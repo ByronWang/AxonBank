@@ -34,7 +34,23 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>axon-bank-core-api</artifactId>
             <version>${project.version}</version>
-        </dependency>
+        </dependency>	
+		<dependency>
+			<groupId>org.ow2.asm</groupId>
+			<artifactId>asm</artifactId>
+			<version>5.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.ow2.asm</groupId>
+			<artifactId>asm-commons</artifactId>
+			<version>5.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.ow2.asm</groupId>
+			<artifactId>asm-all</artifactId>
+			<version>5.2</version>
+			<scope>test</scope>
+		</dependency>
     </dependencies>
 
 </project>

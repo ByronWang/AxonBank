@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.axonframework.samples.bank.simple.instanceCommand;
+package org.axonframework.samples.bank.simple.instanceCommand.done;
 
 import org.axonframework.commandhandling.CommandHandler;
 import org.axonframework.commandhandling.model.Aggregate;
@@ -27,6 +27,7 @@ import org.axonframework.samples.bank.api.bankaccount.BankTransferSourceDebitCom
 import org.axonframework.samples.bank.api.bankaccount.BankAccountMoneyDepositCommand;
 import org.axonframework.samples.bank.api.bankaccount.BankTransferDestinationNotFoundEvent;
 import org.axonframework.samples.bank.api.bankaccount.BankTransferSourceReturnMoneyCommand;
+import org.axonframework.samples.bank.simple.instanceCommand.BankAccount;
 import org.axonframework.samples.bank.api.bankaccount.BankTransferSourceNotFoundEvent;
 import org.axonframework.samples.bank.api.bankaccount.BankAccountWithdrawMoneyCommand;
 

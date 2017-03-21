@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.axonframework.samples.bank.simple.instanceCommand;
+package org.axonframework.samples.bank.simple.instanceCommand.done;
 
 import org.axonframework.commandhandling.CommandBus;
 import org.axonframework.eventhandling.saga.EndSaga;
