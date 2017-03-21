@@ -27,17 +27,21 @@ public class BankAccount {
 	private long overdraftLimit;
 	private long balanceInCents;
 
-	public String getId() {
-		return id;
-	}
-
-	public long getOverdraftLimit() {
-		return overdraftLimit;
-	}
-
-	public long getBalanceInCents() {
-		return balanceInCents;
-	}
+//	public void setId(String id) {
+//		this.id = id;
+//	}
+//	
+//	public String getId() {
+//		return id;
+//	}
+//
+//	public long getOverdraftLimit() {
+//		return overdraftLimit;
+//	}
+//
+//	public long getBalanceInCents() {
+//		return balanceInCents;
+//	}
 
 	@SuppressWarnings("unused")
 	private BankAccount() {

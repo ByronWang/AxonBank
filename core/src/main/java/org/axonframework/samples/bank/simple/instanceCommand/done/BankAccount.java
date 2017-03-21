@@ -31,12 +31,16 @@ public class BankAccount {
 		return id;
 	}
 
-	public long getOverdraftLimit() {
-		return overdraftLimit;
-	}
+//	public long getOverdraftLimit() {
+//		return overdraftLimit;
+//	}
+//
+//	public long getBalanceInCents() {
+//		return balanceInCents;
+//	}
 
-	public long getBalanceInCents() {
-		return balanceInCents;
+	public void setId(String id) {
+		this.id = id;
 	}
 
 	@SuppressWarnings("unused")
