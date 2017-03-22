@@ -18,9 +18,9 @@ public class CommandBuilder implements Opcodes {
 
 		cw.visitSource(type.getClassName(), null);
 
-		visitFields(cw, type, command.data);
-		visitGetField(cw, type, command.data);
-		visitinit(cw, type, command.data);
+		visitFields(cw, type, command.fields);
+		visitGetField(cw, type, command.fields);
+		visitinit(cw, type, command.fields);
 		return cw.toByteArray();
 	}
 

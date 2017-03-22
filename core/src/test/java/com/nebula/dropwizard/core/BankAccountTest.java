@@ -85,9 +85,7 @@ public class BankAccountTest {
 
 		byte[] code = cw.toByteArray();
 		writeTo(folder, BankAccount.class.getSimpleName(), code);
-	
-		
-		
+			
 		for (Event event : domainMaker.events) {
 			if (event.superName != null) {				
 				byte[] eventCode = AliasEventBuilder.dump(packageName, event);

@@ -19,7 +19,7 @@ public class AliasEventBuilder implements Opcodes {
 
 		cw.visitSource(type.getClassName(), null);
 
-		visitinit(cw, type,superType, event.data);
+		visitinit(cw, type,superType, event.fields);
 		return cw.toByteArray();
 	}
 

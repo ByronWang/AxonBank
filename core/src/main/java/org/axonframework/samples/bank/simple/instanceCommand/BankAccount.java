@@ -49,19 +49,19 @@ public class BankAccount {
 
 	// BankAccountCreateCommand
 	public BankAccount(String id, long overdraftLimit) {
-		onCreated(id, overdraftLimit);// BankAccountCreatedEvent
+		onCreated(overdraftLimit);// BankAccountCreatedEvent
 	}
 
 	// BankAccountMoneyDepositCommand
 	public boolean deposit(long amount) {
-		onMoneyAdded(id,amount);// BankAccountMoneyDepositedEvent
+		onMoneyAdded(amount);// BankAccountMoneyDepositedEvent
 		return true;
 	}
 
 	// BankAccountWithdrawMoneyCommand
 	public boolean withdraw(long amount) {
 		if (amount <= balanceInCents + overdraftLimit) {
-			onMoneySubtracted(id,amount);// BankAccountMoneyWithdrawnEvent
+			onMoneySubtracted(amount);// BankAccountMoneyWithdrawnEvent
 			return true;
 		} else {
 			return false;
@@ -86,7 +86,7 @@ public class BankAccount {
 	// BankTransferSourceDebitCommand
 	public boolean debit(long amount) {
 		if (amount <= balanceInCents + overdraftLimit) {
-			onMoneySubtracted(id,amount);// BankTransferSourceDebitedEvent
+			onMoneySubtracted(amount);// BankTransferSourceDebitedEvent
 			return true;
 		} else {
 			return false;// BankTransferSourceDebitRejectedEvent
@@ -95,30 +95,30 @@ public class BankAccount {
 
 	// BankTransferDestinationCreditCommand
 	public boolean credit(long amount) {
-		onMoneyAdded(id,amount);// BankTransferDestinationCreditedEvent
+		onMoneyAdded(amount);// BankTransferDestinationCreditedEvent
 		return true;
 	}
 
 	// BankTransferSourceReturnMoneyCommand
 	public boolean returnMoney(long amount) {
-		onMoneyAdded(id,amount);// BankTransferSourceReturnedMoneyOfFailedEvent
+		onMoneyAdded(amount);// BankTransferSourceReturnedMoneyOfFailedEvent
 		return true;
 	}
 
 	// BankAccountCreatedEvent
-	void onCreated(String id, long overdraftLimit) {
+	void onCreated(long overdraftLimit) {
 		this.id = id;
 		this.overdraftLimit = overdraftLimit;
 		this.balanceInCents = 0;
 	}
 
 	// BankAccountMoneyAddedEvent
-	void onMoneyAdded(String id,long amount) {
+	void onMoneyAdded(long amount) {
 		balanceInCents += amount;
 	}
 
 	// BankAccountMoneySubtractedEvent
-	void onMoneySubtracted(String id,long amount) {
+	void onMoneySubtracted(long amount) {
 		balanceInCents -= amount;
 	}
 }

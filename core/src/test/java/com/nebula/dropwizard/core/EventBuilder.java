@@ -17,9 +17,9 @@ public class EventBuilder implements Opcodes {
 
 		cw.visitSource(type.getClassName(), null);
 
-		visitFields(cw, type, event.data);
-		visitGetField(cw, type, event.data);
-		visitinit(cw, type, event.data);
+		visitFields(cw, type, event.fields);
+		visitGetField(cw, type, event.fields);
+		visitinit(cw, type, event.fields);
 		return cw.toByteArray();
 	}
 
