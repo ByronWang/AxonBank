@@ -8,14 +8,14 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
-public class DomainMaker extends ClassVisitor {
-	Type type;
+public class DDOBuilder extends ClassVisitor {
+//	Type type;
 
-	public DomainMaker(int api, ClassVisitor cv) {
+	public DDOBuilder(int api, ClassVisitor cv) {
 		super(api, cv);
 	}
 
-	public DomainMaker(int api, String clzNewName) {
+	public DDOBuilder(int api, String clzNewName) {
 		super(api);
 	}
 
