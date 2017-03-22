@@ -77,10 +77,16 @@ public class BankAccountTest {
 
 		String packageName = BankAccount.class.getPackage().getName();
 
+
 		ClassReader cr = new ClassReader(BankAccount.class.getName());
+		CQRSAnalyzerClassVisitor analyzer = new CQRSAnalyzerClassVisitor(Opcodes.ASM5);
+		cr.accept(analyzer, 0);
+		System.out.println(analyzer.methods);
+
+//		ClassReader cr = new ClassReader(BankAccount.class.getName());
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
 		TraceClassVisitor traceClassVisitorToConsole = new TraceClassVisitor(cw, new ASMifier(), new PrintWriter(System.out));
-		CQRSBuilder domainMaker = new CQRSBuilder(Opcodes.ASM5, traceClassVisitorToConsole);
+		CQRSBuilder domainMaker = new CQRSBuilder(Opcodes.ASM5, traceClassVisitorToConsole,analyzer.methods);
 		cr.accept(domainMaker, 0);
 
 		byte[] code = cw.toByteArray();

@@ -6,6 +6,7 @@ import java.io.PrintWriter;
 import org.axonframework.samples.bank.api.bankaccount.BankAccountMoneyDepositCommand;
 import org.axonframework.samples.bank.api.bankaccount.BankAccountMoneyDepositedEvent;
 import org.axonframework.samples.bank.api.bankaccount.BankAccountMoneySubtractedEvent;
+import org.axonframework.samples.bank.command.BankAccountCommandHandler;
 import org.axonframework.samples.bank.simple.instanceCommand.BankAccount;
 import org.junit.Test;
 import org.objectweb.asm.ClassReader;
@@ -17,17 +18,17 @@ import org.objectweb.asm.util.TraceClassVisitor;
 
 public class TodoTest {
 
-	@Test
-	public void testTodo() throws IOException {
-		ClassReader cr = new ClassReader(Todo.class.getName());
-		ClassVisitor typemaker = new CQRSBuilder(Opcodes.ASM5);
-		cr.accept(typemaker, ClassReader.SKIP_DEBUG);
-
-		ClassVisitor visitor = new TraceClassVisitor(null, new ASMifier(), new PrintWriter(System.out));
-		cr.accept(visitor, ClassReader.EXPAND_FRAMES);
-
-		System.out.println(typemaker.toString());
-	}
+//	@Test
+//	public void testTodo() throws IOException {
+//		ClassReader cr = new ClassReader(Todo.class.getName());
+//		ClassVisitor typemaker = new CQRSBuilder(Opcodes.ASM5);
+//		cr.accept(typemaker, ClassReader.SKIP_DEBUG);
+//
+//		ClassVisitor visitor = new TraceClassVisitor(null, new ASMifier(), new PrintWriter(System.out));
+//		cr.accept(visitor, ClassReader.EXPAND_FRAMES);
+//
+//		System.out.println(typemaker.toString());
+//	}
 	@Test
 	public void testPrintTodo() throws IOException {
 		ClassReader cr = new ClassReader(Todo.class.getName());
@@ -42,7 +43,16 @@ public class TodoTest {
 		cr.accept(visitor, ClassReader.EXPAND_FRAMES);
 	}
 	
-
+	
+	@Test
+	public void testPrintBankAccountCommandHandler() throws IOException {
+		ClassReader cr = new ClassReader(BankAccountCommandHandler.class.getName());
+		ClassVisitor visitor = new TraceClassVisitor(null, new ASMifier(), new PrintWriter(System.out));
+		cr.accept(visitor, ClassReader.EXPAND_FRAMES);
+	}
+	
+	
+	
 	@Test
 	public void testPrintcommand_BankAccount() throws IOException {
 		ClassReader cr = new ClassReader(org.axonframework.samples.bank.command.BankAccount.class.getName());

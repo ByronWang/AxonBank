@@ -2,6 +2,7 @@ package com.nebula.dropwizard.core;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.axonframework.commandhandling.model.AggregateIdentifier;
 import org.objectweb.asm.AnnotationVisitor;
@@ -12,6 +13,8 @@ import org.objectweb.asm.MethodVisitor;
 import static org.objectweb.asm.Opcodes.*;
 import org.objectweb.asm.Type;
 
+import com.nebula.dropwizard.core.CQRSAnalyzerClassVisitor.Method;
+
 public class CQRSBuilder extends ClassVisitor {
 	Type type;
 
@@ -19,18 +22,20 @@ public class CQRSBuilder extends ClassVisitor {
 	List<Event> events = new ArrayList<>();
 	Domain domain;
 	Field fieldID;
+	Map<String, Method> methods;
 
 	@Override
 	public String toString() {
 		return "TypeMaker [commands=" + commands + ", events=" + events + ", domain=" + domain + "]";
 	}
 
-	public CQRSBuilder(int api, ClassVisitor cv) {
+	public CQRSBuilder(int api, ClassVisitor cv, Map<String, Method> methods) {
 		super(api, cv);
+		this.methods = methods;
 	}
 
-	public CQRSBuilder(int api) {
-		super(api);
+	public CQRSBuilder(int api, Map<String, Method> methods) {
+		this(api, null, methods);
 	}
 
 	@Override
@@ -78,10 +83,11 @@ public class CQRSBuilder extends ClassVisitor {
 			return methodVisitor;
 		} else if (is(access, ACC_PUBLIC)) {// Command
 			MethodVisitor methodVisitor = super.visitMethod(access, name, desc, signature, exceptions);
+			String newName = name;
 			if ("<init>".equals(name)) {
-				name = "Create";
+				newName = "Create";
 			}
-			CommandMethodVisitor commandMethodVisitor = new CommandMethodVisitor(api, methodVisitor, access, name, desc, signature, exceptions);
+			CommandMethodVisitor commandMethodVisitor = new CommandMethodVisitor(api, methodVisitor, access, name, newName, desc, signature, exceptions);
 			this.events.add(commandMethodVisitor.event);
 			this.commands.add(commandMethodVisitor.command);
 
@@ -104,12 +110,14 @@ public class CQRSBuilder extends ClassVisitor {
 	@Override
 	public void visitEnd() {
 		for (Event event : events) {
-			if (event.params.size() == 0 || !(event.params.get(0).name == fieldID.name
-					&& event.params.get(0).type.getInternalName().equals(fieldID.type.getInternalName()))) {
+			if (event.params.length == 0
+					|| !(event.params[0].name == fieldID.name && event.params[0].type.getInternalName().equals(fieldID.type.getInternalName()))) {
 				event.fields.add(fieldID);
 				event.withoutID = true;
 			}
-			event.fields.addAll(event.params);
+			for (int i = 0; i < event.params.length; i++) {
+				event.fields.add(event.params[i]);
+			}
 		}
 		for (Event event : events) {
 			if (event.innerEvent) {
@@ -127,12 +135,14 @@ public class CQRSBuilder extends ClassVisitor {
 			}
 		}
 		for (Command command : commands) {
-			if (command.params.size() == 0 || !(command.params.get(0).name == fieldID.name
-					&& command.params.get(0).type.getInternalName().equals(fieldID.type.getInternalName()))) {
+			if (command.params.length == 0
+					|| !(command.params[0].name == fieldID.name && command.params[0].type.getInternalName().equals(fieldID.type.getInternalName()))) {
 				command.fields.add(fieldID);
 				command.withoutID = true;
 			}
-			command.fields.addAll(command.params);
+			for (int i = 0; i < command.params.length; i++) {
+				command.fields.add(command.params[i]);
+			}
 		}
 
 		super.visitEnd();
@@ -151,11 +161,11 @@ public class CQRSBuilder extends ClassVisitor {
 			// Call event
 			Type typeEvent = typeOf(event.name);
 
-//			List<Field> parameters = event.params;
+			// List<Field> parameters = event.params;
 
-			Type[] params = new Type[event.params.size()];
-			for (int i = 0; i < event.params.size(); i++) {
-				params[i] = event.params.get(i).type;
+			Type[] params = new Type[event.params.length];
+			for (int i = 0; i < event.params.length; i++) {
+				params[i] = event.params[i].type;
 			}
 			final String methodDescriptor = Type.getMethodDescriptor(Type.VOID_TYPE, params);
 
@@ -172,8 +182,8 @@ public class CQRSBuilder extends ClassVisitor {
 				mv.visitFieldInsn(GETFIELD, type.getInternalName(), fieldID.name, fieldID.type.getDescriptor());
 			}
 
-			for (int i = 0; i < event.params.size(); i++) {
-				Field parameter = event.params.get(i);
+			for (int i = 0; i < event.params.length; i++) {
+				Field parameter = event.params[i];
 				mv.visitVarInsn(parameter.type.getOpcode(ILOAD), i + 1);
 			}
 
@@ -194,8 +204,8 @@ public class CQRSBuilder extends ClassVisitor {
 			Label l2 = new Label();
 			mv.visitLabel(l2);
 			mv.visitLocalVariable("this", type.getDescriptor(), null, l0, l2, 0);
-			for (int i = 0; i < event.params.size(); i++) {
-				Field field = event.params.get(i);
+			for (int i = 0; i < event.params.length; i++) {
+				Field field = event.params[i];
 				mv.visitLocalVariable(field.name, field.type.getDescriptor(), null, l0, l2, i + 1);
 			}
 			mv.visitMaxs(5, 3);
@@ -210,38 +220,24 @@ public class CQRSBuilder extends ClassVisitor {
 	class CommandMethodVisitor extends MethodVisitor {
 		final Command command;
 		final Event event;
-		final List<Event> otherEvents = new ArrayList<>();;
-		// final List<Field> parametes = new ArrayList<>();
-		final List<Integer> stack = new ArrayList<>();
+		final List<Event> otherEvents = new ArrayList<>();
 
 		int parameters = 0;
 
-		final String name;
+		final String commandName;
 
-		public CommandMethodVisitor(int api, MethodVisitor mv, int access, String name, String desc, String signature, String[] exceptions) {
+		public CommandMethodVisitor(int api, MethodVisitor mv, int access, String name, String commandName, String desc, String signature, String[] exceptions) {
 			super(api, mv);
-			this.name = name;
-			this.command = new Command(domain.name + toCamel(name) + "Command");
-			this.event = new Event(domain.name + toCamel(name) + "FinishedEvent");
+			this.commandName = commandName;
+			this.command = new Command(domain.name + toCamel(commandName) + "Command");
+			this.event = new Event(domain.name + toCamel(commandName) + "FinishedEvent");
 
-			Type[] types = Type.getArgumentTypes(desc);
-
-			for (Type type : types) {
-				Field argument = new Field(null, type);
-				command.params.add(argument);
-			}
+			Method method = methods.get(name);
+			command.params = method.params;
 		}
 
-		public CommandMethodVisitor(int api, int access, String name, String desc, String signature, String[] exceptions) {
-			this(api, null, access, name, desc, signature, exceptions);
-		}
-
-		@Override
-		public void visitLocalVariable(String name, String desc, String signature, Label start, Label end, int index) {
-			if (index > 0 && index <= command.params.size()) {
-				command.params.get(index - 1).name = name;
-			}
-			super.visitLocalVariable(name, desc, signature, start, end, index);
+		public CommandMethodVisitor(int api, int access, String name, String newName, String desc, String signature, String[] exceptions) {
+			this(api, null, access, name, newName, desc, signature, exceptions);
 		}
 
 		// mv.visitInsn(ICONST_0);
@@ -252,8 +248,8 @@ public class CQRSBuilder extends ClassVisitor {
 		@Override
 		public void visitInsn(int opcode) {
 			if (opcode == IRETURN && lastOpcode == ICONST_0) {
-				Event eventRejected = new Event(domain.name + toCamel(name) + "RejectedEvent");
-				// eventRejected.data.add(fieldID);
+				Event eventRejected = new Event(domain.name + toCamel(commandName) + "RejectedEvent");
+				eventRejected.params = new Field[0];
 				CQRSBuilder.this.events.add(eventRejected);
 
 				mv.visitVarInsn(ALOAD, 0);
@@ -267,11 +263,8 @@ public class CQRSBuilder extends ClassVisitor {
 
 		@Override
 		public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-			Type[] types = Type.getArgumentTypes(desc);
-			for (int i = 0; i < types.length; i++) {
-				Field argument = new Field("i" + i, types[i]);
-				event.params.add(argument);
-			}
+			Method method = methods.get(name);
+			event.params = method.params;
 
 			if (owner.equals(type.getInternalName()) && name.startsWith("on")) {
 				// set super name
@@ -283,15 +276,7 @@ public class CQRSBuilder extends ClassVisitor {
 
 				super.visitMethodInsn(opcode, owner, name, desc, itf);
 			}
-
 		}
-
-		@Override
-		public void visitParameter(String name, int access) {
-			super.visitParameter(name, access);
-			command.params.get(parameters++).name = name;
-		}
-
 	}
 
 	class EventMethodVisitor extends MethodVisitor {
@@ -307,20 +292,16 @@ public class CQRSBuilder extends ClassVisitor {
 			this.event.type = typeEvent;
 			this.event.innerEvent = true;
 
-			Type[] types = Type.getArgumentTypes(oldDesc);
-
-			for (Type type : types) {
-				Field argument = new Field(null, type);
-				event.params.add(argument);
-			}
+			Method method = methods.get(name);
+			event.params = method.params;
 		}
 
 		@Override
 		public void visitVarInsn(int opcode, int var) {
-			if (0 < var && var <= event.params.size()) {
+			if (0 < var && var <= event.params.length) {
 				// super.visitVarInsn(opcode, var);
 				super.visitVarInsn(ALOAD, 1);
-				Field field = event.params.get(var - 1);
+				Field field = event.params[var - 1];
 				String descriptor = Type.getMethodDescriptor(field.type, new Type[] {});
 				super.visitMethodInsn(INVOKEVIRTUAL, event.type.getInternalName(), "get" + toCamel(field.name), descriptor, false);
 			} else {
@@ -334,15 +315,15 @@ public class CQRSBuilder extends ClassVisitor {
 		public void visitLocalVariable(String name, String desc, String signature, Label start, Label end, int index) {
 			if (index == 0) {
 				super.visitLocalVariable(name, desc, signature, start, end, index);
-			} else if (index <= event.params.size()) {
-				event.params.get(index - 1).name = name;
+			} else if (index <= event.params.length) {
+				event.params[index - 1].name = name;
 				if (!doneVisitLocalVariable) {
 					String parameterName = Character.toLowerCase(event.name.charAt(0)) + event.name.substring(1);
 					super.visitLocalVariable(parameterName, event.type.getDescriptor(), signature, start, end, 1);
 					doneVisitLocalVariable = true;
 				}
 			} else {
-				super.visitLocalVariable(name, desc, signature, start, end, index - event.params.size() + 1);
+				super.visitLocalVariable(name, desc, signature, start, end, index - event.params.length + 1);
 			}
 		}
 
@@ -350,7 +331,7 @@ public class CQRSBuilder extends ClassVisitor {
 
 		@Override
 		public void visitParameter(String name, int access) {
-			event.params.get(parameters++).name = name;
+			event.params[parameters++].name = name;
 			if (!doneVisitParameter) {
 				String parameterName = Character.toLowerCase(event.name.charAt(0)) + event.name.substring(1);
 				super.visitParameter(parameterName, 0);
@@ -368,7 +349,7 @@ public class CQRSBuilder extends ClassVisitor {
 		return (access & modified) > 0;
 	}
 
-	class Field {
+	static class Field {
 		public Field(String name, Type type) {
 			super();
 			this.name = name;
@@ -397,7 +378,7 @@ public class CQRSBuilder extends ClassVisitor {
 
 		String name;
 		List<Field> fields = new ArrayList<>();
-		List<Field> params = new ArrayList<>();
+		Field[] params;
 		boolean withoutID = false;
 	}
 
@@ -418,7 +399,7 @@ public class CQRSBuilder extends ClassVisitor {
 		}
 
 		List<Field> fields = new ArrayList<>();
-		List<Field> params = new ArrayList<>();
+		Field[] params;
 		boolean withoutID = false;
 	}
 
