@@ -28,7 +28,6 @@ public class TodoTest {
 
 		System.out.println(typemaker.toString());
 	}
-
 	@Test
 	public void testPrintTodo() throws IOException {
 		ClassReader cr = new ClassReader(Todo.class.getName());
