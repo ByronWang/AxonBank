@@ -48,10 +48,10 @@ public class CQRSDomainBuilder extends ClassVisitor {
 	@Override
 	public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
 		Field field = new Field(name, Type.getType(desc));
-		if (domain.data.size() == 0) {
+		if (domain.fields.size() == 0) {
 			this.fieldID = field;
 		}
-		domain.data.add(field);
+		domain.fields.add(field);
 		FieldVisitor fieldVisitor = super.visitField(access, name, desc, signature, value);
 		return new CustomFieldVisitor(api, fieldVisitor, field, access, name, desc, signature, value);
 	}
@@ -96,7 +96,7 @@ public class CQRSDomainBuilder extends ClassVisitor {
 
 			Type type = typeOf(simpleClassName);
 
-			Command command = new Command(methodName, commandName,ctorMethod, simpleClassName, type);
+			Command command = new Command(methodName, commandName, ctorMethod, simpleClassName, type);
 
 			MethodVisitor methodVisitor = super.visitMethod(access, name, desc, signature, exceptions);
 			CommandMethodVisitor commandMethodVisitor = new CommandMethodVisitor(api, methodVisitor, access, command, desc, signature, exceptions);
@@ -145,9 +145,9 @@ public class CQRSDomainBuilder extends ClassVisitor {
 			if (event.innerEvent) {
 
 			} else {
-				if (event.superName != null) {
+				if (event.realEvent != null) {
 					for (Event eventSuper : events) {
-						if (eventSuper.eventName.equals(event.superName)) {
+						if (eventSuper.type.getClassName().equals(event.type.getClassName())) {
 							event.fields = eventSuper.fields;
 							event.methodParams = eventSuper.methodParams;
 						}
@@ -312,7 +312,7 @@ public class CQRSDomainBuilder extends ClassVisitor {
 
 			if (owner.equals(typeDomain.getInternalName()) && name.startsWith("on")) {
 				// set super name
-				event.superName = domain.name + toCamelUpper(name.substring(2)) + "Event";
+				event.realEvent = typeOf(domain.name + toCamelUpper(name.substring(2)) + "Event");
 
 				super.visitMethodInsn(opcode, owner, "apply" + event.simpleClassName, desc, itf);
 
@@ -436,7 +436,7 @@ public class CQRSDomainBuilder extends ClassVisitor {
 	}
 
 	class Event {
-		String superName;
+		Type realEvent;
 
 		@Override
 		public String toString() {
@@ -476,7 +476,7 @@ public class CQRSDomainBuilder extends ClassVisitor {
 			this.name = name;
 		}
 
-		List<Field> data = new ArrayList<>();
+		List<Field> fields = new ArrayList<>();
 	}
 
 }

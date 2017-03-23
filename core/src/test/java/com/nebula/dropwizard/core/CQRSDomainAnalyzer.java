@@ -14,7 +14,6 @@ import org.objectweb.asm.Type;
 import com.nebula.dropwizard.core.CQRSDomainBuilder.Field;
 
 public class CQRSDomainAnalyzer extends ClassVisitor {
-	// Type type;
 
 	public CQRSDomainAnalyzer(int api, ClassVisitor cv) {
 		super(api, cv);
