@@ -1,6 +1,5 @@
 package com.nebula.dropwizard.core;
 
-import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;

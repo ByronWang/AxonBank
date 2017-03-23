@@ -7,13 +7,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.axonframework.commandhandling.model.Repository;
 import org.axonframework.eventhandling.EventBus;
-import org.axonframework.samples.bank.command.BankAccountCommandHandler;
-import org.axonframework.samples.bank.command.BankAccountCommandHandler2;
 import org.axonframework.samples.bank.simple.instanceCommand.BankAccount;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -176,7 +172,7 @@ public class BankAccountTest {
 		try {
 			Constructor<BankAccount> con31 = clzDomain.getDeclaredConstructor();
 			con31.setAccessible(true);
-			Object f31 = (Object) con31.newInstance();
+			con31.newInstance();
 
 			byte[] codeHandler = new CQRSCommandHandlerBuilder().dump(cqrs.commands, typeDomain, typeHandler);
 			writeToWithPackage(root, handlerClassName, codeHandler);

@@ -6,14 +6,11 @@ import java.io.PrintWriter;
 import org.axonframework.samples.bank.api.bankaccount.BankAccountMoneyDepositCommand;
 import org.axonframework.samples.bank.api.bankaccount.BankAccountMoneyDepositedEvent;
 import org.axonframework.samples.bank.api.bankaccount.BankAccountMoneySubtractedEvent;
-import org.axonframework.samples.bank.command.BankAccountCommandHandler;
 import org.axonframework.samples.bank.command.BankAccountCommandHandler2;
 import org.axonframework.samples.bank.simple.instanceCommand.BankAccount;
 import org.junit.Test;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.util.ASMifier;
 import org.objectweb.asm.util.TraceClassVisitor;
 
