@@ -15,21 +15,22 @@ import com.nebula.dropwizard.core.CQRSDomainBuilder.Field;
 
 public class CQRSCommandBuilder implements Opcodes {
 
-	public static byte[] dump(Command command) {
+	public static byte[] dump(Command target) {
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
-		Type type = command.type;
+		Type type = target.type;
 
-		cw.visit(52, ACC_PUBLIC + ACC_SUPER + ACC_ABSTRACT, type.getInternalName(), null, "java/lang/Object", null);
+		cw.visit(52, ACC_PUBLIC + ACC_SUPER, type.getInternalName(), null, "java/lang/Object", null);
 
 		cw.visitSource(type.getClassName(), null);
 
-		visitFields(cw, type, command.fields);
-		visitGetField(cw, type, command.fields);
-		visitinit(cw, type, command.fields);
+		visit_fields(cw, type, target.fields);
+		visit_getField(cw, type, target.fields);
+		visit_init(cw, type, target.fields);
+		visit_toString(cw, type, target.fields);
 		return cw.toByteArray();
 	}
 
-	public static void visitFields(ClassWriter cw, Type type, List<Field> fields) {
+	public static void visit_fields(ClassWriter cw, Type type, List<Field> fields) {
 		for (Field field : fields) {
 			FieldVisitor fv;
 			{
@@ -47,7 +48,7 @@ public class CQRSCommandBuilder implements Opcodes {
 		return Character.toUpperCase(name.charAt(0)) + name.substring(1);
 	}
 
-	public static void visitGetField(ClassWriter cw, Type type, List<Field> fields) {
+	public static void visit_getField(ClassWriter cw, Type type, List<Field> fields) {
 		MethodVisitor mv;
 
 		for (Field field : fields) {
@@ -59,16 +60,16 @@ public class CQRSCommandBuilder implements Opcodes {
 			mv.visitLineNumber(22, l0);
 			mv.visitVarInsn(ALOAD, 0);
 			mv.visitFieldInsn(GETFIELD, type.getInternalName(), field.name, field.type.getDescriptor());
-			mv.visitInsn(ARETURN);
+			mv.visitInsn(field.type.getOpcode(IRETURN));
 			Label l1 = new Label();
 			mv.visitLabel(l1);
 			mv.visitLocalVariable("this", type.getDescriptor(), null, l0, l1, 0);
-			mv.visitMaxs(1, 1);
+			mv.visitMaxs(0, 0);
 			mv.visitEnd();
 		}
 	}
 
-	public static void visitinit(ClassWriter cw, Type type, List<Field> fields) {
+	public static void visit_init(ClassWriter cw, Type type, List<Field> fields) {
 		MethodVisitor mv;
 		AnnotationVisitor av0;
 		{
@@ -101,7 +102,7 @@ public class CQRSCommandBuilder implements Opcodes {
 			for (int i = 0; i < fields.size(); i++) {
 				Field field = fields.get(i);
 				mv.visitVarInsn(ALOAD, 0);
-				mv.visitVarInsn(ALOAD, i + 1);
+				mv.visitVarInsn(field.type.getOpcode(ILOAD), i + 1);
 				mv.visitFieldInsn(PUTFIELD, type.getInternalName(), field.name, field.type.getDescriptor());
 			}
 
@@ -118,5 +119,48 @@ public class CQRSCommandBuilder implements Opcodes {
 			mv.visitEnd();
 		}
 		cw.visitEnd();
+	}
+
+	public static void visit_toString(ClassWriter cw, Type type, List<Field> fields) {
+		MethodVisitor mv;
+		{
+			mv = cw.visitMethod(ACC_PUBLIC, "toString", "()Ljava/lang/String;", null, null);
+			mv.visitCode();
+			Label l0 = new Label();
+			mv.visitLabel(l0);
+			mv.visitLineNumber(22, l0);
+			mv.visitTypeInsn(NEW, "java/lang/StringBuilder");
+			mv.visitInsn(DUP);
+			mv.visitLdcInsn(CQRSDomainBuilder.toSimpleName(type.getClassName()) + "(");
+			mv.visitMethodInsn(INVOKESPECIAL, "java/lang/StringBuilder", "<init>", "(Ljava/lang/String;)V", false);
+			{
+				for (int i = 0; i < fields.size(); i++) {
+					Field field = fields.get(i);
+					if (i != 0) {
+						mv.visitLdcInsn(",");
+						mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;", false);
+					}
+
+					mv.visitLdcInsn(field.name + "=");
+					mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;", false);
+
+					mv.visitVarInsn(ALOAD, 0);
+					mv.visitMethodInsn(INVOKEVIRTUAL, type.getInternalName(), toGetName(field.name), Type.getMethodDescriptor(field.type), false);
+					mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append",
+							Type.getMethodDescriptor(Type.getObjectType("java/lang/StringBuilder"), field.type), false);
+
+				}
+			}
+
+			mv.visitLdcInsn(")");
+			mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;", false);
+			mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "toString", "()Ljava/lang/String;", false);
+			mv.visitInsn(ARETURN);
+			Label l1 = new Label();
+			mv.visitLabel(l1);
+			mv.visitLocalVariable("this", type.getDescriptor(), null, l0, l1, 0);
+			mv.visitMaxs(3, 1);
+			mv.visitEnd();
+		}
 	}
 }

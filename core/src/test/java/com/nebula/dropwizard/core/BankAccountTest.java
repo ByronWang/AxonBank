@@ -23,6 +23,8 @@ import com.nebula.dropwizard.core.CQRSDomainBuilder.Command;
 import com.nebula.dropwizard.core.CQRSDomainBuilder.Event;
 
 public class BankAccountTest {
+	
+	MyClassLoader classLoader = new MyClassLoader();
 
 	private void writeToWithPackage(File root, String name, byte[] code) {
 		try {
@@ -59,13 +61,18 @@ public class BankAccountTest {
 
 	@Test
 	public void testMakeDomainPerson() throws Exception {
-		this.makeDomainCQRSHelper("org.axonframework.samples.bank.simple.instanceCommand.Person");
+		Object handler = this.makeDomainCQRSHelper("org.axonframework.samples.bank.simple.instanceCommand.Person");
+		Class<?> clzCommand = classLoader.loadClass("org.axonframework.samples.bank.simple.instanceCommand.Person_CtorCommand");
+		Object o = clzCommand.getConstructor(String.class,String.class, long.class).newInstance("101","wangshilian",20);
+		System.out.println(o.toString());
+		
+//		Object.class.getMethod(null, null)
 	}
 	
-	private void makeDomainCQRSHelper(String domainClassName) throws Exception{
+	private Object makeDomainCQRSHelper(String domainClassName) throws Exception{
 		File root = new File("target/generated-auto-classes/");
 
-		MyClassLoader classLoader = new MyClassLoader();
+//		MyClassLoader classLoader = new MyClassLoader();
 		Class<?> clzHandle = null;
 		{
 			Type typeDomain = Type.getObjectType(domainClassName.replace('.','/'));
@@ -88,7 +95,7 @@ public class BankAccountTest {
 			{
 				for (Event event : cqrs.events) {
 					if (event.realEvent == null) {
-						byte[] eventCode = CQRSEventBuilder.dump(event);
+						byte[] eventCode = CQRSEventRealBuilder.dump(event);
 						writeToWithPackage(root, cqrs.fullnameOf(event.simpleClassName), eventCode);
 						classLoader.defineClass(cqrs.fullnameOf(event.simpleClassName), eventCode);
 					}
@@ -144,8 +151,8 @@ public class BankAccountTest {
 		EventBus eventBus = Mockito.mock(EventBus.class);
 
 		Constructor<?> c = clzHandle.getConstructor(Repository.class, EventBus.class);
-		c.newInstance(repos, eventBus);
-
+		return c.newInstance(repos, eventBus);
+		
 	}
 
 	static class MyClassLoader extends ClassLoader {
