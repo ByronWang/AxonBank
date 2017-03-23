@@ -10,7 +10,7 @@ public class AliasEventBuilder implements Opcodes {
 
 	public static byte[] dump(String packageName, Event event) {
 		ClassWriter cw = new ClassWriter(0);
-		String eventName = packageName + "." + event.name;
+		String eventName = packageName + "." + event.simpleClassName;
 		String superEventName = packageName + "." + event.superName;
 		Type type = Type.getObjectType(eventName.replace('.', '/'));
 		Type superType = Type.getObjectType(superEventName.replace('.', '/'));

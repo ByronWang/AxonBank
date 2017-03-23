@@ -10,7 +10,7 @@ public class EventBuilder implements Opcodes {
 
 	public static byte[] dump(String packageName, Event event) {
 		ClassWriter cw = new ClassWriter(0);
-		String eventName = packageName + "." + event.name;
+		String eventName = packageName + "." + event.simpleClassName;
 		Type type = Type.getObjectType(eventName.replace('.', '/'));
 
 		cw.visit(52, ACC_PUBLIC + ACC_SUPER + ACC_ABSTRACT, type.getInternalName(), null, "java/lang/Object", null);

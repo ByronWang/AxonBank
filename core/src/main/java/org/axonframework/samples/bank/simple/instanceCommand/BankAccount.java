@@ -27,21 +27,21 @@ public class BankAccount {
 	private long overdraftLimit;
 	private long balanceInCents;
 
-//	public void setId(String id) {
-//		this.id = id;
-//	}
-//	
-//	public String getId() {
-//		return id;
-//	}
-//
-//	public long getOverdraftLimit() {
-//		return overdraftLimit;
-//	}
-//
-//	public long getBalanceInCents() {
-//		return balanceInCents;
-//	}
+	// public void setId(String id) {
+	// this.id = id;
+	// }
+	//
+	// public String getId() {
+	// return id;
+	// }
+	//
+	// public long getOverdraftLimit() {
+	// return overdraftLimit;
+	// }
+	//
+	// public long getBalanceInCents() {
+	// return balanceInCents;
+	// }
 
 	@SuppressWarnings("unused")
 	private BankAccount() {
@@ -49,7 +49,7 @@ public class BankAccount {
 
 	// BankAccountCreateCommand
 	public BankAccount(String id, long overdraftLimit) {
-		onCreated(overdraftLimit);// BankAccountCreatedEvent
+		onCreated(id, overdraftLimit);// BankAccountCreatedEvent
 	}
 
 	// BankAccountMoneyDepositCommand
@@ -106,7 +106,7 @@ public class BankAccount {
 	}
 
 	// BankAccountCreatedEvent
-	void onCreated(long overdraftLimit) {
+	void onCreated(String id, long overdraftLimit) {
 		this.id = id;
 		this.overdraftLimit = overdraftLimit;
 		this.balanceInCents = 0;

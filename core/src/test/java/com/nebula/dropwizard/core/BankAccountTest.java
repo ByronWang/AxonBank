@@ -124,28 +124,27 @@ public class BankAccountTest {
 		// ClassReader cr = new ClassReader(BankAccount.class.getName());
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
 		TraceClassVisitor traceClassVisitorToConsole = new TraceClassVisitor(cw, new ASMifier(), new PrintWriter(System.out));
-		CQRSBuilder domainMaker = new CQRSBuilder(Opcodes.ASM5, traceClassVisitorToConsole, analyzer.methods);
-		cr.accept(domainMaker, 0);
+		CQRSBuilder cqrs = new CQRSBuilder(Opcodes.ASM5, traceClassVisitorToConsole, analyzer.methods);
+		cr.accept(cqrs, 0);
 
 		byte[] code = cw.toByteArray();
 		writeToWithPackage(root, BankAccount.class.getName(), code);
 
-		// for (Event event : domainMaker.events) {
-		// if (event.superName != null) {
-		// byte[] eventCode = AliasEventBuilder.dump(packageName, event);
-		// writeToWithPackage(root, BankAccount.class.getPackage().getName() +
-		// "." + event.name, eventCode);
-		// classLoader.defineClass(BankAccount.class.getPackage().getName() +
-		// "." + event.name, eventCode);
-		// } else {
-		// byte[] eventCode = EventBuilder.dump(packageName, event);
-		// writeToWithPackage(root, BankAccount.class.getPackage().getName() +
-		// "." + event.name, eventCode);
-		// classLoader.defineClass(BankAccount.class.getPackage().getName() +
-		// "." + event.name, eventCode);
-		// }
-		// }
-		for (Command command : domainMaker.commands) {
+		for (Event event : cqrs.events) {
+			if (event.superName==null) {
+				byte[] eventCode = EventBuilder.dump(packageName, event);
+				writeToWithPackage(root, cqrs.fullnameOf(event.simpleClassName), eventCode);
+				classLoader.defineClass(cqrs.fullnameOf(event.simpleClassName), eventCode);
+			}
+		}
+		for (Event event : cqrs.events) {
+			if (event.superName!=null) {
+				byte[] eventCode = AliasEventBuilder.dump(packageName, event);
+				writeToWithPackage(root,cqrs.fullnameOf(event.simpleClassName), eventCode);
+				classLoader.defineClass(cqrs.fullnameOf(event.simpleClassName), eventCode);
+			}
+		}
+		for (Command command : cqrs.commands) {
 			if (command.ctorMethod) {
 				byte[] codeCommand = CommandBuilder.dump(packageName, command);
 				writeToWithPackage(root, command.type.getClassName(), codeCommand);
@@ -179,7 +178,7 @@ public class BankAccountTest {
 			con31.setAccessible(true);
 			Object f31 = (Object) con31.newInstance();
 
-			byte[] codeHandler = new CRQSCommandHandlerBuilder().dump(domainMaker.commands, typeDomain, typeHandler);
+			byte[] codeHandler = new CRQSCommandHandlerBuilder().dump(cqrs.commands, typeDomain, typeHandler);
 			writeToWithPackage(root, handlerClassName, codeHandler);
 			Class<?> clzHandle = classLoader.defineClass(handlerClassName, codeHandler);
 			classLoader.doResolveClass(clzHandle);
@@ -204,7 +203,7 @@ public class BankAccountTest {
 			e.printStackTrace();
 		}
 
-		System.out.println(domainMaker.toString());
+		System.out.println(cqrs.toString());
 	}
 
 	// @Test
