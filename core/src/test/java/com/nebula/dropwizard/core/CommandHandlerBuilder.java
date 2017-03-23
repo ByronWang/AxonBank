@@ -13,7 +13,7 @@ import org.objectweb.asm.Type;
 import com.nebula.dropwizard.core.CQRSBuilder.Command;
 import com.nebula.dropwizard.core.CQRSBuilder.Field;
 
-public class CommandBuilder implements Opcodes {
+public class CommandHandlerBuilder implements Opcodes {
 
 	public static byte[] dump(String packageName, Command command) {
 		ClassWriter cw = new ClassWriter(0);

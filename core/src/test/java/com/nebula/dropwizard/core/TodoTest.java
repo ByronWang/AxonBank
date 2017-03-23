@@ -7,6 +7,7 @@ import org.axonframework.samples.bank.api.bankaccount.BankAccountMoneyDepositCom
 import org.axonframework.samples.bank.api.bankaccount.BankAccountMoneyDepositedEvent;
 import org.axonframework.samples.bank.api.bankaccount.BankAccountMoneySubtractedEvent;
 import org.axonframework.samples.bank.command.BankAccountCommandHandler;
+import org.axonframework.samples.bank.command.BankAccountCommandHandler2;
 import org.axonframework.samples.bank.simple.instanceCommand.BankAccount;
 import org.junit.Test;
 import org.objectweb.asm.ClassReader;
@@ -46,7 +47,14 @@ public class TodoTest {
 	
 	@Test
 	public void testPrintBankAccountCommandHandler() throws IOException {
-		ClassReader cr = new ClassReader(BankAccountCommandHandler.class.getName());
+		ClassReader cr = new ClassReader(BankAccountCommandHandler2.class.getName());
+		ClassVisitor visitor = new TraceClassVisitor(null, new ASMifier(), new PrintWriter(System.out));
+		cr.accept(visitor, ClassReader.EXPAND_FRAMES);
+	}
+	
+	@Test
+	public void testPrintBankAccountCommandHandler2() throws IOException {
+		ClassReader cr = new ClassReader(BankAccountCommandHandler2.class.getName()+"$1");
 		ClassVisitor visitor = new TraceClassVisitor(null, new ASMifier(), new PrintWriter(System.out));
 		cr.accept(visitor, ClassReader.EXPAND_FRAMES);
 	}
