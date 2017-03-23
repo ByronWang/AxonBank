@@ -5,10 +5,10 @@ import java.util.*;
 import org.axonframework.spring.stereotype.Aggregate;
 import org.objectweb.asm.*;
 
-import com.nebula.dropwizard.core.CQRSBuilder.Command;
-import com.nebula.dropwizard.core.CQRSBuilder.Field;
+import com.nebula.dropwizard.core.CQRSDomainBuilder.Command;
+import com.nebula.dropwizard.core.CQRSDomainBuilder.Field;
 
-public class CRQSCommandHandlerBuilder implements Opcodes {
+public class CQRSCommandHandlerBuilder implements Opcodes {
 
 	public byte[] dump(List<Command> commands, Type typeDomain, Type typeHandler) {
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
@@ -17,7 +17,7 @@ public class CRQSCommandHandlerBuilder implements Opcodes {
 
 		cw.visit(52, ACC_PUBLIC + ACC_SUPER, typeHandler.getInternalName(), null, "java/lang/Object", null);
 
-		cw.visitSource(CQRSBuilder.toSimpleName(typeHandler.getClassName()) + ".java", null);
+		cw.visitSource(CQRSDomainBuilder.toSimpleName(typeHandler.getClassName()) + ".java", null);
 
 		for (Command command : commands) {
 			if (!command.ctorMethod) {
@@ -149,7 +149,7 @@ public class CRQSCommandHandlerBuilder implements Opcodes {
 			mv.visitVarInsn(ALOAD, 1);
 
 			Field idField = command.fields.get(0);
-			mv.visitMethodInsn(INVOKEVIRTUAL, command.type.getInternalName(), "get" + CQRSBuilder.toCamelUpper(idField.name), Type.getMethodDescriptor(idField.type),
+			mv.visitMethodInsn(INVOKEVIRTUAL, command.type.getInternalName(), "get" + CQRSDomainBuilder.toCamelUpper(idField.name), Type.getMethodDescriptor(idField.type),
 					false);
 
 			mv.visitMethodInsn(INVOKEINTERFACE, "org/axonframework/commandhandling/model/Repository", "load",

@@ -105,26 +105,6 @@ public class TodoTest {
 		cr.accept(visitor, ClassReader.EXPAND_FRAMES);
 	}
 
-	@Test
-	public void testMakeDomain() throws IOException, InstantiationException, IllegalAccessException {
-		ClassReader cr = new ClassReader(Todo.class.getName());
-		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
-		TraceClassVisitor traceClassVisitor = new TraceClassVisitor(cw, new ASMifier(), new PrintWriter(System.out));
-		DDOBuilder domainMaker = new DDOBuilder(Opcodes.ASM5, traceClassVisitor);
-		cr.accept(domainMaker, ClassReader.EXPAND_FRAMES);
-
-		byte[] code = cw.toByteArray();
-
-		MyClassLoader cl = new MyClassLoader();
-		Class<?> clzDomain = new MyClassLoader().defineClass(Todo.class.getName(), code);
-		cl.doResolveClass(clzDomain);
-		
-		Object o =  clzDomain.newInstance();
-		
-
-		System.out.println(domainMaker.toString());
-	}
-
 	static class MyClassLoader extends ClassLoader {
 		public Class<?> defineClass(String name, byte[] b) {
 			return defineClass(name, b, 0, b.length);

@@ -13,9 +13,9 @@ import org.objectweb.asm.MethodVisitor;
 import static org.objectweb.asm.Opcodes.*;
 import org.objectweb.asm.Type;
 
-import com.nebula.dropwizard.core.CQRSAnalyzerClassVisitor.Method;
+import com.nebula.dropwizard.core.CQRSDomainAnalyzer.Method;
 
-public class CQRSBuilder extends ClassVisitor {
+public class CQRSDomainBuilder extends ClassVisitor {
 	Type typeDomain;
 
 	List<Command> commands = new ArrayList<>();
@@ -29,12 +29,12 @@ public class CQRSBuilder extends ClassVisitor {
 		return "TypeMaker [commands=" + commands + ", events=" + events + ", domain=" + domain + "]";
 	}
 
-	public CQRSBuilder(int api, ClassVisitor cv, Map<String, Method> methods) {
+	public CQRSDomainBuilder(int api, ClassVisitor cv, Map<String, Method> methods) {
 		super(api, cv);
 		this.methods = methods;
 	}
 
-	public CQRSBuilder(int api, Map<String, Method> methods) {
+	public CQRSDomainBuilder(int api, Map<String, Method> methods) {
 		this(api, null, methods);
 	}
 
@@ -68,7 +68,7 @@ public class CQRSBuilder extends ClassVisitor {
 		public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
 			Type type = Type.getType(desc);
 			if (type.getInternalName() == Type.getType(AggregateIdentifier.class).getInternalName()) {
-				CQRSBuilder.this.fieldID = this.field;
+				CQRSDomainBuilder.this.fieldID = this.field;
 			}
 			return super.visitAnnotation(desc, visible);
 		}
@@ -294,7 +294,7 @@ public class CQRSBuilder extends ClassVisitor {
 				Type typeEvent = typeOf(simpleClassName);
 				Event eventRejected = new Event(eventName, originMethodName, newMethodName, innerEvent, simpleClassName, typeEvent);
 				eventRejected.methodParams = new Field[0];
-				CQRSBuilder.this.events.add(eventRejected);
+				CQRSDomainBuilder.this.events.add(eventRejected);
 
 				mv.visitVarInsn(ALOAD, 0);
 				String desc = Type.getMethodDescriptor(Type.VOID_TYPE, new Type[] {});
@@ -358,7 +358,7 @@ public class CQRSBuilder extends ClassVisitor {
 			} else if (index <= event.methodParams.length) {
 				event.methodParams[index - 1].name = name;
 				if (!doneVisitLocalVariable) {
-					String parameterName = CQRSBuilder.toCamelLower(event.eventName);
+					String parameterName = CQRSDomainBuilder.toCamelLower(event.eventName);
 					super.visitLocalVariable(parameterName, event.type.getDescriptor(), signature, start, end, 1);
 					doneVisitLocalVariable = true;
 				}
@@ -373,7 +373,7 @@ public class CQRSBuilder extends ClassVisitor {
 		public void visitParameter(String name, int access) {
 			event.methodParams[parameters++].name = name;
 			if (!doneVisitParameter) {
-				String parameterName = CQRSBuilder.toCamelLower(event.eventName);
+				String parameterName = CQRSDomainBuilder.toCamelLower(event.eventName);
 				super.visitParameter(parameterName, 0);
 				doneVisitParameter = true;
 			}

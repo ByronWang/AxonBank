@@ -24,8 +24,8 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.util.ASMifier;
 import org.objectweb.asm.util.TraceClassVisitor;
 
-import com.nebula.dropwizard.core.CQRSBuilder.Command;
-import com.nebula.dropwizard.core.CQRSBuilder.Event;
+import com.nebula.dropwizard.core.CQRSDomainBuilder.Command;
+import com.nebula.dropwizard.core.CQRSDomainBuilder.Event;
 
 public class BankAccountTest {
 
@@ -117,14 +117,14 @@ public class BankAccountTest {
 		Type typeDomain = Type.getType(BankAccount.class);
 
 		ClassReader cr = new ClassReader(BankAccount.class.getName());
-		CQRSAnalyzerClassVisitor analyzer = new CQRSAnalyzerClassVisitor(Opcodes.ASM5);
+		CQRSDomainAnalyzer analyzer = new CQRSDomainAnalyzer(Opcodes.ASM5);
 		cr.accept(analyzer, 0);
 		System.out.println(analyzer.methods);
 
 		// ClassReader cr = new ClassReader(BankAccount.class.getName());
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
 		TraceClassVisitor traceClassVisitorToConsole = new TraceClassVisitor(cw, new ASMifier(), new PrintWriter(System.out));
-		CQRSBuilder cqrs = new CQRSBuilder(Opcodes.ASM5, traceClassVisitorToConsole, analyzer.methods);
+		CQRSDomainBuilder cqrs = new CQRSDomainBuilder(Opcodes.ASM5, traceClassVisitorToConsole, analyzer.methods);
 		cr.accept(cqrs, 0);
 
 		byte[] code = cw.toByteArray();
@@ -132,38 +132,38 @@ public class BankAccountTest {
 
 		for (Event event : cqrs.events) {
 			if (event.superName==null) {
-				byte[] eventCode = EventBuilder.dump(packageName, event);
+				byte[] eventCode = CQRSEventBuilder.dump(packageName, event);
 				writeToWithPackage(root, cqrs.fullnameOf(event.simpleClassName), eventCode);
 				classLoader.defineClass(cqrs.fullnameOf(event.simpleClassName), eventCode);
 			}
 		}
 		for (Event event : cqrs.events) {
 			if (event.superName!=null) {
-				byte[] eventCode = AliasEventBuilder.dump(packageName, event);
+				byte[] eventCode = CQRSEventAliasBuilder.dump(packageName, event);
 				writeToWithPackage(root,cqrs.fullnameOf(event.simpleClassName), eventCode);
 				classLoader.defineClass(cqrs.fullnameOf(event.simpleClassName), eventCode);
 			}
 		}
 		for (Command command : cqrs.commands) {
 			if (command.ctorMethod) {
-				byte[] codeCommand = CommandBuilder.dump(packageName, command);
+				byte[] codeCommand = CQRSCommandBuilder.dump(packageName, command);
 				writeToWithPackage(root, command.type.getClassName(), codeCommand);
 				Class<?> clzCommand = classLoader.defineClass(command.type.getClassName(), codeCommand);
 				classLoader.doResolveClass(clzCommand);
 
 				Type typeInvoke = Type.getObjectType(typeHandler.getInternalName() + "$Inner" + command.simpleClassName);
-				byte[] codeCommandHandlerInvoke = CRQSCommandHandlerCtorCommandCallerBuilder.dump(typeDomain, typeHandler, command);
+				byte[] codeCommandHandlerInvoke = CQRSCommandHandlerCtorCallerBuilder.dump(typeDomain, typeHandler, command);
 				writeToWithPackage(root, typeInvoke.getClassName(), codeCommandHandlerInvoke);
 				Class<?> clzCommandHandlerInvoke = classLoader.defineClass(typeInvoke.getClassName(), codeCommandHandlerInvoke);
 				classLoader.doResolveClass(clzCommandHandlerInvoke);
 			} else {
-				byte[] codeCommand = CommandBuilder.dump(packageName, command);
+				byte[] codeCommand = CQRSCommandBuilder.dump(packageName, command);
 				writeToWithPackage(root, command.type.getClassName(), codeCommand);
 				Class<?> clzCommand = classLoader.defineClass(command.type.getClassName(), codeCommand);
 				classLoader.doResolveClass(clzCommand);
 
 				Type typeInvoke = Type.getObjectType(typeHandler.getInternalName() + "$Inner" + command.simpleClassName);
-				byte[] codeCommandHandlerInvoke = CRQSCommandHandlerCommandCallerBuilder.dump(typeDomain, typeHandler, command);
+				byte[] codeCommandHandlerInvoke = CQRSCommandHandlerCallerBuilder.dump(typeDomain, typeHandler, command);
 				writeToWithPackage(root, typeInvoke.getClassName(), codeCommandHandlerInvoke);
 				Class<?> clzCommandHandlerInvoke = classLoader.defineClass(typeInvoke.getClassName(), codeCommandHandlerInvoke);
 				classLoader.doResolveClass(clzCommandHandlerInvoke);
@@ -178,7 +178,7 @@ public class BankAccountTest {
 			con31.setAccessible(true);
 			Object f31 = (Object) con31.newInstance();
 
-			byte[] codeHandler = new CRQSCommandHandlerBuilder().dump(cqrs.commands, typeDomain, typeHandler);
+			byte[] codeHandler = new CQRSCommandHandlerBuilder().dump(cqrs.commands, typeDomain, typeHandler);
 			writeToWithPackage(root, handlerClassName, codeHandler);
 			Class<?> clzHandle = classLoader.defineClass(handlerClassName, codeHandler);
 			classLoader.doResolveClass(clzHandle);

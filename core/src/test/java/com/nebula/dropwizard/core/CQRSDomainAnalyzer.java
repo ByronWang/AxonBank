@@ -11,16 +11,16 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
-import com.nebula.dropwizard.core.CQRSBuilder.Field;
+import com.nebula.dropwizard.core.CQRSDomainBuilder.Field;
 
-public class CQRSAnalyzerClassVisitor extends ClassVisitor {
+public class CQRSDomainAnalyzer extends ClassVisitor {
 	// Type type;
 
-	public CQRSAnalyzerClassVisitor(int api, ClassVisitor cv) {
+	public CQRSDomainAnalyzer(int api, ClassVisitor cv) {
 		super(api, cv);
 	}
 
-	public CQRSAnalyzerClassVisitor(int api) {
+	public CQRSDomainAnalyzer(int api) {
 		super(api);
 	}
 
@@ -52,7 +52,7 @@ public class CQRSAnalyzerClassVisitor extends ClassVisitor {
 		public FillParamsMethodVisitor(int api, MethodVisitor mv, String name, String desc) {
 			super(api, mv);
 			this.method = new Method(name);
-			CQRSAnalyzerClassVisitor.this.methods.put(name, method);
+			CQRSDomainAnalyzer.this.methods.put(name, method);
 
 			Type[] types = Type.getArgumentTypes(desc);
 			this.method.params = new Field[types.length];

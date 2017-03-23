@@ -1,31 +1,25 @@
 package com.nebula.dropwizard.core;
 
-import java.util.List;
+import java.util.*;
+import org.objectweb.asm.*;
 
-import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.FieldVisitor;
-import org.objectweb.asm.Label;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
+import com.nebula.dropwizard.core.CQRSDomainBuilder.Event;
+import com.nebula.dropwizard.core.CQRSDomainBuilder.Field;
 
-import com.nebula.dropwizard.core.CQRSBuilder.Command;
-import com.nebula.dropwizard.core.CQRSBuilder.Field;
+public class CQRSEventBuilder implements Opcodes {
 
-public class CommandBuilder implements Opcodes {
-
-	public static byte[] dump(String packageName, Command command) {
+	public static byte[] dump(String packageName, Event event) {
 		ClassWriter cw = new ClassWriter(0);
-		Type type = command.type;
+		String eventName = packageName + "." + event.simpleClassName;
+		Type type = Type.getObjectType(eventName.replace('.', '/'));
 
 		cw.visit(52, ACC_PUBLIC + ACC_SUPER + ACC_ABSTRACT, type.getInternalName(), null, "java/lang/Object", null);
 
 		cw.visitSource(type.getClassName(), null);
 
-		visitFields(cw, type, command.fields);
-		visitGetField(cw, type, command.fields);
-		visitinit(cw, type, command.fields);
+		visitFields(cw, type, event.fields);
+		visitGetField(cw, type, event.fields);
+		visitinit(cw, type, event.fields);
 		return cw.toByteArray();
 	}
 

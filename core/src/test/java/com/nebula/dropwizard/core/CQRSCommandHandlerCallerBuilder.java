@@ -1,5 +1,6 @@
 package com.nebula.dropwizard.core;
 
+import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
@@ -7,10 +8,10 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-import com.nebula.dropwizard.core.CQRSBuilder.Command;
-import com.nebula.dropwizard.core.CQRSBuilder.Field;
+import com.nebula.dropwizard.core.CQRSDomainBuilder.Command;
+import com.nebula.dropwizard.core.CQRSDomainBuilder.Field;
 
-public class CRQSCommandHandlerCtorCommandCallerBuilder implements Opcodes {
+public class CQRSCommandHandlerCallerBuilder implements Opcodes {
 
 	public static byte[] dump(Type typeDomain, Type typeHandler, Command command) throws Exception {
 
@@ -22,10 +23,10 @@ public class CRQSCommandHandlerCtorCommandCallerBuilder implements Opcodes {
 
 		Type typeCommand = command.type;
 
-		cw.visit(52, ACC_SUPER, typeInner.getInternalName(), "Ljava/lang/Object;Ljava/util/concurrent/Callable<" + typeDomain.getDescriptor() + ">;",
-				"java/lang/Object", new String[] { "java/util/concurrent/Callable" });
+		cw.visit(52, ACC_SUPER, typeInner.getInternalName(), "Ljava/lang/Object;Ljava/util/function/Consumer<" + typeDomain.getDescriptor() + ">;",
+				"java/lang/Object", new String[] { "java/util/function/Consumer" });
 
-		cw.visitSource(CQRSBuilder.toSimpleName(typeHandler.getClassName()) + ".java", null);
+		cw.visitSource(CQRSDomainBuilder.toSimpleName(typeHandler.getClassName()) + ".java", null);
 
 		cw.visitOuterClass(typeHandler.getInternalName(), "handle", Type.getMethodDescriptor(Type.VOID_TYPE, typeCommand));
 
@@ -64,13 +65,12 @@ public class CRQSCommandHandlerCtorCommandCallerBuilder implements Opcodes {
 			mv.visitEnd();
 		}
 		{
-			mv = cw.visitMethod(ACC_PUBLIC, "call", Type.getMethodDescriptor(typeDomain), null, new String[] { "java/lang/Exception" });
+			mv = cw.visitMethod(ACC_PUBLIC, "accept", Type.getMethodDescriptor(Type.VOID_TYPE, typeDomain), null, null);
 			mv.visitCode();
 			Label l0 = new Label();
 			mv.visitLabel(l0);
 			mv.visitLineNumber(65, l0);
-			mv.visitTypeInsn(NEW, typeDomain.getInternalName());
-			mv.visitInsn(DUP);
+			mv.visitVarInsn(ALOAD, 1);
 
 			Type[] types = new Type[command.methodParams.length];
 			for (int i = 0; i < command.methodParams.length; i++) {
@@ -79,28 +79,34 @@ public class CRQSCommandHandlerCtorCommandCallerBuilder implements Opcodes {
 
 				mv.visitVarInsn(ALOAD, 0);
 				mv.visitFieldInsn(GETFIELD, typeInner.getInternalName(), "val$command", typeCommand.getDescriptor());
-				mv.visitMethodInsn(INVOKEVIRTUAL, typeCommand.getInternalName(), "get" + CQRSBuilder.toCamelUpper(param.name),
+				mv.visitMethodInsn(INVOKEVIRTUAL, typeCommand.getInternalName(), "get" + CQRSDomainBuilder.toCamelUpper(param.name),
 						Type.getMethodDescriptor(param.type), false);
 			}
 
-			mv.visitMethodInsn(INVOKESPECIAL, typeDomain.getInternalName(), "<init>", Type.getMethodDescriptor(Type.VOID_TYPE, types), false);
-			mv.visitInsn(ARETURN);
+			mv.visitMethodInsn(INVOKEVIRTUAL, typeDomain.getInternalName(), command.methodName, Type.getMethodDescriptor(Type.VOID_TYPE, types), false);
 			Label l1 = new Label();
 			mv.visitLabel(l1);
-			mv.visitLocalVariable("this", typeInner.getDescriptor(), null, l0, l1, 0);
-			mv.visitMaxs(5, 1);
+			mv.visitLineNumber(66, l1);
+			mv.visitInsn(RETURN);
+			Label l2 = new Label();
+			mv.visitLabel(l2);
+			mv.visitLocalVariable("this", typeInner.getDescriptor(), null, l0, l2, 0);
+			mv.visitLocalVariable(CQRSDomainBuilder.toCamelLower(CQRSDomainBuilder.toSimpleName(typeDomain.getClassName())), typeDomain.getDescriptor(), null, l0, l2, 1);
+			mv.visitMaxs(3, 2);
 			mv.visitEnd();
 		}
 		{
-			mv = cw.visitMethod(ACC_PUBLIC + ACC_BRIDGE + ACC_SYNTHETIC, "call", "()Ljava/lang/Object;", null, new String[] { "java/lang/Exception" });
+			mv = cw.visitMethod(ACC_PUBLIC + ACC_BRIDGE + ACC_SYNTHETIC, "accept", "(Ljava/lang/Object;)V", null, null);
 			mv.visitCode();
 			Label l0 = new Label();
 			mv.visitLabel(l0);
 			mv.visitLineNumber(1, l0);
 			mv.visitVarInsn(ALOAD, 0);
-			mv.visitMethodInsn(INVOKEVIRTUAL, typeInner.getInternalName(), "call", Type.getMethodDescriptor(typeDomain), false);
-			mv.visitInsn(ARETURN);
-			mv.visitMaxs(1, 1);
+			mv.visitVarInsn(ALOAD, 1);
+			mv.visitTypeInsn(CHECKCAST, typeDomain.getInternalName());
+			mv.visitMethodInsn(INVOKEVIRTUAL, typeInner.getInternalName(), "accept", Type.getMethodDescriptor(Type.VOID_TYPE, typeDomain), false);
+			mv.visitInsn(RETURN);
+			mv.visitMaxs(2, 2);
 			mv.visitEnd();
 		}
 		cw.visitEnd();

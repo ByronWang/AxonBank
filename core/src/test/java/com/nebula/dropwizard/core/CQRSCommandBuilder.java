@@ -1,26 +1,42 @@
 package com.nebula.dropwizard.core;
 
-import java.util.*;
-import org.objectweb.asm.*;
+import java.util.List;
 
-import com.nebula.dropwizard.core.CQRSBuilder.Event;
-import com.nebula.dropwizard.core.CQRSBuilder.Field;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
-public class AliasEventBuilder implements Opcodes {
+import com.nebula.dropwizard.core.CQRSDomainBuilder.Command;
+import com.nebula.dropwizard.core.CQRSDomainBuilder.Field;
 
-	public static byte[] dump(String packageName, Event event) {
+public class CQRSCommandBuilder implements Opcodes {
+
+	public static byte[] dump(String packageName, Command command) {
 		ClassWriter cw = new ClassWriter(0);
-		String eventName = packageName + "." + event.simpleClassName;
-		String superEventName = packageName + "." + event.superName;
-		Type type = Type.getObjectType(eventName.replace('.', '/'));
-		Type superType = Type.getObjectType(superEventName.replace('.', '/'));
+		Type type = command.type;
 
-		cw.visit(52, ACC_PUBLIC + ACC_SUPER, type.getInternalName(), null, (packageName + "." + event.superName).replace('.', '/'), null);
+		cw.visit(52, ACC_PUBLIC + ACC_SUPER + ACC_ABSTRACT, type.getInternalName(), null, "java/lang/Object", null);
 
 		cw.visitSource(type.getClassName(), null);
 
-		visitinit(cw, type,superType, event.fields);
+		visitFields(cw, type, command.fields);
+		visitGetField(cw, type, command.fields);
+		visitinit(cw, type, command.fields);
 		return cw.toByteArray();
+	}
+
+	public static void visitFields(ClassWriter cw, Type type, List<Field> fields) {
+		for (Field field : fields) {
+			FieldVisitor fv;
+			{
+				fv = cw.visitField(ACC_PRIVATE + ACC_FINAL, field.name, field.type.getDescriptor(), null, null);
+				fv.visitEnd();
+			}
+		}
 	}
 
 	public static String toGetName(String fieldName) {
@@ -31,8 +47,30 @@ public class AliasEventBuilder implements Opcodes {
 		return Character.toUpperCase(name.charAt(0)) + name.substring(1);
 	}
 
-	public static void visitinit(ClassWriter cw, Type type,Type superType, List<Field> fields) {
+	public static void visitGetField(ClassWriter cw, Type type, List<Field> fields) {
 		MethodVisitor mv;
+
+		for (Field field : fields) {
+			String methodDescriptor = Type.getMethodDescriptor(field.type, new Type[] {});
+			mv = cw.visitMethod(ACC_PUBLIC, toGetName(field.name), methodDescriptor, null, null);
+			mv.visitCode();
+			Label l0 = new Label();
+			mv.visitLabel(l0);
+			mv.visitLineNumber(22, l0);
+			mv.visitVarInsn(ALOAD, 0);
+			mv.visitFieldInsn(GETFIELD, type.getInternalName(), field.name, field.type.getDescriptor());
+			mv.visitInsn(ARETURN);
+			Label l1 = new Label();
+			mv.visitLabel(l1);
+			mv.visitLocalVariable("this", type.getDescriptor(), null, l0, l1, 0);
+			mv.visitMaxs(1, 1);
+			mv.visitEnd();
+		}
+	}
+
+	public static void visitinit(ClassWriter cw, Type type, List<Field> fields) {
+		MethodVisitor mv;
+		AnnotationVisitor av0;
 		{
 			Type[] params = new Type[fields.size()];
 
@@ -40,42 +78,47 @@ public class AliasEventBuilder implements Opcodes {
 				params[i] = fields.get(i).type;
 			}
 
-			String methodDescriptor = Type.getMethodDescriptor(Type.VOID_TYPE, params);			
+			String methodDescriptor = Type.getMethodDescriptor(Type.VOID_TYPE, params);
+
 			mv = cw.visitMethod(ACC_PUBLIC, "<init>", methodDescriptor, null, null);
+			{
+				av0 = mv.visitAnnotation("Ljava/beans/ConstructorProperties;", true);
+				{
+					AnnotationVisitor av1 = av0.visitArray("value");
+					for (Field field : fields) {
+						av1.visit(null, field.name);
+					}
+					av1.visitEnd();
+				}
+				av0.visitEnd();
+			}
 			mv.visitCode();
 			Label l0 = new Label();
 			mv.visitLabel(l0);
-			mv.visitLineNumber(22, l0);
 			mv.visitVarInsn(ALOAD, 0);
-			
+			mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
 
 			for (int i = 0; i < fields.size(); i++) {
 				Field field = fields.get(i);
-				mv.visitVarInsn(field.type.getOpcode(ILOAD), i+1);			
+				mv.visitVarInsn(ALOAD, 0);
+				mv.visitVarInsn(ALOAD, i + 1);
+				mv.visitFieldInsn(PUTFIELD, type.getInternalName(), field.name, field.type.getDescriptor());
 			}
-			mv.visitMethodInsn(INVOKESPECIAL, superType.getInternalName(), "<init>",methodDescriptor, false);
-			
-			
+
+			mv.visitInsn(RETURN);
 			Label l1 = new Label();
 			mv.visitLabel(l1);
-			mv.visitLineNumber(23, l1);
-			mv.visitInsn(RETURN);
-			Label l2 = new Label();
-			mv.visitLabel(l2);
-			mv.visitLocalVariable("this", type.getDescriptor(), null, l0, l2, 0);
+			mv.visitLocalVariable("this", type.getDescriptor(), null, l0, l1, 0);
+
 			for (int i = 0; i < fields.size(); i++) {
 				Field field = fields.get(i);
-				mv.visitLocalVariable(field.name, field.type.getDescriptor(), null, l0, l2, i + 1);
+				mv.visitLocalVariable(field.name, field.type.getDescriptor(), null, l0, l1, i + 1);
 			}
-			
-			mv.visitMaxs(4, 4);
+			mv.visitMaxs(3, 4);
 			mv.visitEnd();
-			
 		}
+		cw.visitEnd();
 	}
-	
-	
-	
 
 	// public void visitEquals(ClassWriter cw) {
 	// MethodVisitor mv;
