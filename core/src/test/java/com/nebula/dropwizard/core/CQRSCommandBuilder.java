@@ -16,7 +16,7 @@ import com.nebula.dropwizard.core.CQRSDomainBuilder.Field;
 public class CQRSCommandBuilder implements Opcodes {
 
 	public static byte[] dump(Command command) {
-		ClassWriter cw = new ClassWriter(0);
+		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
 		Type type = command.type;
 
 		cw.visit(52, ACC_PUBLIC + ACC_SUPER + ACC_ABSTRACT, type.getInternalName(), null, "java/lang/Object", null);

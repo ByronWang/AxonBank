@@ -9,10 +9,10 @@ import java.lang.reflect.Constructor;
 
 import org.axonframework.commandhandling.model.Repository;
 import org.axonframework.eventhandling.EventBus;
-import org.axonframework.samples.bank.simple.instanceCommand.BankAccount;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -45,19 +45,33 @@ public class BankAccountTest {
 			e.printStackTrace();
 		}
 	}
+	
+	private void dump(byte[] code) {
+		ClassReader cr = new ClassReader(code);
+		ClassVisitor visitor = new TraceClassVisitor(null, new ASMifier(), new PrintWriter(System.out));
+		cr.accept(visitor, ClassReader.EXPAND_FRAMES);
+	}
+	
+	@Test
+	public void testMakeDomainBankAccount() throws Exception {
+		this.makeDomainCQRSHelper("org.axonframework.samples.bank.simple.instanceCommand.BankAccount");
+	}
 
 	@Test
-	public void testMakeDomainTypeMaker() throws Exception {
+	public void testMakeDomainPerson() throws Exception {
+		this.makeDomainCQRSHelper("org.axonframework.samples.bank.simple.instanceCommand.Person");
+	}
+	
+	private void makeDomainCQRSHelper(String domainClassName) throws Exception{
 		File root = new File("target/generated-auto-classes/");
 
 		MyClassLoader classLoader = new MyClassLoader();
 		Class<?> clzHandle = null;
 		{
-			String handlerClassName = BankAccount.class.getPackage().getName() + "." + BankAccount.class.getSimpleName() + "CommandHandler";
-			Type typeHandler = Type.getObjectType(handlerClassName.replace('.', '/'));
-			Type typeDomain = Type.getType(BankAccount.class);
+			Type typeDomain = Type.getObjectType(domainClassName.replace('.','/'));
+			Type typeHandler = Type.getObjectType(typeDomain.getInternalName()+ "CommandHandler");
 
-			ClassReader cr = new ClassReader(BankAccount.class.getName());
+			ClassReader cr = new ClassReader(typeDomain.getClassName());
 			CQRSDomainAnalyzer analyzer = new CQRSDomainAnalyzer(Opcodes.ASM5);
 			cr.accept(analyzer, 0);
 
@@ -69,7 +83,7 @@ public class BankAccountTest {
 			System.out.println(cqrs.toString());
 
 			byte[] code = cw.toByteArray();
-			writeToWithPackage(root, BankAccount.class.getName(), code);
+			writeToWithPackage(root, typeDomain.getClassName(), code);
 
 			{
 				for (Event event : cqrs.events) {
@@ -113,16 +127,16 @@ public class BankAccountTest {
 				}
 			}
 
-			Class<BankAccount> clzDomain = classLoader.defineClass(BankAccount.class.getName(), code);
+			Class<?> clzDomain = classLoader.defineClass(typeDomain.getClassName(), code);
 			classLoader.doResolveClass(clzDomain);
 
-			Constructor<BankAccount> con31 = clzDomain.getDeclaredConstructor();
+			Constructor<?> con31 = clzDomain.getDeclaredConstructor();
 			con31.setAccessible(true);
 			con31.newInstance();
 
 			byte[] codeHandler = new CQRSCommandHandlerBuilder().dump(cqrs.commands, typeDomain, typeHandler);
-			writeToWithPackage(root, handlerClassName, codeHandler);
-			clzHandle = classLoader.defineClass(handlerClassName, codeHandler);
+			writeToWithPackage(root, typeHandler.getClassName(), codeHandler);
+			clzHandle = classLoader.defineClass(typeHandler.getClassName(), codeHandler);
 			classLoader.doResolveClass(clzHandle);
 		}
 

@@ -9,7 +9,7 @@ import com.nebula.dropwizard.core.CQRSDomainBuilder.Field;
 public class CQRSEventAliasBuilder implements Opcodes {
 
 	public static byte[] dump(Event event) {
-		ClassWriter cw = new ClassWriter(0);
+		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
 		Type type = event.type;
 		Type typeSuper = event.realEvent;
 

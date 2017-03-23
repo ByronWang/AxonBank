@@ -14,7 +14,7 @@ public class CQRSCommandHandlerCtorCallerBuilder implements Opcodes {
 
 	public static byte[] dump(Type typeDomain, Type typeHandler, Command command) throws Exception {
 
-		ClassWriter cw = new ClassWriter(0);
+		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
 		FieldVisitor fv;
 		MethodVisitor mv;
 

@@ -335,6 +335,11 @@ public class CQRSDomainBuilder extends ClassVisitor {
 
 			Method method = methods.get(event.originMethodName);
 			event.methodParams = method.params;
+			{
+				AnnotationVisitor av0;
+				av0 = visitAnnotation("Lorg/axonframework/eventhandling/EventHandler;", true);
+				av0.visitEnd();
+			}
 		}
 
 		@Override
