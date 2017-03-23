@@ -2,7 +2,6 @@ package com.nebula.dropwizard.core;
 
 import java.util.*;
 
-import org.axonframework.spring.stereotype.Aggregate;
 import org.objectweb.asm.*;
 
 import com.nebula.dropwizard.core.CQRSDomainBuilder.Command;
@@ -153,7 +152,7 @@ public class CQRSCommandHandlerBuilder implements Opcodes {
 					false);
 
 			mv.visitMethodInsn(INVOKEINTERFACE, "org/axonframework/commandhandling/model/Repository", "load",
-					Type.getMethodDescriptor(Type.getType(Aggregate.class), idField.type), true);
+					Type.getMethodDescriptor(Type.getObjectType("org/axonframework/commandhandling/model/Aggregate"), idField.type), true);
 			mv.visitVarInsn(ASTORE, 2);
 			Label l1 = new Label();
 			mv.visitLabel(l1);

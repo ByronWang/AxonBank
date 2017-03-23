@@ -7,10 +7,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Constructor;
 
-import org.axonframework.commandhandling.model.Repository;
-import org.axonframework.eventhandling.EventBus;
-import org.junit.Test;
-import org.mockito.Mockito;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -22,11 +18,11 @@ import org.objectweb.asm.util.TraceClassVisitor;
 import com.nebula.dropwizard.core.CQRSDomainBuilder.Command;
 import com.nebula.dropwizard.core.CQRSDomainBuilder.Event;
 
-public class BankAccountTest {
-	
-	MyClassLoader classLoader = new MyClassLoader();
+public class CQRSBuilder {
 
-	private void writeToWithPackage(File root, String name, byte[] code) {
+	static MyClassLoader classLoader = new MyClassLoader();
+
+	static private void writeToWithPackage(File root, String name, byte[] code) {
 		try {
 			int i = name.lastIndexOf(".");
 			String packageName = name.substring(0, i).replace('.', '/');
@@ -47,36 +43,60 @@ public class BankAccountTest {
 			e.printStackTrace();
 		}
 	}
-	
-	private void dump(byte[] code) {
+
+	static private void dump(byte[] code) {
 		ClassReader cr = new ClassReader(code);
 		ClassVisitor visitor = new TraceClassVisitor(null, new ASMifier(), new PrintWriter(System.out));
 		cr.accept(visitor, ClassReader.EXPAND_FRAMES);
 	}
-	
-	@Test
-	public void testMakeDomainBankAccount() throws Exception {
-		this.makeDomainCQRSHelper("org.axonframework.samples.bank.simple.instanceCommand.BankAccount");
-	}
 
-	@Test
-	public void testMakeDomainPerson() throws Exception {
-		Object handler = this.makeDomainCQRSHelper("org.axonframework.samples.bank.simple.instanceCommand.Person");
-		Class<?> clzCommand = classLoader.loadClass("org.axonframework.samples.bank.simple.instanceCommand.Person_CtorCommand");
-		Object o = clzCommand.getConstructor(String.class,String.class, long.class).newInstance("101","wangshilian",20);
-		System.out.println(o.toString());
-		
-//		Object.class.getMethod(null, null)
-	}
-	
-	private Object makeDomainCQRSHelper(String domainClassName) throws Exception{
+	// @Test
+	// public void testMakeDomainBankAccount() throws Exception {
+	// this.makeDomainCQRSHelper("org.axonframework.samples.bank.simple.instanceCommand.BankAccount");
+	// }
+
+	// @Test
+	// public void testMakeDomainPerson() throws Exception {
+	//
+	// Class<?> clzHandle =
+	// this.makeDomainCQRSHelper("org.axonframework.samples.bank.simple.instanceCommand.Person");
+	//
+	// Class<?> clzDomain =
+	// classLoader.loadClass("org.axonframework.samples.bank.simple.instanceCommand.Person");
+	//
+	// FixtureConfiguration<?> testFixture;
+	// testFixture = new AggregateTestFixture<>(clzDomain);
+	//
+	// Constructor<?> c = clzHandle.getConstructor(Repository.class,
+	// EventBus.class);
+	// Object handler = c.newInstance(testFixture.getRepository(),
+	// testFixture.getEventBus());
+	//
+	// testFixture.registerAnnotatedCommandHandler(handler);
+	// testFixture.registerCommandDispatchInterceptor(new
+	// BeanValidationInterceptor<>());
+	//
+	//
+	//
+	// Class<?> clzCommand =
+	// classLoader.loadClass("org.axonframework.samples.bank.simple.instanceCommand.Person_CtorCommand");
+	// Object command = clzCommand.getConstructor(String.class, String.class,
+	// long.class).newInstance("101", "wangshilian", 20);
+	// System.out.println(command.toString());
+	// handler.getClass().getMethod("handle", clzCommand).invoke(handler,
+	// command);
+	//
+	// // Object.class.getMethod(null, null)
+	// }
+
+	public static Class<?> makeDomainCQRSHelper(String domainClassName) throws Exception {
 		File root = new File("target/generated-auto-classes/");
 
-//		MyClassLoader classLoader = new MyClassLoader();
+		// MyClassLoader classLoader = new MyClassLoader();
 		Class<?> clzHandle = null;
 		{
-			Type typeDomain = Type.getObjectType(domainClassName.replace('.','/'));
-			Type typeHandler = Type.getObjectType(typeDomain.getInternalName()+ "CommandHandler");
+			Type typeDomain = Type.getObjectType(domainClassName.replace('.', '/'));
+			Type typeHandler = Type.getObjectType(typeDomain.getInternalName() + "CommandHandler");
 
 			ClassReader cr = new ClassReader(typeDomain.getClassName());
 			CQRSDomainAnalyzer analyzer = new CQRSDomainAnalyzer(Opcodes.ASM5);
@@ -147,12 +167,7 @@ public class BankAccountTest {
 			classLoader.doResolveClass(clzHandle);
 		}
 
-		Repository<?> repos = Mockito.mock(Repository.class);
-		EventBus eventBus = Mockito.mock(EventBus.class);
-
-		Constructor<?> c = clzHandle.getConstructor(Repository.class, EventBus.class);
-		return c.newInstance(repos, eventBus);
-		
+		return clzHandle;
 	}
 
 	static class MyClassLoader extends ClassLoader {
