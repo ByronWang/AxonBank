@@ -14,26 +14,46 @@
  * limitations under the License.
  */
 
-package org.axonframework.samples.bank.cqrs;
+package org.axonframework.samples.bank.simple.instanceCommand.done;
 
 import org.axonframework.commandhandling.model.AggregateIdentifier;
 import org.axonframework.spring.stereotype.Aggregate;
 
 @Aggregate
-public class BankAccount {
+public class BankAccountInstanceDone {
 
 	@AggregateIdentifier
 	private String id;
 	private long overdraftLimit;
 	private long balanceInCents;
 
+	public String getId() {
+		return id;
+	}
+
+//	public long getOverdraftLimit() {
+//		return overdraftLimit;
+//	}
+//
+//	public long getBalanceInCents() {
+//		return balanceInCents;
+//	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
 	@SuppressWarnings("unused")
-	private BankAccount() {
+	private BankAccountInstanceDone() {
+	}
+
+	public BankAccountInstanceDone(String bankAccountId, long overdraftLimit) {
+		onCreated(bankAccountId, overdraftLimit);// BankAccountCreatedEvent
 	}
 
 	// BankAccountCreateCommand
-	public BankAccount(String id, long overdraftLimit) {
-		onCreated(id, overdraftLimit);// BankAccountCreatedEvent
+	public BankAccountInstanceDone create(String bankAccountId, long overdraftLimit) {
+		return new BankAccountInstanceDone(bankAccountId, overdraftLimit);
 	}
 
 	// BankAccountMoneyDepositCommand
@@ -52,7 +72,7 @@ public class BankAccount {
 		}
 	}
 
-	public static boolean bankTransfer(BankAccount source, BankAccount destination, long amount) {// BankTransferCreatedEvent
+	public static boolean bankTransfer(BankAccountInstanceDone source, BankAccountInstanceDone destination, long amount) {// BankTransferCreatedEvent
 		boolean sourceDebitSucceed = source.debit(amount);// BankTransferSourceDebitCommand
 		if (sourceDebitSucceed) {// BankTransferSourceDebitedEvent
 			boolean destinationCreditSucceed = destination.credit(amount);// BankTransferDestinationCreditCommand

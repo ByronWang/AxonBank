@@ -20,7 +20,7 @@ import org.axonframework.commandhandling.model.AggregateIdentifier;
 import org.axonframework.spring.stereotype.Aggregate;
 
 @Aggregate
-public class BankAccount {
+public class BankAccountInstance {
 
 	@AggregateIdentifier
 	private String id;
@@ -28,11 +28,11 @@ public class BankAccount {
 	private long balanceInCents;
 
 	@SuppressWarnings("unused")
-	private BankAccount() {
+	private BankAccountInstance() {
 	}
 
 	// BankAccountCreateCommand
-	public BankAccount(String id, long overdraftLimit) {
+	public BankAccountInstance(String id, long overdraftLimit) {
 		onCreated(id, overdraftLimit);// BankAccountCreatedEvent
 	}
 
@@ -52,7 +52,7 @@ public class BankAccount {
 		}
 	}
 
-	public static boolean bankTransfer(BankAccount source, BankAccount destination, long amount) {// BankTransferCreatedEvent
+	public static boolean bankTransfer(BankAccountInstance source, BankAccountInstance destination, long amount) {// BankTransferCreatedEvent
 		boolean sourceDebitSucceed = source.debit(amount);// BankTransferSourceDebitCommand
 		if (sourceDebitSucceed) {// BankTransferSourceDebitedEvent
 			boolean destinationCreditSucceed = destination.credit(amount);// BankTransferDestinationCreditCommand

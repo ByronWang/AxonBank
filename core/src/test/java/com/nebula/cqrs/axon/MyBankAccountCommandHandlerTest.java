@@ -27,7 +27,7 @@ import org.axonframework.test.aggregate.FixtureConfiguration;
 import org.junit.Before;
 import org.junit.Test;
 
-public class BankAccountCommandHandlerTest {
+public class MyBankAccountCommandHandlerTest {
 
 	private Class<?> clzDomain;
 	Class<?> clzHandle;
@@ -41,7 +41,7 @@ public class BankAccountCommandHandlerTest {
 	@Before
 	public void setUp() throws Exception {
 
-		String domainClassName = "org.axonframework.samples.bank.cqrs.BankAccount";
+		String domainClassName = "org.axonframework.samples.bank.cqrs.MyBankAccount";
 		packageName = domainClassName.substring(0, domainClassName.lastIndexOf('.'));
 		cqrs = new CQRSBuilder();
 		cqrs.makeDomainCQRSHelper(domainClassName);
@@ -58,54 +58,54 @@ public class BankAccountCommandHandlerTest {
 	}
 	//
 	// @Test(expected = JSR303ViolationException.class)
-	// public void testCreateBankAccount_RejectNegativeOverdraft() throws
+	// public void testCreateMyBankAccount_RejectNegativeOverdraft() throws
 	// Exception {
-	// testFixture.givenNoPriorActivity().when(make("BankAccount_CtorCommand",
+	// testFixture.givenNoPriorActivity().when(make("MyBankAccount_CtorCommand",
 	// UUID.randomUUID().toString(), -1000L));
 	// }
 
 	@Test
-	public void testCreateBankAccount() throws Exception {
-		String id = "bankAccountId";
+	public void testCreateMyBankAccount() throws Exception {
+		String id = "MyBankAccountId";
 
-		testFixture.givenNoPriorActivity().when(make("BankAccount_CtorCommand", id, 0L)).expectEvents(make("BankAccount_CtorFinishedEvent", id, 0L));
+		testFixture.givenNoPriorActivity().when(make("MyBankAccount_CtorCommand", id, 0L)).expectEvents(make("MyBankAccount_CtorFinishedEvent", id, 0L));
 	}
 
 	@Test
 	public void testDepositMoney() throws Exception {
-		String id = "bankAccountId";
+		String id = "MyBankAccountId";
 
-		testFixture.given(make("BankAccount_CtorFinishedEvent", id, 0L)).when(make("BankAccountDepositCommand", id, 1000L))
-				.expectEvents(make("BankAccountDepositFinishedEvent", id, 1000L));
+		testFixture.given(make("MyBankAccount_CtorFinishedEvent", id, 0L)).when(make("MyBankAccountDepositCommand", id, 1000L))
+				.expectEvents(make("MyBankAccountDepositFinishedEvent", id, 1000L));
 
-		// testFixture.given(new BankAccountCreatedEvent(id, 0))
-		// .when(new BankAccountMoneyDepositCommand(id, 1000))
-		// .expectEvents(new BankAccountMoneyDepositedEvent(id, 1000));
+		// testFixture.given(new MyBankAccountCreatedEvent(id, 0))
+		// .when(new MyBankAccountMoneyDepositCommand(id, 1000))
+		// .expectEvents(new MyBankAccountMoneyDepositedEvent(id, 1000));
 	}
 
 	@Test
 	public void testWithdrawMoney() throws Exception {
-		String id = "bankAccountId";
+		String id = "MyBankAccountId";
 
-		testFixture.given(make("BankAccount_CtorFinishedEvent", id, 0L), make("BankAccountDepositFinishedEvent", id, 50L))
-				.when(make("BankAccountWithdrawCommand", id, 50L)).expectEvents(make("BankAccountWithdrawFinishedEvent", id, 50L));
+		testFixture.given(make("MyBankAccount_CtorFinishedEvent", id, 0L), make("MyBankAccountDepositFinishedEvent", id, 50L))
+				.when(make("MyBankAccountWithdrawCommand", id, 50L)).expectEvents(make("MyBankAccountWithdrawFinishedEvent", id, 50L));
 
 		//
-		// testFixture.given(new BankAccountCreatedEvent(id, 0), new
-		// BankAccountMoneyDepositedEvent(id, 50)).when(new
-		// BankAccountWithdrawMoneyCommand(id, 50))
-		// .expectEvents(new BankAccountMoneyWithdrawnEvent(id, 50));
+		// testFixture.given(new MyBankAccountCreatedEvent(id, 0), new
+		// MyBankAccountMoneyDepositedEvent(id, 50)).when(new
+		// MyBankAccountWithdrawMoneyCommand(id, 50))
+		// .expectEvents(new MyBankAccountMoneyWithdrawnEvent(id, 50));
 	}
 
 	@Test
 	public void testWithdrawMoney_RejectWithdrawal() throws Exception {
-		String id = "bankAccountId";
+		String id = "MyBankAccountId";
 
-		testFixture.given(make("BankAccount_CtorFinishedEvent", id, 0L), make("BankAccountDepositFinishedEvent", id, 50L))
-				.when(make("BankAccountWithdrawCommand", id, 51L)).expectEvents();
+		testFixture.given(make("MyBankAccount_CtorFinishedEvent", id, 0L), make("MyBankAccountDepositFinishedEvent", id, 50L))
+				.when(make("MyBankAccountWithdrawCommand", id, 51L)).expectEvents();
 	}
 
-	private static Object createCommandHandler(Class<?> clz, Repository<?> repository, EventBus eventBus) throws Exception {
+	private Object createCommandHandler(Class<?> clz, Repository<?> repository, EventBus eventBus) throws Exception {
 		Constructor<?> c = clz.getConstructor(Repository.class, EventBus.class);
 		return c.newInstance(repository, eventBus);
 	}

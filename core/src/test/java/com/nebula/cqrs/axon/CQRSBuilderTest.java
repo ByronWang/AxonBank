@@ -12,7 +12,7 @@ public class CQRSBuilderTest {
 	}
 	@Test
 	public void testMakeDomainCQRSHelper() throws Exception {
-		cqrs.makeDomainCQRSHelper("org.axonframework.samples.bank.cqrs.BankAccount");
+		cqrs.makeDomainCQRSHelper("org.axonframework.samples.bank.cqrs.MyBankAccount");
 	}
 
 }

@@ -4,15 +4,12 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.lang.reflect.Constructor;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.util.ASMifier;
-import org.objectweb.asm.util.TraceClassVisitor;
 
 import com.nebula.cqrs.axon.CQRSDomainBuilder.Command;
 import com.nebula.cqrs.axon.CQRSDomainBuilder.Event;
@@ -57,8 +54,7 @@ public class CQRSBuilder {
 			cr.accept(analyzer, 0);
 
 			ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
-			TraceClassVisitor traceClassVisitorToConsole = new TraceClassVisitor(cw, new ASMifier(), new PrintWriter(System.out));
-			CQRSDomainBuilder cqrs = new CQRSDomainBuilder(Opcodes.ASM5, traceClassVisitorToConsole, analyzer.methods);
+			CQRSDomainBuilder cqrs = new CQRSDomainBuilder(Opcodes.ASM5, cw, analyzer.methods);
 			cr.accept(cqrs, 0);
 
 			System.out.println(cqrs.toString());
