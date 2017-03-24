@@ -32,6 +32,7 @@ import org.axonframework.test.aggregate.FixtureConfiguration;
 import org.junit.*;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.UUID;
@@ -40,15 +41,23 @@ public class BankAccountCommandHandlerTest {
 
 	private Class<?> clzDomain;
 	Class<?> clzHandle;
+	String packageName;
 
 	private FixtureConfiguration<?> testFixture;
 
+	static boolean classLoaded = false;
+	
 	@Before
 	public void setUp() throws Exception {
 
-		String domainClassName = "org.axonframework.samples.bank.simple.instanceCommand.BankAccount";
+		String domainClassName = "org.axonframework.samples.bank.cqrs.BankAccount";
+		packageName = domainClassName.substring(0,domainClassName.lastIndexOf('.'));
 
-		CQRSBuilder.makeDomainCQRSHelper(domainClassName);
+		if(!classLoaded){
+			CQRSBuilder.makeDomainCQRSHelper(domainClassName);
+			classLoaded=true;
+		}
+				
 		clzDomain = CQRSBuilder.classLoader.loadClass(domainClassName);
 		clzHandle = CQRSBuilder.classLoader.loadClass(domainClassName + "CommandHandler");
 
@@ -59,82 +68,74 @@ public class BankAccountCommandHandlerTest {
 		testFixture.registerAnnotatedCommandHandler(commandHandler);
 		testFixture.registerCommandDispatchInterceptor(new BeanValidationInterceptor<>());
 	}
-
-	private static Object createCommandHandler(Class<?> clz, Repository<?> repository, EventBus eventBus) throws Exception {
-		Constructor<?> c = clz.getConstructor(Repository.class, EventBus.class);
-		return c.newInstance(repository, eventBus);
-	}
-
-	// @Test(expected = JSR303ViolationException.class)
-	// public void testCreateBankAccount_RejectNegativeOverdraft() throws
-	// Exception {
-	// Class<?> clzCommand =
-	// CQRSBuilder.classLoader.loadClass("org.axonframework.samples.bank.simple.instanceCommand.BankAccount");
-	// testFixture.givenNoPriorActivity().when(createCommand(clzCommand,
-	// UUID.randomUUID().toString(), "wangshilian", 20));
-	// }
+//
+//	@Test(expected = JSR303ViolationException.class)
+//	public void testCreateBankAccount_RejectNegativeOverdraft() throws Exception {
+//		testFixture.givenNoPriorActivity().when(make("BankAccount_CtorCommand", UUID.randomUUID().toString(), -1000L));
+//	}
 
 	@Test
 	public void testCreateBankAccount() throws Exception {
 		String id = "bankAccountId";
 
-		Class<?> clzCreateCommand = CQRSBuilder.classLoader.loadClass("org.axonframework.samples.bank.simple.instanceCommand.BankAccount_CtorCommand");
-		Object createCommand = clzCreateCommand.getConstructor(String.class, long.class).newInstance(id, 0);
-
-		Class<?> clzEvent = CQRSBuilder.classLoader.loadClass("org.axonframework.samples.bank.simple.instanceCommand.BankAccount_CtorFinishedEvent");
-		Object event = clzEvent.getConstructor(String.class, long.class).newInstance(id, 0);
-
-		testFixture.givenNoPriorActivity().when(createCommand).expectEvents(event);
+		testFixture.givenNoPriorActivity().when(make("BankAccount_CtorCommand", id, 0L)).expectEvents(make("BankAccount_CtorFinishedEvent", id, 0L));
 	}
 
 	@Test
 	public void testDepositMoney() throws Exception {
 		String id = "bankAccountId";
 
-		Class<?> clzCreateCommand = CQRSBuilder.classLoader.loadClass("org.axonframework.samples.bank.simple.instanceCommand.BankAccount_CtorCommand");
-		Object createCommand = clzCreateCommand.getConstructor(String.class, long.class).newInstance(id, 0);
+		testFixture.given(make("BankAccount_CtorFinishedEvent", id, 0L)).when(make("BankAccountDepositCommand", id, 1000L))
+				.expectEvents(make("BankAccountDepositFinishedEvent", id, 1000L));
 
-		Class<?> clzCommand = CQRSBuilder.classLoader.loadClass("org.axonframework.samples.bank.simple.instanceCommand.BankAccountWithdrawCommand");
-		Object thisCommand = clzCommand.getConstructor(String.class, long.class).newInstance(id, 1000);
-
-		Class<?> clzEvent = CQRSBuilder.classLoader.loadClass("org.axonframework.samples.bank.simple.instanceCommand.BankAccountDepositFinishedEvent");
-		Object thisEvent = clzEvent.getConstructor(String.class, long.class).newInstance(id, 1000);
-
-		testFixture.given(createCommand).when(thisCommand).expectEvents(thisEvent);
-		System.out.println("XXXX " + testFixture.getRepository().load(id));
+		// testFixture.given(new BankAccountCreatedEvent(id, 0))
+		// .when(new BankAccountMoneyDepositCommand(id, 1000))
+		// .expectEvents(new BankAccountMoneyDepositedEvent(id, 1000));
 	}
 
 	@Test
 	public void testWithdrawMoney() throws Exception {
 		String id = "bankAccountId";
 
-		testFixture.given(new BankAccountCreatedEvent(id, 0), new BankAccountMoneyDepositedEvent(id, 50)).when(new BankAccountWithdrawMoneyCommand(id, 50))
-				.expectEvents(new BankAccountMoneyWithdrawnEvent(id, 50));
+		testFixture.given(make("BankAccount_CtorFinishedEvent", id, 0L), make("BankAccountDepositFinishedEvent", id, 50L))
+				.when(make("BankAccountWithdrawCommand", id, 50L)).expectEvents(make("BankAccountWithdrawFinishedEvent", id, 50L));
+
+		//
+		// testFixture.given(new BankAccountCreatedEvent(id, 0), new
+		// BankAccountMoneyDepositedEvent(id, 50)).when(new
+		// BankAccountWithdrawMoneyCommand(id, 50))
+		// .expectEvents(new BankAccountMoneyWithdrawnEvent(id, 50));
 	}
 
 	@Test
 	public void testWithdrawMoney_RejectWithdrawal() throws Exception {
 		String id = "bankAccountId";
 
-		testFixture.given(new BankAccountCreatedEvent(id, 0), new BankAccountMoneyDepositedEvent(id, 50)).when(new BankAccountWithdrawMoneyCommand(id, 51))
-				.expectEvents();
+		testFixture.given(make("BankAccount_CtorFinishedEvent", id, 0L), make("BankAccountDepositFinishedEvent", id, 50L))
+				.when(make("BankAccountWithdrawCommand", id, 51L)).expectEvents();
 	}
-	
 
-	private void print(Class<?> clz) {
-		Method[] methods = clz.getMethods();
-		StringBuilder sb = new StringBuilder();
-		for (Method method : methods) {
-			sb.append(method.getName());
-			sb.append("[");
-			Class<?>[] parameterTypes = method.getParameterTypes();
-			for (int i = 0; i < parameterTypes.length; i++) {
-				if (i == 0) sb.append(",");
-				sb.append(parameterTypes[i].getSimpleName());
+	private static Object createCommandHandler(Class<?> clz, Repository<?> repository, EventBus eventBus) throws Exception {
+		Constructor<?> c = clz.getConstructor(Repository.class, EventBus.class);
+		return c.newInstance(repository, eventBus);
+	}
+
+	private Object make(String name, Object... parameters) throws Exception {
+		Class<?>[] parameterTypes = new Class<?>[parameters.length];
+		for (int i = 0; i < parameters.length; i++) {
+			Class<?> clz = parameters[i].getClass();
+			Field[] fields = clz.getDeclaredFields();
+			for (int j = 0; j < fields.length; j++) {
+				Field field = fields[j];
+				if ("TYPE".equals(field.getName())) {
+					clz = (Class<?>) field.get(clz);
+					break;
+				}
 			}
-			sb.append("]\n");
+			parameterTypes[i] = clz;
 		}
-		System.out.println(sb.toString());
-	}
 
+		Class<?> clzCommand = CQRSBuilder.classLoader.loadClass(packageName+ "." + name);
+		return clzCommand.getConstructor(parameterTypes).newInstance(parameters);
+	}
 }

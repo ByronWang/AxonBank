@@ -31,12 +31,24 @@ public class CQRSCommandBuilder implements Opcodes {
 	}
 
 	public static void visit_fields(ClassWriter cw, Type type, List<Field> fields) {
-		for (Field field : fields) {
-			FieldVisitor fv;
+
+		FieldVisitor fv;
+		{
+			Field field = fields.get(0);
+			fv = cw.visitField(ACC_PRIVATE + ACC_FINAL, field.name, field.type.getDescriptor(), null, null);
 			{
-				fv = cw.visitField(ACC_PRIVATE + ACC_FINAL, field.name, field.type.getDescriptor(), null, null);
-				fv.visitEnd();
+				AnnotationVisitor av0;
+				av0 = fv.visitAnnotation("Lorg/axonframework/commandhandling/TargetAggregateIdentifier;", true);
+				av0.visitEnd();
 			}
+			fv.visitEnd();
+		}
+
+		for (int i = 1; i < fields.size(); i++) {
+			Field field = fields.get(i);
+
+			fv = cw.visitField(ACC_PRIVATE + ACC_FINAL, field.name, field.type.getDescriptor(), null, null);
+			fv.visitEnd();
 		}
 	}
 

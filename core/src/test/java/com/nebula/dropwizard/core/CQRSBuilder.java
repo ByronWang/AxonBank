@@ -50,45 +50,6 @@ public class CQRSBuilder {
 		cr.accept(visitor, ClassReader.EXPAND_FRAMES);
 	}
 
-	// @Test
-	// public void testMakeDomainBankAccount() throws Exception {
-	// this.makeDomainCQRSHelper("org.axonframework.samples.bank.simple.instanceCommand.BankAccount");
-	// }
-
-	// @Test
-	// public void testMakeDomainPerson() throws Exception {
-	//
-	// Class<?> clzHandle =
-	// this.makeDomainCQRSHelper("org.axonframework.samples.bank.simple.instanceCommand.Person");
-	//
-	// Class<?> clzDomain =
-	// classLoader.loadClass("org.axonframework.samples.bank.simple.instanceCommand.Person");
-	//
-	// FixtureConfiguration<?> testFixture;
-	// testFixture = new AggregateTestFixture<>(clzDomain);
-	//
-	// Constructor<?> c = clzHandle.getConstructor(Repository.class,
-	// EventBus.class);
-	// Object handler = c.newInstance(testFixture.getRepository(),
-	// testFixture.getEventBus());
-	//
-	// testFixture.registerAnnotatedCommandHandler(handler);
-	// testFixture.registerCommandDispatchInterceptor(new
-	// BeanValidationInterceptor<>());
-	//
-	//
-	//
-	// Class<?> clzCommand =
-	// classLoader.loadClass("org.axonframework.samples.bank.simple.instanceCommand.Person_CtorCommand");
-	// Object command = clzCommand.getConstructor(String.class, String.class,
-	// long.class).newInstance("101", "wangshilian", 20);
-	// System.out.println(command.toString());
-	// handler.getClass().getMethod("handle", clzCommand).invoke(handler,
-	// command);
-	//
-	// // Object.class.getMethod(null, null)
-	// }
-
 	public static Class<?> makeDomainCQRSHelper(String domainClassName) throws Exception {
 		File root = new File("target/generated-auto-classes/");
 

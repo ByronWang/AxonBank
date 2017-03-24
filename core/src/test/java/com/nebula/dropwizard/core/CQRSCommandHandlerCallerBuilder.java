@@ -82,7 +82,7 @@ public class CQRSCommandHandlerCallerBuilder implements Opcodes {
 						Type.getMethodDescriptor(param.type), false);
 			}
 
-			mv.visitMethodInsn(INVOKEVIRTUAL, typeDomain.getInternalName(), command.methodName, Type.getMethodDescriptor(Type.VOID_TYPE, types), false);
+			mv.visitMethodInsn(INVOKEVIRTUAL, typeDomain.getInternalName(), command.methodName, Type.getMethodDescriptor(command.returnType, types), false);
 			Label l1 = new Label();
 			mv.visitLabel(l1);
 			mv.visitLineNumber(66, l1);

@@ -96,7 +96,9 @@ public class CQRSDomainBuilder extends ClassVisitor {
 
 			Type type = typeOf(simpleClassName);
 
-			Command command = new Command(methodName, commandName, ctorMethod, simpleClassName, type);
+			Type returnType = Type.getReturnType(desc);
+
+			Command command = new Command(methodName, commandName, ctorMethod, simpleClassName, type, returnType);
 
 			MethodVisitor methodVisitor = super.visitMethod(access, name, desc, signature, exceptions);
 			CommandMethodVisitor commandMethodVisitor = new CommandMethodVisitor(api, methodVisitor, access, command, desc, signature, exceptions);
@@ -284,22 +286,26 @@ public class CQRSDomainBuilder extends ClassVisitor {
 
 		@Override
 		public void visitInsn(int opcode) {
-			if (opcode == IRETURN && lastOpcode == ICONST_0) {
-
-				String eventName = command.commandName + "Rejected";
-				String originMethodName = null;
-				String newMethodName = null;
-				boolean innerEvent = false;
-				String simpleClassName = eventName + "Event";
-				Type typeEvent = typeOf(simpleClassName);
-				Event eventRejected = new Event(eventName, originMethodName, newMethodName, innerEvent, simpleClassName, typeEvent);
-				eventRejected.methodParams = new Field[0];
-				CQRSDomainBuilder.this.events.add(eventRejected);
-
-				mv.visitVarInsn(ALOAD, 0);
-				String desc = Type.getMethodDescriptor(Type.VOID_TYPE, new Type[] {});
-				super.visitMethodInsn(INVOKEVIRTUAL, typeDomain.getInternalName(), "apply" + toCamelUpper(eventRejected.simpleClassName), desc, false);
-			}
+			// if (opcode == IRETURN && lastOpcode == ICONST_0) {
+			//
+			// String eventName = command.commandName + "Rejected";
+			// String originMethodName = null;
+			// String newMethodName = null;
+			// boolean innerEvent = false;
+			// String simpleClassName = eventName + "Event";
+			// Type typeEvent = typeOf(simpleClassName);
+			// Event eventRejected = new Event(eventName, originMethodName,
+			// newMethodName, innerEvent, simpleClassName, typeEvent);
+			// eventRejected.methodParams = new Field[0];
+			// CQRSDomainBuilder.this.events.add(eventRejected);
+			//
+			// mv.visitVarInsn(ALOAD, 0);
+			// String desc = Type.getMethodDescriptor(Type.VOID_TYPE, new Type[]
+			// {});
+			// super.visitMethodInsn(INVOKEVIRTUAL,
+			// typeDomain.getInternalName(), "apply" +
+			// toCamelUpper(eventRejected.simpleClassName), desc, false);
+			// }
 
 			super.visitInsn(opcode);
 			lastOpcode = opcode;
@@ -426,16 +432,18 @@ public class CQRSDomainBuilder extends ClassVisitor {
 
 		List<Field> fields = new ArrayList<>();
 
-		public Command(String methodName, String commandName, boolean ctorMethod, String simpleClassName, Type type) {
+		public Command(String methodName, String commandName, boolean ctorMethod, String simpleClassName, Type type, Type returnType) {
 			super();
 			this.methodName = methodName;
 			this.commandName = commandName;
 			this.ctorMethod = ctorMethod;
 			this.simpleClassName = simpleClassName;
 			this.type = type;
+			this.returnType = returnType;
 		}
 
 		Type type;
+		final Type returnType;
 
 		boolean withoutID = false;
 	}
