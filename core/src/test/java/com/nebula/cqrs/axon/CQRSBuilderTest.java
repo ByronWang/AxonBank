@@ -1,16 +1,18 @@
 package com.nebula.cqrs.axon;
 
-import static org.junit.Assert.*;
-
+import org.junit.Before;
 import org.junit.Test;
-
-import com.nebula.cqrs.axon.CQRSBuilder;
 
 public class CQRSBuilderTest {
 
+	CQRSBuilder cqrs;
+	@Before
+	public void setUp() throws Exception {
+		cqrs = new CQRSBuilder();
+	}
 	@Test
 	public void testMakeDomainCQRSHelper() throws Exception {
-		CQRSBuilder.makeDomainCQRSHelper("org.axonframework.samples.bank.cqrs.BankAccount");
+		cqrs.makeDomainCQRSHelper("org.axonframework.samples.bank.cqrs.BankAccount");
 	}
 
 }

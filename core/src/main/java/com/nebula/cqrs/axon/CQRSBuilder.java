@@ -8,7 +8,6 @@ import java.io.PrintWriter;
 import java.lang.reflect.Constructor;
 
 import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -20,7 +19,7 @@ import com.nebula.cqrs.axon.CQRSDomainBuilder.Event;
 
 public class CQRSBuilder {
 
-	static MyClassLoader classLoader = new MyClassLoader();
+	MyClassLoader classLoader = new MyClassLoader();
 
 	static private void writeToWithPackage(File root, String name, byte[] code) {
 		try {
@@ -44,13 +43,7 @@ public class CQRSBuilder {
 		}
 	}
 
-	static private void dump(byte[] code) {
-		ClassReader cr = new ClassReader(code);
-		ClassVisitor visitor = new TraceClassVisitor(null, new ASMifier(), new PrintWriter(System.out));
-		cr.accept(visitor, ClassReader.EXPAND_FRAMES);
-	}
-
-	public static Class<?> makeDomainCQRSHelper(String domainClassName) throws Exception {
+	public Class<?> makeDomainCQRSHelper(String domainClassName) throws Exception {
 		File root = new File("target/generated-auto-classes/");
 
 		// MyClassLoader classLoader = new MyClassLoader();
@@ -131,7 +124,11 @@ public class CQRSBuilder {
 		return clzHandle;
 	}
 
-	static class MyClassLoader extends ClassLoader {
+	public Class<?> loadClass(String name) throws ClassNotFoundException {
+		return this.classLoader.loadClass(name);
+	}
+
+	class MyClassLoader extends ClassLoader {
 		@SuppressWarnings("unchecked")
 		public <T> Class<T> defineClass(String name, byte[] b) {
 			return (Class<T>) defineClass(name, b, 0, b.length);

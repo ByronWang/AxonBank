@@ -16,52 +16,38 @@
 
 package com.nebula.cqrs.axon;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+
 import org.axonframework.commandhandling.model.Repository;
 import org.axonframework.eventhandling.EventBus;
 import org.axonframework.messaging.interceptors.BeanValidationInterceptor;
-import org.axonframework.messaging.interceptors.JSR303ViolationException;
-import org.axonframework.samples.bank.api.bankaccount.BankAccountCreatedEvent;
-import org.axonframework.samples.bank.api.bankaccount.BankAccountCreateCommand;
-import org.axonframework.samples.bank.api.bankaccount.BankAccountMoneyDepositCommand;
-import org.axonframework.samples.bank.api.bankaccount.BankAccountMoneyDepositedEvent;
-import org.axonframework.samples.bank.api.bankaccount.BankAccountMoneyWithdrawnEvent;
-import org.axonframework.samples.bank.api.bankaccount.BankAccountWithdrawMoneyCommand;
-import org.axonframework.samples.bank.simple.instanceCommand.BankAccount;
 import org.axonframework.test.aggregate.AggregateTestFixture;
 import org.axonframework.test.aggregate.FixtureConfiguration;
-import org.junit.*;
-
-import com.nebula.cqrs.axon.CQRSBuilder;
-
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.UUID;
+import org.junit.Before;
+import org.junit.Test;
 
 public class BankAccountCommandHandlerTest {
 
 	private Class<?> clzDomain;
 	Class<?> clzHandle;
 	String packageName;
+	CQRSBuilder cqrs;
 
 	private FixtureConfiguration<?> testFixture;
 
-	static boolean classLoaded = false;
-	
+	// static boolean classLoaded = false;
+
 	@Before
 	public void setUp() throws Exception {
 
 		String domainClassName = "org.axonframework.samples.bank.cqrs.BankAccount";
-		packageName = domainClassName.substring(0,domainClassName.lastIndexOf('.'));
+		packageName = domainClassName.substring(0, domainClassName.lastIndexOf('.'));
+		cqrs = new CQRSBuilder();
+		cqrs.makeDomainCQRSHelper(domainClassName);
 
-		if(!classLoaded){
-			CQRSBuilder.makeDomainCQRSHelper(domainClassName);
-			classLoaded=true;
-		}
-				
-		clzDomain = CQRSBuilder.classLoader.loadClass(domainClassName);
-		clzHandle = CQRSBuilder.classLoader.loadClass(domainClassName + "CommandHandler");
+		clzDomain = cqrs.loadClass(domainClassName);
+		clzHandle = cqrs.loadClass(domainClassName + "CommandHandler");
 
 		testFixture = new AggregateTestFixture<>(clzDomain);
 
@@ -70,11 +56,13 @@ public class BankAccountCommandHandlerTest {
 		testFixture.registerAnnotatedCommandHandler(commandHandler);
 		testFixture.registerCommandDispatchInterceptor(new BeanValidationInterceptor<>());
 	}
-//
-//	@Test(expected = JSR303ViolationException.class)
-//	public void testCreateBankAccount_RejectNegativeOverdraft() throws Exception {
-//		testFixture.givenNoPriorActivity().when(make("BankAccount_CtorCommand", UUID.randomUUID().toString(), -1000L));
-//	}
+	//
+	// @Test(expected = JSR303ViolationException.class)
+	// public void testCreateBankAccount_RejectNegativeOverdraft() throws
+	// Exception {
+	// testFixture.givenNoPriorActivity().when(make("BankAccount_CtorCommand",
+	// UUID.randomUUID().toString(), -1000L));
+	// }
 
 	@Test
 	public void testCreateBankAccount() throws Exception {
@@ -137,7 +125,7 @@ public class BankAccountCommandHandlerTest {
 			parameterTypes[i] = clz;
 		}
 
-		Class<?> clzCommand = CQRSBuilder.classLoader.loadClass(packageName+ "." + name);
+		Class<?> clzCommand = cqrs.loadClass(packageName + "." + name);
 		return clzCommand.getConstructor(parameterTypes).newInstance(parameters);
 	}
 }
