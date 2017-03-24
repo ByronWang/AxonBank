@@ -1,4 +1,4 @@
-package com.nebula.dropwizard.core;
+package com.nebula.cqrs.axon;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +13,7 @@ import org.objectweb.asm.MethodVisitor;
 import static org.objectweb.asm.Opcodes.*;
 import org.objectweb.asm.Type;
 
-import com.nebula.dropwizard.core.CQRSDomainAnalyzer.Method;
+import com.nebula.cqrs.axon.CQRSDomainAnalyzer.Method;
 
 public class CQRSDomainBuilder extends ClassVisitor {
 	Type typeDomain;

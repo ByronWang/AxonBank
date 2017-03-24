@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.nebula.dropwizard.core;
+package com.nebula.cqrs.axon;
 
 import org.axonframework.commandhandling.model.Repository;
 import org.axonframework.eventhandling.EventBus;
@@ -30,6 +30,8 @@ import org.axonframework.samples.bank.simple.instanceCommand.BankAccount;
 import org.axonframework.test.aggregate.AggregateTestFixture;
 import org.axonframework.test.aggregate.FixtureConfiguration;
 import org.junit.*;
+
+import com.nebula.cqrs.axon.CQRSBuilder;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;

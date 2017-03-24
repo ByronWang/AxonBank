@@ -1,4 +1,4 @@
-package com.nebula.dropwizard.core;
+package com.nebula.cqrs.axon;
 
 import java.util.List;
 
@@ -10,8 +10,8 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-import com.nebula.dropwizard.core.CQRSDomainBuilder.Command;
-import com.nebula.dropwizard.core.CQRSDomainBuilder.Field;
+import com.nebula.cqrs.axon.CQRSDomainBuilder.Command;
+import com.nebula.cqrs.axon.CQRSDomainBuilder.Field;
 
 public class CQRSCommandBuilder implements Opcodes {
 

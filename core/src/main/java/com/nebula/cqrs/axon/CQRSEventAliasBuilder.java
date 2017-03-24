@@ -1,10 +1,10 @@
-package com.nebula.dropwizard.core;
+package com.nebula.cqrs.axon;
 
 import java.util.*;
 import org.objectweb.asm.*;
 
-import com.nebula.dropwizard.core.CQRSDomainBuilder.Event;
-import com.nebula.dropwizard.core.CQRSDomainBuilder.Field;
+import com.nebula.cqrs.axon.CQRSDomainBuilder.Event;
+import com.nebula.cqrs.axon.CQRSDomainBuilder.Field;
 
 public class CQRSEventAliasBuilder implements Opcodes {
 

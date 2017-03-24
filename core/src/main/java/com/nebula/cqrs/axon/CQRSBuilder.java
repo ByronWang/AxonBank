@@ -1,4 +1,4 @@
-package com.nebula.dropwizard.core;
+package com.nebula.cqrs.axon;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -15,8 +15,8 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.util.ASMifier;
 import org.objectweb.asm.util.TraceClassVisitor;
 
-import com.nebula.dropwizard.core.CQRSDomainBuilder.Command;
-import com.nebula.dropwizard.core.CQRSDomainBuilder.Event;
+import com.nebula.cqrs.axon.CQRSDomainBuilder.Command;
+import com.nebula.cqrs.axon.CQRSDomainBuilder.Event;
 
 public class CQRSBuilder {
 

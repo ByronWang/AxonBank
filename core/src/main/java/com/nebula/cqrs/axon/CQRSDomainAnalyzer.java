@@ -1,4 +1,4 @@
-package com.nebula.dropwizard.core;
+package com.nebula.cqrs.axon;
 
 import static org.objectweb.asm.Opcodes.ACC_STATIC;
 
@@ -11,7 +11,7 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
-import com.nebula.dropwizard.core.CQRSDomainBuilder.Field;
+import com.nebula.cqrs.axon.CQRSDomainBuilder.Field;
 
 public class CQRSDomainAnalyzer extends ClassVisitor {
 
