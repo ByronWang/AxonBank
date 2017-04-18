@@ -32,8 +32,8 @@ public class AxonConfig {
     @Autowired
     private EventBus eventBus;
 
-//    @Bean
-//    public BankAccountCommandHandler bankAccountCommandHandler() {
-//        return new BankAccountCommandHandler(axonConfiguration.repository(BankAccount.class), eventBus);
-//    }
+    @Bean
+    public BankAccountCommandHandler bankAccountCommandHandler() {
+        return new BankAccountCommandHandler(axonConfiguration.repository(BankAccount.class), eventBus);
+    }
 }

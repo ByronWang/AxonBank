@@ -146,7 +146,7 @@ public class CQRSWebControllerBuilder implements Opcodes {
 
 			Type typeDto = Type.getObjectType(typeDomain.getInternalName() + CQRSDomainBuilder.toCamelUpper(command.actionName) + "Dto");
 
-			mv = cw.visitMethod(ACC_PUBLIC, command.actionName, "(Lorg/axonframework/samples/bank/web/dto/BankAccountDto;)V", null, null);
+			mv = cw.visitMethod(ACC_PUBLIC, command.actionName, Type.getMethodDescriptor(Type.VOID_TYPE, typeDto), null, null);
 			{
 				av0 = mv.visitAnnotation(Type.getDescriptor(SubscribeMapping.class), true);
 				{
@@ -180,7 +180,7 @@ public class CQRSWebControllerBuilder implements Opcodes {
 			mv.visitLabel(l2);
 			mv.visitLineNumber(65, l2);
 			mv.visitVarInsn(ALOAD, 0);
-			mv.visitFieldInsn(GETFIELD, typeController.getInternalName(), "commandBus", "Lorg/axonframework/commandhandling/CommandBus;");
+			mv.visitFieldInsn(GETFIELD, typeController.getInternalName(), "commandBus",Type.getDescriptor(CommandBus.class));
 			mv.visitVarInsn(ALOAD, 3);
 			mv.visitMethodInsn(INVOKESTATIC, "org/axonframework/commandhandling/GenericCommandMessage", "asCommandMessage",
 					"(Ljava/lang/Object;)Lorg/axonframework/commandhandling/CommandMessage;", false);
@@ -192,9 +192,9 @@ public class CQRSWebControllerBuilder implements Opcodes {
 			Label l4 = new Label();
 			mv.visitLabel(l4);
 			mv.visitLocalVariable("this", typeController.getDescriptor(), null, l0, l4, 0);
-			mv.visitLocalVariable("dto", "Lorg/axonframework/samples/bank/web/dto/BankAccountDto;", null, l0, l4, 1);
-			mv.visitLocalVariable("id", "Ljava/lang/String;", null, l1, l4, 2);
-			mv.visitLocalVariable("command", "Lorg/axonframework/samples/bank/api/bankaccount/BankAccountCreateCommand;", null, l2, l4, 3);
+			mv.visitLocalVariable("dto", typeDto.getDescriptor(), null, l0, l4, 1);
+			mv.visitLocalVariable(cqrs.newfieldID.name, cqrs.newfieldID.type.getDescriptor(), null, l1, l4, 2);
+			mv.visitLocalVariable("command", command.type.getDescriptor(), null, l2, l4, 3);
 			mv.visitMaxs(5, 4);
 			mv.visitEnd();
 		}
@@ -232,7 +232,7 @@ public class CQRSWebControllerBuilder implements Opcodes {
 			mv.visitLabel(l1);
 			mv.visitLineNumber(71, l1);
 			mv.visitVarInsn(ALOAD, 0);
-			mv.visitFieldInsn(GETFIELD, typeController.getInternalName(), "commandBus", "Lorg/axonframework/commandhandling/CommandBus;");
+			mv.visitFieldInsn(GETFIELD, typeController.getInternalName(), "commandBus", Type.getDescriptor(CommandBus.class));
 			mv.visitVarInsn(ALOAD, 2);
 			mv.visitMethodInsn(INVOKESTATIC, "org/axonframework/commandhandling/GenericCommandMessage", "asCommandMessage",
 					"(Ljava/lang/Object;)Lorg/axonframework/commandhandling/CommandMessage;", false);
