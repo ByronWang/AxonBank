@@ -57,33 +57,19 @@ public class AsmBuilder implements Opcodes {
 	}
 
 	public static void define_field(ClassWriter cw, Field field, Class<?>... annotations) {
-		FieldVisitor fv = cw.visitField(ACC_PRIVATE, field.name, field.type.getDescriptor(), null, null);
-		{
-			for (Class<?> annotation : annotations) {
-				AnnotationVisitor av0 = fv.visitAnnotation(Type.getDescriptor(annotation), true);
-				av0.visitEnd();
-			}
-		}
-		fv.visitEnd();
+		define_field(cw, field.type, field.name, annotations);
+	}
+
+	public static void define_field(ClassWriter cw, Class<?> fieldClass, String fieldName, Class<?>... annotations) {
+		define_field(cw, Type.getType(fieldClass), fieldName, annotations);
 	}
 
 	public static void define_field(ClassWriter cw, Type fieldType, String name, Class<?>... annotations) {
 		FieldVisitor fv = cw.visitField(ACC_PRIVATE, name, fieldType.getDescriptor(), null, null);
-		{
-			for (Class<?> annotation : annotations) {
-				AnnotationVisitor av0 = fv.visitAnnotation(Type.getDescriptor(annotation), true);
-				av0.visitEnd();
-			}
-		}
-		fv.visitEnd();
-	}
-
-	public static void define_field(ClassWriter cw, Class<?> fieldClass, String name, Class<?>... annotations) {
-		FieldVisitor fv = cw.visitField(ACC_PRIVATE, name, Type.getDescriptor(fieldClass), null, null);
 		annotations(fv, annotations);
 		fv.visitEnd();
 	}
-
+	
 	public static void annotations(FieldVisitor fv, Class<?>... annotations) {
 		for (Class<?> annotation : annotations) {
 			AnnotationVisitor av0 = fv.visitAnnotation(Type.getDescriptor(annotation), true);

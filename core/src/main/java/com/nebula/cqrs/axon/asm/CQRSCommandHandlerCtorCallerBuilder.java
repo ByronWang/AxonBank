@@ -82,7 +82,7 @@ public class CQRSCommandHandlerCtorCallerBuilder extends AsmBuilder {
 
 			mv.visitMethodInsn(INVOKESPECIAL, typeDomain.getInternalName(), "<init>", Type.getMethodDescriptor(Type.VOID_TYPE, types), false);
 
-			AsmBuilder.printStaticMessage(mv, typeCommand.getInternalName() + " create new object");
+			printStaticMessage(mv, typeCommand.getInternalName() + " create new object");
 
 			mv.visitInsn(ARETURN);
 			Label l1 = new Label();
