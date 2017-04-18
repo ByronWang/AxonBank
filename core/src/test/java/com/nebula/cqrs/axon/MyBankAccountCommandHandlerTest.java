@@ -60,7 +60,7 @@ public class MyBankAccountCommandHandlerTest {
 	// @Test(expected = JSR303ViolationException.class)
 	// public void testCreateMyBankAccount_RejectNegativeOverdraft() throws
 	// Exception {
-	// testFixture.givenNoPriorActivity().when(make("MyBankAccount_CtorCommand",
+	// testFixture.givenNoPriorActivity().when(make("MyBankAccountCreateCommand",
 	// UUID.randomUUID().toString(), -1000L));
 	// }
 
@@ -68,14 +68,14 @@ public class MyBankAccountCommandHandlerTest {
 	public void testCreateMyBankAccount() throws Exception {
 		String id = "MyBankAccountId";
 
-		testFixture.givenNoPriorActivity().when(make("MyBankAccount_CtorCommand", id, 0L)).expectEvents(make("MyBankAccount_CtorFinishedEvent", id, 0L));
+		testFixture.givenNoPriorActivity().when(make("MyBankAccountCreateCommand", id, 0L)).expectEvents(make("MyBankAccountCreateFinishedEvent", id, 0L));
 	}
 
 	@Test
 	public void testDepositMoney() throws Exception {
 		String id = "MyBankAccountId";
 
-		testFixture.given(make("MyBankAccount_CtorFinishedEvent", id, 0L)).when(make("MyBankAccountDepositCommand", id, 1000L))
+		testFixture.given(make("MyBankAccountCreateFinishedEvent", id, 0L)).when(make("MyBankAccountDepositCommand", id, 1000L))
 				.expectEvents(make("MyBankAccountDepositFinishedEvent", id, 1000L));
 
 		// testFixture.given(new MyBankAccountCreatedEvent(id, 0))
@@ -87,7 +87,7 @@ public class MyBankAccountCommandHandlerTest {
 	public void testWithdrawMoney() throws Exception {
 		String id = "MyBankAccountId";
 
-		testFixture.given(make("MyBankAccount_CtorFinishedEvent", id, 0L), make("MyBankAccountDepositFinishedEvent", id, 50L))
+		testFixture.given(make("MyBankAccountCreateFinishedEvent", id, 0L), make("MyBankAccountDepositFinishedEvent", id, 50L))
 				.when(make("MyBankAccountWithdrawCommand", id, 50L)).expectEvents(make("MyBankAccountWithdrawFinishedEvent", id, 50L));
 
 		//
@@ -101,7 +101,7 @@ public class MyBankAccountCommandHandlerTest {
 	public void testWithdrawMoney_RejectWithdrawal() throws Exception {
 		String id = "MyBankAccountId";
 
-		testFixture.given(make("MyBankAccount_CtorFinishedEvent", id, 0L), make("MyBankAccountDepositFinishedEvent", id, 50L))
+		testFixture.given(make("MyBankAccountCreateFinishedEvent", id, 0L), make("MyBankAccountDepositFinishedEvent", id, 50L))
 				.when(make("MyBankAccountWithdrawCommand", id, 51L)).expectEvents();
 	}
 

@@ -68,7 +68,7 @@ public class MyBankAccount {
 	}
 
 	// BankTransferSourceDebitCommand
-	public boolean debit(long amount) {
+	private boolean debit(long amount) {
 		if (amount <= balanceInCents + overdraftLimit) {
 			onMoneySubtracted(amount);// BankTransferSourceDebitedEvent
 			return true;
@@ -78,13 +78,13 @@ public class MyBankAccount {
 	}
 
 	// BankTransferDestinationCreditCommand
-	public boolean credit(long amount) {
+	private boolean credit(long amount) {
 		onMoneyAdded(amount);// BankTransferDestinationCreditedEvent
 		return true;
 	}
 
 	// BankTransferSourceReturnMoneyCommand
-	public boolean returnMoney(long amount) {
+	private boolean returnMoney(long amount) {
 		onMoneyAdded(amount);// BankTransferSourceReturnedMoneyOfFailedEvent
 		return true;
 	}

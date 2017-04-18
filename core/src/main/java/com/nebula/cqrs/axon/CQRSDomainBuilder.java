@@ -1,5 +1,20 @@
 package com.nebula.cqrs.axon;
 
+import static org.objectweb.asm.Opcodes.ACC_FINAL;
+import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
+import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
+import static org.objectweb.asm.Opcodes.ACC_STATIC;
+import static org.objectweb.asm.Opcodes.ALOAD;
+import static org.objectweb.asm.Opcodes.DUP;
+import static org.objectweb.asm.Opcodes.GETFIELD;
+import static org.objectweb.asm.Opcodes.ILOAD;
+import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
+import static org.objectweb.asm.Opcodes.INVOKESTATIC;
+import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
+import static org.objectweb.asm.Opcodes.NEW;
+import static org.objectweb.asm.Opcodes.POP;
+import static org.objectweb.asm.Opcodes.RETURN;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -10,7 +25,6 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
-import static org.objectweb.asm.Opcodes.*;
 import org.objectweb.asm.Type;
 
 import com.nebula.cqrs.axon.CQRSDomainAnalyzer.Method;
@@ -21,7 +35,17 @@ public class CQRSDomainBuilder extends ClassVisitor {
 	List<Command> commands = new ArrayList<>();
 	List<Event> events = new ArrayList<>();
 	Domain domain;
-	Field fieldID;
+	Field newfieldID;
+
+	public void setKeyField(Field field) {
+		if (newfieldID != null && newfieldID != field) {
+			newfieldID.idField = false;
+		}
+
+		field.idField = true;
+		this.newfieldID = field;
+	}
+
 	Map<String, Method> methods;
 
 	@Override
@@ -49,7 +73,7 @@ public class CQRSDomainBuilder extends ClassVisitor {
 	public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
 		Field field = new Field(name, Type.getType(desc));
 		if (domain.fields.size() == 0) {
-			this.fieldID = field;
+			this.setKeyField(field);
 		}
 		domain.fields.add(field);
 		FieldVisitor fieldVisitor = super.visitField(access, name, desc, signature, value);
@@ -68,7 +92,7 @@ public class CQRSDomainBuilder extends ClassVisitor {
 		public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
 			Type type = Type.getType(desc);
 			if (type.getInternalName() == Type.getType(AggregateIdentifier.class).getInternalName()) {
-				CQRSDomainBuilder.this.fieldID = this.field;
+				CQRSDomainBuilder.this.setKeyField(field);
 			}
 			return super.visitAnnotation(desc, visible);
 		}
@@ -83,22 +107,25 @@ public class CQRSDomainBuilder extends ClassVisitor {
 			return methodVisitor;
 		} else if (is(access, ACC_PUBLIC)) {// Command
 			String methodName = name;
-			boolean ctorMethod = false;
+			String actionName;
+			boolean ctorMethod;
 			String commandName;
 			if ("<init>".equals(name)) {
 				ctorMethod = true;
-				commandName = domain.name + toCamelUpper("_Ctor");
+				actionName = "create";
 			} else {
 				ctorMethod = false;
-				commandName = domain.name + toCamelUpper(methodName);
+				actionName = methodName;
 			}
+
+			commandName = domain.name + toCamelUpper(actionName);
 			String simpleClassName = commandName + "Command";;
 
 			Type type = typeOf(simpleClassName);
 
 			Type returnType = Type.getReturnType(desc);
 
-			Command command = new Command(methodName, commandName, ctorMethod, simpleClassName, type, returnType);
+			Command command = new Command(actionName, methodName, commandName, ctorMethod, simpleClassName, type, returnType);
 
 			MethodVisitor methodVisitor = super.visitMethod(access, name, desc, signature, exceptions);
 			CommandMethodVisitor commandMethodVisitor = new CommandMethodVisitor(api, methodVisitor, access, command, desc, signature, exceptions);
@@ -134,9 +161,9 @@ public class CQRSDomainBuilder extends ClassVisitor {
 	@Override
 	public void visitEnd() {
 		for (Event event : events) {
-			if (event.methodParams.length == 0
-					|| !(event.methodParams[0].name == fieldID.name && event.methodParams[0].type.getInternalName().equals(fieldID.type.getInternalName()))) {
-				event.fields.add(fieldID);
+			if (event.methodParams.length == 0 || !(event.methodParams[0].name == newfieldID.name
+					&& event.methodParams[0].type.getInternalName().equals(newfieldID.type.getInternalName()))) {
+				event.fields.add(newfieldID);
 				event.withoutID = true;
 			}
 			for (int i = 0; i < event.methodParams.length; i++) {
@@ -159,13 +186,16 @@ public class CQRSDomainBuilder extends ClassVisitor {
 			}
 		}
 		for (Command command : commands) {
-			if (command.methodParams.length == 0 || !(command.methodParams[0].name == fieldID.name
-					&& command.methodParams[0].type.getInternalName().equals(fieldID.type.getInternalName()))) {
-				command.fields.add(fieldID);
+			if (command.methodParams.length == 0 || !(command.methodParams[0].name == newfieldID.name
+					&& command.methodParams[0].type.getInternalName().equals(newfieldID.type.getInternalName()))) {
+				command.fields.add(newfieldID);
 				command.withoutID = true;
 			}
 			for (int i = 0; i < command.methodParams.length; i++) {
 				command.fields.add(command.methodParams[i]);
+			}
+			if (command.fields.get(0).name == newfieldID.name && command.fields.get(0).type.getInternalName().equals(newfieldID.type.getInternalName())) {
+				command.fields.get(0).idField = true;
 			}
 		}
 
@@ -207,7 +237,7 @@ public class CQRSDomainBuilder extends ClassVisitor {
 
 			if (event.withoutID) {
 				mv.visitVarInsn(ALOAD, 0);
-				mv.visitFieldInsn(GETFIELD, typeDomain.getInternalName(), fieldID.name, fieldID.type.getDescriptor());
+				mv.visitFieldInsn(GETFIELD, typeDomain.getInternalName(), newfieldID.name, newfieldID.type.getDescriptor());
 			}
 
 			for (int i = 0; i < event.methodParams.length; i++) {
@@ -277,38 +307,6 @@ public class CQRSDomainBuilder extends ClassVisitor {
 
 			Method method = methods.get(command.methodName);
 			command.methodParams = method.params;
-		}
-
-		// mv.visitInsn(ICONST_0);
-		// mv.visitInsn(IRETURN);
-
-		int lastOpcode = 0;
-
-		@Override
-		public void visitInsn(int opcode) {
-			// if (opcode == IRETURN && lastOpcode == ICONST_0) {
-			//
-			// String eventName = command.commandName + "Rejected";
-			// String originMethodName = null;
-			// String newMethodName = null;
-			// boolean innerEvent = false;
-			// String simpleClassName = eventName + "Event";
-			// Type typeEvent = typeOf(simpleClassName);
-			// Event eventRejected = new Event(eventName, originMethodName,
-			// newMethodName, innerEvent, simpleClassName, typeEvent);
-			// eventRejected.methodParams = new Field[0];
-			// CQRSDomainBuilder.this.events.add(eventRejected);
-			//
-			// mv.visitVarInsn(ALOAD, 0);
-			// String desc = Type.getMethodDescriptor(Type.VOID_TYPE, new Type[]
-			// {});
-			// super.visitMethodInsn(INVOKEVIRTUAL,
-			// typeDomain.getInternalName(), "apply" +
-			// toCamelUpper(eventRejected.simpleClassName), desc, false);
-			// }
-
-			super.visitInsn(opcode);
-			lastOpcode = opcode;
 		}
 
 		@Override
@@ -414,6 +412,7 @@ public class CQRSDomainBuilder extends ClassVisitor {
 
 		String name;
 		Type type;
+		boolean idField;
 	}
 
 	class Command {
@@ -423,6 +422,7 @@ public class CQRSDomainBuilder extends ClassVisitor {
 		}
 
 		final String methodName;
+		final String actionName;
 		final String commandName;
 		final String simpleClassName;
 
@@ -432,8 +432,9 @@ public class CQRSDomainBuilder extends ClassVisitor {
 
 		List<Field> fields = new ArrayList<>();
 
-		public Command(String methodName, String commandName, boolean ctorMethod, String simpleClassName, Type type, Type returnType) {
+		public Command(String actionName, String methodName, String commandName, boolean ctorMethod, String simpleClassName, Type type, Type returnType) {
 			super();
+			this.actionName = actionName;
 			this.methodName = methodName;
 			this.commandName = commandName;
 			this.ctorMethod = ctorMethod;
