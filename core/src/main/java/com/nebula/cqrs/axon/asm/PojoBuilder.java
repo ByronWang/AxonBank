@@ -20,6 +20,7 @@ public class PojoBuilder extends AsmBuilder {
 			define_field (cw,field);
 			define_getField(cw, pojoType, field);
 		}
+		define_init_nothing(cw, pojoType);
 		define_init_allfield(cw, pojoType, fields);
 		define_toString_allfield(cw, pojoType, fields);
 		return cw.toByteArray();

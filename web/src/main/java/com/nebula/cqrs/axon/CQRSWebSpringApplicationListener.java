@@ -1,6 +1,5 @@
 package com.nebula.cqrs.axon;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,10 +12,6 @@ import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.boot.context.event.ApplicationPreparedEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.data.repository.core.EntityInformation;
-import org.springframework.data.repository.core.RepositoryInformation;
-import org.springframework.data.repository.core.RepositoryMetadata;
-import org.springframework.data.repository.core.support.RepositoryFactorySupport;
 
 import com.nebula.cqrs.axon.asm.CQRSAxonConfigBuilder;
 import com.nebula.cqrs.axon.asm.CQRSDomainBuilder;

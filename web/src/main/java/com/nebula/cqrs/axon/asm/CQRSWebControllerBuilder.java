@@ -1,7 +1,8 @@
 package com.nebula.cqrs.axon.asm;
 
 import org.axonframework.commandhandling.CommandBus;
-import org.objectweb.asm.AnnotationVisitor;
+import org.axonframework.commandhandling.CommandMessage;
+import org.axonframework.commandhandling.GenericCommandMessage;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
@@ -17,25 +18,25 @@ import com.nebula.cqrs.axon.pojo.Field;
 public class CQRSWebControllerBuilder extends AsmBuilder {
 
 	public static byte[] dump(Type typeDomain, Type typeController, Type typeRepository, Type typeEntry, CQRSDomainBuilder cqrs) throws Exception {
-		Type typeCommandBus = Type.getType(CommandBus.class);
-
 		ClassWriter cw = new ClassWriter(0);
 
 		cw.visit(52, ACC_PUBLIC + ACC_SUPER, typeController.getInternalName(), null, "java/lang/Object", null);
 
-		annotations(cw, Controller.class);
-
+		annotation(cw, Controller.class);
 		annotation(cw, MessageMapping.class, "/bank-accounts");
 
-		define_field(cw, typeCommandBus, "commandBus");
+		define_field(cw, CommandBus.class, "commandBus");
 		define_field(cw, typeRepository, "repository");
 
-		define_init(cw, typeController, typeRepository, typeCommandBus);
+		define_init(cw, typeController, typeRepository);
 
 		for (Command command : cqrs.commands) {
-			if (command.ctorMethod) define_action_create(typeDomain, typeController, cqrs, typeCommandBus, cw, command);
-			else
-				define_action_other(typeDomain, typeController, typeCommandBus, cw, command);
+			Type typeDto = Type.getObjectType(typeDomain.getInternalName() + CQRSDomainBuilder.toCamelUpper(command.actionName) + "Dto");
+			if (command.ctorMethod) {
+				define_action_create(cw, typeController, typeDto, command);
+			} else {
+				define_action_other(cw, typeController, typeDto, command);
+			}
 		}
 
 		cw.visitEnd();
@@ -43,20 +44,53 @@ public class CQRSWebControllerBuilder extends AsmBuilder {
 		return cw.toByteArray();
 	}
 
-	private static void define_action_other(Type typeDomain, Type typeController, Type typeCommandBus, ClassWriter cw, Command command) {
+	private static MethodVisitor define_init(ClassWriter cw, Type typeController, Type typeRepository) {
 		MethodVisitor mv;
 		{
-			Type typeDto = Type.getObjectType(typeDomain.getInternalName() + CQRSDomainBuilder.toCamelUpper(command.actionName) + "Dto");
+			mv = cw.visitMethod(ACC_PUBLIC, "<init>", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(CommandBus.class)), null, null);
+			annotation(mv, Autowired.class);
+			mv.visitCode();
+			Label l0 = new Label();
+			mv.visitLabel(l0);
+			mv.visitLineNumber(45, l0);
 
+			INVOKE_init_Object(mv, 0);
+
+			Label l1 = new Label();
+			mv.visitLabel(l1);
+			mv.visitLineNumber(47, l1);
+
+			PUT_FIELD(mv, typeController, 0, CommandBus.class, "commandBus", 1);
+
+			Label l3 = new Label();
+			mv.visitLabel(l3);
+			mv.visitLineNumber(49, l3);
+			mv.visitInsn(RETURN);
+			Label l4 = new Label();
+			mv.visitLabel(l4);
+			mv.visitLocalVariable("this", typeController.getDescriptor(), null, l0, l4, 0);
+			mv.visitLocalVariable("commandBus", Type.getDescriptor(CommandBus.class), null, l0, l4, 1);
+			mv.visitLocalVariable("repository", typeRepository.getDescriptor(), null, l0, l4, 2);
+			mv.visitMaxs(2, 3);
+			mv.visitEnd();
+		}
+		return mv;
+	}
+
+	private static void define_action_other(ClassWriter cw, Type typeController, Type typeDto, Command command) {
+		MethodVisitor mv;
+		{
 			mv = cw.visitMethod(ACC_PUBLIC, command.actionName, Type.getMethodDescriptor(Type.VOID_TYPE, typeDto), null, null);
 
-			annotation(cw, SubscribeMapping.class, "/" + command.actionName);
+			annotation(mv, SubscribeMapping.class, "/" + command.actionName);
 
 			mv.visitCode();
 			Label l0 = new Label();
 			mv.visitLabel(l0);
 			mv.visitLineNumber(70, l0);
-			mv.visitTypeInsn(NEW, command.type.getInternalName());
+
+			NEW_type(mv, command.type);
+
 			mv.visitInsn(DUP);
 
 			for (Field field : command.fields) {
@@ -66,6 +100,7 @@ public class CQRSWebControllerBuilder extends AsmBuilder {
 			INVOKE_init_typeWithAllfield(mv, command.type, command.fields);
 
 			mv.visitVarInsn(ASTORE, 2);
+
 			Label l1 = new Label();
 			mv.visitLabel(l1);
 			mv.visitLineNumber(71, l1);
@@ -73,14 +108,15 @@ public class CQRSWebControllerBuilder extends AsmBuilder {
 			GET_FIELD(mv, typeController, 0, CommandBus.class, "commandBus");
 
 			mv.visitVarInsn(ALOAD, 2);
-			mv.visitMethodInsn(INVOKESTATIC, "org/axonframework/commandhandling/GenericCommandMessage", "asCommandMessage",
-					"(Ljava/lang/Object;)Lorg/axonframework/commandhandling/CommandMessage;", false);
-			mv.visitMethodInsn(INVOKEINTERFACE, typeCommandBus.getInternalName(), "dispatch", "(Lorg/axonframework/commandhandling/CommandMessage;)V", true);
-			
+
+			INVOKE_STATIC(mv, GenericCommandMessage.class, CommandMessage.class, "asCommandMessage", Object.class);
+
+			INVOKE_INTERFACE(mv, CommandBus.class, "dispatch", CommandMessage.class);
+
 			Label l2 = new Label();
 			mv.visitLabel(l2);
 			mv.visitLineNumber(72, l2);
-			
+
 			mv.visitInsn(RETURN);
 			Label l3 = new Label();
 			mv.visitLabel(l3);
@@ -92,15 +128,11 @@ public class CQRSWebControllerBuilder extends AsmBuilder {
 		}
 	}
 
-	private static MethodVisitor define_action_create(Type typeDomain, Type typeController, CQRSDomainBuilder cqrs, Type typeCommandBus, ClassWriter cw,
-			Command command) {
+	private static MethodVisitor define_action_create(ClassWriter cw, Type typeController, Type typeDto, Command command) {
 		MethodVisitor mv;
 		{
-			Type typeDto = Type.getObjectType(typeDomain.getInternalName() + CQRSDomainBuilder.toCamelUpper(command.actionName) + "Dto");
-
 			mv = cw.visitMethod(ACC_PUBLIC, command.actionName, Type.getMethodDescriptor(Type.VOID_TYPE, typeDto), null, null);
-
-			annotation(cw, SubscribeMapping.class, "/" + command.actionName);
+			annotation(mv, SubscribeMapping.class, "/" + command.actionName);
 
 			mv.visitCode();
 			Label l0 = new Label();
@@ -108,23 +140,29 @@ public class CQRSWebControllerBuilder extends AsmBuilder {
 			mv.visitLineNumber(63, l0);
 			mv.visitMethodInsn(INVOKESTATIC, "java/util/UUID", "randomUUID", "()Ljava/util/UUID;", false);
 			mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/UUID", "toString", "()Ljava/lang/String;", false);
+
 			mv.visitVarInsn(ASTORE, 2);
+
 			Label l1 = new Label();
 			mv.visitLabel(l1);
 			mv.visitLineNumber(64, l1);
-			mv.visitTypeInsn(NEW, command.type.getInternalName());
+
+			NEW_type(mv, command.type);
+
 			mv.visitInsn(DUP);
 
 			mv.visitVarInsn(ALOAD, 2); // load key
 
+			Field idField = command.fields.get(0);
+
 			for (Field field : command.fields) {
 				if (!field.idField) invoke_getField(mv, 1, typeDto, field);
 			}
-			
+
 			INVOKE_init_typeWithAllfield(mv, command.type, command.fields);
 
 			mv.visitVarInsn(ASTORE, 3);
-			
+
 			Label l2 = new Label();
 			mv.visitLabel(l2);
 			mv.visitLineNumber(65, l2);
@@ -132,9 +170,10 @@ public class CQRSWebControllerBuilder extends AsmBuilder {
 			GET_FIELD(mv, typeController, 0, CommandBus.class, "commandBus");
 
 			mv.visitVarInsn(ALOAD, 3);
-			mv.visitMethodInsn(INVOKESTATIC, "org/axonframework/commandhandling/GenericCommandMessage", "asCommandMessage",
-					"(Ljava/lang/Object;)Lorg/axonframework/commandhandling/CommandMessage;", false);
-			mv.visitMethodInsn(INVOKEINTERFACE, typeCommandBus.getInternalName(), "dispatch", "(Lorg/axonframework/commandhandling/CommandMessage;)V", true);
+
+			INVOKE_STATIC(mv, GenericCommandMessage.class, CommandMessage.class, "asCommandMessage", Object.class);
+			INVOKE_INTERFACE(mv, CommandBus.class, "dispatch", CommandMessage.class);
+
 			Label l3 = new Label();
 			mv.visitLabel(l3);
 			mv.visitLineNumber(66, l3);
@@ -143,42 +182,9 @@ public class CQRSWebControllerBuilder extends AsmBuilder {
 			mv.visitLabel(l4);
 			mv.visitLocalVariable("this", typeController.getDescriptor(), null, l0, l4, 0);
 			mv.visitLocalVariable("dto", typeDto.getDescriptor(), null, l0, l4, 1);
-			mv.visitLocalVariable(cqrs.newfieldID.name, cqrs.newfieldID.type.getDescriptor(), null, l1, l4, 2);
+			mv.visitLocalVariable(idField.name, idField.type.getDescriptor(), null, l1, l4, 2);
 			mv.visitLocalVariable("command", command.type.getDescriptor(), null, l2, l4, 3);
 			mv.visitMaxs(5, 4);
-			mv.visitEnd();
-		}
-		return mv;
-	}
-
-	private static MethodVisitor define_init(ClassWriter cw, Type typeController, Type typeRepository, Type typeCommandBus) {
-		MethodVisitor mv;
-		{
-			mv = cw.visitMethod(ACC_PUBLIC, "<init>", Type.getMethodDescriptor(Type.VOID_TYPE, typeCommandBus), null, null);
-			annotations(cw, Autowired.class);
-			mv.visitCode();
-			Label l0 = new Label();
-			mv.visitLabel(l0);
-			mv.visitLineNumber(45, l0);
-
-			INVOKE_init_Object(mv,0);
-
-			Label l1 = new Label();
-			mv.visitLabel(l1);
-			mv.visitLineNumber(47, l1);
-
-			PUT_FIELD(mv, typeController, 0, typeCommandBus, "commandBus", 1);
-
-			Label l3 = new Label();
-			mv.visitLabel(l3);
-			mv.visitLineNumber(49, l3);
-			mv.visitInsn(RETURN);
-			Label l4 = new Label();
-			mv.visitLabel(l4);
-			mv.visitLocalVariable("this", typeController.getDescriptor(), null, l0, l4, 0);
-			mv.visitLocalVariable("commandBus", typeCommandBus.getDescriptor(), null, l0, l4, 1);
-			mv.visitLocalVariable("repository", typeRepository.getDescriptor(), null, l0, l4, 2);
-			mv.visitMaxs(2, 3);
 			mv.visitEnd();
 		}
 		return mv;

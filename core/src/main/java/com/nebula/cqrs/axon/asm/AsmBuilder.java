@@ -2,8 +2,6 @@ package com.nebula.cqrs.axon.asm;
 
 import java.util.List;
 
-import org.axonframework.commandhandling.model.Repository;
-import org.axonframework.spring.config.AxonConfiguration;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
@@ -107,6 +105,15 @@ public class AsmBuilder implements Opcodes {
 		}
 	}
 
+	public static void annotation(ClassWriter cw, Class<?> annotation) {
+		AnnotationVisitor av0 = cw.visitAnnotation(Type.getDescriptor(annotation), true);
+		av0.visitEnd();
+	}
+	public static void annotation(MethodVisitor mv, Class<?> annotation) {
+		AnnotationVisitor av0 = mv.visitAnnotation(Type.getDescriptor(annotation), true);
+		av0.visitEnd();
+	}
+	
 	public static void annotation(ClassWriter cw, Class<?> annotation, String value) {
 		AnnotationVisitor av0 = cw.visitAnnotation(Type.getDescriptor(annotation), true);
 		{
@@ -117,6 +124,15 @@ public class AsmBuilder implements Opcodes {
 		av0.visitEnd();
 	}
 
+	public static void annotation(MethodVisitor mv, Class<?> annotation, String value) {
+		AnnotationVisitor av0 = mv.visitAnnotation(Type.getDescriptor(annotation), true);
+		{
+			AnnotationVisitor av1 = av0.visitArray("value");
+			av1.visit(null, value);
+			av1.visitEnd();
+		}
+		av0.visitEnd();
+	}
 	public static void define_init_nothing(ClassWriter cw, Type type) {
 		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
 		mv.visitCode();
@@ -273,7 +289,7 @@ public class AsmBuilder implements Opcodes {
 		for (int i = 0; i < fields.size(); i++) {
 			params[i] = fields.get(i).type;
 		}
-		invoke_init_typeWithAllfield(mv, type, params);
+		INVOKE_init_typeWithAllfield(mv, type, params);
 	}
 
 	public static void INVOKE_init_typeWithAllfield(MethodVisitor mv, Type type, Class<?>... classes) {
@@ -281,39 +297,105 @@ public class AsmBuilder implements Opcodes {
 		for (int i = 0; i < classes.length; i++) {
 			params[i] = Type.getType(classes[i]);
 		}
-		invoke_init_typeWithAllfield(mv, type, params);
+		INVOKE_init_typeWithAllfield(mv, type, params);
 	}
 
-	public static void invoke_init_typeWithAllfield(MethodVisitor mv, Type type, Type... params) {
+	public static void INVOKE_init_typeWithAllfield(MethodVisitor mv, Type type, Type... params) {
 		mv.visitMethodInsn(INVOKESPECIAL, type.getInternalName(), "<init>", Type.getMethodDescriptor(Type.VOID_TYPE, params), false);
 	}
 
 	public static void INVOKE_VIRTUAL(MethodVisitor mv, Type type, String methodName, Class<?> returnClass, Class<?>... classes) {
-		Type[] params = new Type[classes.length];
-		for (int i = 0; i < classes.length; i++) {
-			params[i] = Type.getType(classes[i]);
-		}
-		INVOKE_VIRTUAL(mv, type, methodName, Type.getType(returnClass), params);
-	}	
+		INVOKE_VIRTUAL(mv, type, Type.getType(returnClass), methodName, classes);
+	}
 
 	public static void INVOKE_VIRTUAL(MethodVisitor mv, Class<?> objectClass, Class<?> returnClass, String methodName, Class<?>... classes) {
+		INVOKE_VIRTUAL(mv, Type.getType(objectClass), Type.getType(returnClass), methodName, classes);
+	}
+
+	public static void INVOKE_VIRTUAL(MethodVisitor mv, Type type, Type returnType, String methodName, Class<?>... classes) {
 		Type[] params = new Type[classes.length];
 		for (int i = 0; i < classes.length; i++) {
 			params[i] = Type.getType(classes[i]);
 		}
-		INVOKE_VIRTUAL(mv, Type.getType(objectClass), methodName, Type.getType(returnClass), params);
+		INVOKE_VIRTUAL(mv, type, returnType, methodName, params);
 	}
 
-	public static void INVOKE_VIRTUAL(MethodVisitor mv, Type type, String methodName, Type returnType, Class<?>... classes) {
+	public static void INVOKE_VIRTUAL(MethodVisitor mv, Type type, Type returnType, String methodName, Type... params) {
+		mv.visitMethodInsn(INVOKEVIRTUAL, type.getInternalName(), methodName, Type.getMethodDescriptor(returnType, params), false);
+	}
+	
+
+	public static void INVOKE_SPECIAL(MethodVisitor mv, Type type, String methodName, Class<?> returnClass, Class<?>... classes) {
+		INVOKE_SPECIAL(mv, type, Type.getType(returnClass), methodName, classes);
+	}
+
+	public static void INVOKE_SPECIAL(MethodVisitor mv, Class<?> objectClass, Class<?> returnClass, String methodName, Class<?>... classes) {
+		INVOKE_SPECIAL(mv, Type.getType(objectClass), Type.getType(returnClass), methodName, classes);
+	}
+
+	public static void INVOKE_SPECIAL(MethodVisitor mv, Type type, Type returnType, String methodName, Class<?>... classes) {
 		Type[] params = new Type[classes.length];
 		for (int i = 0; i < classes.length; i++) {
 			params[i] = Type.getType(classes[i]);
 		}
-		INVOKE_VIRTUAL(mv, type, methodName, returnType, params);
+		INVOKE_SPECIAL(mv, type, returnType, methodName, params);
 	}
 
-	public static void INVOKE_VIRTUAL(MethodVisitor mv, Type type, String methodName, Type returnType, Type... params) {
+	public static void INVOKE_SPECIAL(MethodVisitor mv, Type type, Type returnType, String methodName, Type... params) {
 		mv.visitMethodInsn(INVOKESPECIAL, type.getInternalName(), methodName, Type.getMethodDescriptor(returnType, params), false);
+	}
+	
+
+	public static void INVOKE_STATIC(MethodVisitor mv, Type type, String methodName, Class<?> returnClass, Class<?>... classes) {
+		Type[] params = new Type[classes.length];
+		for (int i = 0; i < classes.length; i++) {
+			params[i] = Type.getType(classes[i]);
+		}
+		INVOKE_STATIC(mv, type, Type.getType(returnClass), methodName, params);
+	}
+
+	public static void INVOKE_STATIC(MethodVisitor mv, Class<?> objectClass, Class<?> returnClass, String methodName, Class<?>... classes) {
+		Type[] params = new Type[classes.length];
+		for (int i = 0; i < classes.length; i++) {
+			params[i] = Type.getType(classes[i]);
+		}
+		INVOKE_STATIC(mv, Type.getType(objectClass), Type.getType(returnClass), methodName, params);
+	}
+
+	public static void INVOKE_STATIC(MethodVisitor mv, Type type, Type returnType, String methodName, Class<?>... classes) {
+		Type[] params = new Type[classes.length];
+		for (int i = 0; i < classes.length; i++) {
+			params[i] = Type.getType(classes[i]);
+		}
+		INVOKE_STATIC(mv, type, returnType, methodName, params);
+	}
+
+	public static void INVOKE_STATIC(MethodVisitor mv, Type type, Type returnType, String methodName, Type... params) {
+		mv.visitMethodInsn(INVOKESTATIC, type.getInternalName(), methodName, Type.getMethodDescriptor(returnType, params), false);
+	}
+
+	public static void INVOKE_INTERFACE(MethodVisitor mv, Type interfaceType, Class<?> returnClass, String methodName, Class<?>... classes) {
+		INVOKE_INTERFACE(mv, interfaceType, Type.getType(returnClass), methodName, classes);
+	}
+
+	public static void INVOKE_INTERFACE(MethodVisitor mv, Class<?> interfaceClass,  String methodName, Class<?>... classes) {
+		INVOKE_INTERFACE(mv, Type.getType(interfaceClass), Type.VOID_TYPE, methodName, classes);
+	}
+
+	public static void INVOKE_INTERFACE(MethodVisitor mv, Class<?> interfaceClass, Class<?> returnClass, String methodName, Class<?>... classes) {
+		INVOKE_INTERFACE(mv, Type.getType(interfaceClass), Type.getType(returnClass), methodName, classes);
+	}
+
+	public static void INVOKE_INTERFACE(MethodVisitor mv, Type type, Type returnType, String methodName, Class<?>... classes) {
+		Type[] params = new Type[classes.length];
+		for (int i = 0; i < classes.length; i++) {
+			params[i] = Type.getType(classes[i]);
+		}
+		INVOKE_INTERFACE(mv, type, returnType, methodName, params);
+	}
+
+	public static void INVOKE_INTERFACE(MethodVisitor mv, Type type, Type returnType, String methodName, Type... params) {
+		mv.visitMethodInsn(INVOKEINTERFACE, type.getInternalName(), methodName, Type.getMethodDescriptor(returnType, params), true);
 	}
 
 	public static void printStaticMessage(MethodVisitor mv, String staticMessage) {
