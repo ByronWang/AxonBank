@@ -1,4 +1,4 @@
-package com.nebula.cqrs.axon;
+package com.nebula.cqrs.axon.asm;
 
 import static org.objectweb.asm.Opcodes.ACC_FINAL;
 import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
@@ -27,15 +27,19 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
-import com.nebula.cqrs.axon.CQRSDomainAnalyzer.Method;
+import com.nebula.cqrs.axon.pojo.Command;
+import com.nebula.cqrs.axon.pojo.Domain;
+import com.nebula.cqrs.axon.pojo.Event;
+import com.nebula.cqrs.axon.pojo.Field;
+import com.nebula.cqrs.axon.pojo.Method;
 
 public class CQRSDomainBuilder extends ClassVisitor {
 	Type typeDomain;
 
-	List<Command> commands = new ArrayList<>();
-	List<Event> events = new ArrayList<>();
-	Domain domain;
-	Field newfieldID;
+	public List<Command> commands = new ArrayList<>();
+	public List<Event> events = new ArrayList<>();
+	public Domain domain;
+	public Field newfieldID;
 
 	public void setKeyField(Field field) {
 		if (newfieldID != null && newfieldID != field) {
@@ -396,101 +400,6 @@ public class CQRSDomainBuilder extends ClassVisitor {
 
 	static boolean is(int access, int modified) {
 		return (access & modified) > 0;
-	}
-
-	static class Field {
-		public Field(String name, Type type) {
-			super();
-			this.name = name;
-			this.type = type;
-		}
-
-		@Override
-		public String toString() {
-			return "Field [name=" + name + ", type=" + type + "]";
-		}
-
-		String name;
-		Type type;
-		boolean idField;
-	}
-
-	class Command {
-		@Override
-		public String toString() {
-			return "Command [simpleClassName=" + simpleClassName + ", fields=" + fields + ", parameters=" + methodParams + "]";
-		}
-
-		final String methodName;
-		final String actionName;
-		final String commandName;
-		final String simpleClassName;
-
-		Field[] methodParams;
-
-		boolean ctorMethod = false;
-
-		List<Field> fields = new ArrayList<>();
-
-		public Command(String actionName, String methodName, String commandName, boolean ctorMethod, String simpleClassName, Type type, Type returnType) {
-			super();
-			this.actionName = actionName;
-			this.methodName = methodName;
-			this.commandName = commandName;
-			this.ctorMethod = ctorMethod;
-			this.simpleClassName = simpleClassName;
-			this.type = type;
-			this.returnType = returnType;
-		}
-
-		Type type;
-		final Type returnType;
-
-		boolean withoutID = false;
-	}
-
-	class Event {
-		Type realEvent;
-
-		@Override
-		public String toString() {
-			return "Command [simpleClassName=" + simpleClassName + ", fields=" + fields + ", parameters=" + methodParams + "]";
-		}
-
-		String originMethodName;
-		String newMethodName;
-		String eventName;
-		Field[] methodParams;
-
-		boolean innerEvent = false;
-
-		String simpleClassName;
-		List<Field> fields = new ArrayList<>();
-
-		public Event(String eventName, String originMethodName, String newMethodName, boolean innerEvent, String simpleClassName, Type type) {
-			super();
-			this.eventName = eventName;
-			this.originMethodName = originMethodName;
-			this.newMethodName = newMethodName;
-			this.innerEvent = innerEvent;
-			this.simpleClassName = simpleClassName;
-			this.type = type;
-		}
-
-		Type type;
-
-		boolean withoutID = false;
-	}
-
-	class Domain {
-		String name;
-
-		public Domain(String name) {
-			super();
-			this.name = name;
-		}
-
-		List<Field> fields = new ArrayList<>();
 	}
 
 }

@@ -1,22 +1,25 @@
-package com.nebula.cqrs.axon;
+package com.nebula.cqrs.axon.asm;
 
-import java.util.*;
+import java.util.List;
 
-import org.objectweb.asm.*;
+import org.axonframework.eventhandling.EventBus;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Type;
 
-import com.nebula.cqrs.axon.CQRSDomainBuilder.Command;
-import com.nebula.cqrs.axon.CQRSDomainBuilder.Field;
+import com.nebula.cqrs.axon.pojo.Command;
+import com.nebula.cqrs.axon.pojo.Field;
 
-public class CQRSCommandHandlerBuilder implements Opcodes {
+public class CQRSCommandHandlerBuilder extends AsmBuilder {
 
 	public byte[] dump(List<Command> commands, Type typeDomain, Type typeHandler) {
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
 		FieldVisitor fv;
-		MethodVisitor mv;
 
 		cw.visit(52, ACC_PUBLIC + ACC_SUPER, typeHandler.getInternalName(), null, "java/lang/Object", null);
-
-		cw.visitSource(CQRSDomainBuilder.toSimpleName(typeHandler.getClassName()) + ".java", null);
 
 		for (Command command : commands) {
 			if (!command.ctorMethod) {
@@ -30,10 +33,26 @@ public class CQRSCommandHandlerBuilder implements Opcodes {
 					"Lorg/axonframework/commandhandling/model/Repository<" + typeDomain.getDescriptor() + ">;", null);
 			fv.visitEnd();
 		}
-		{
-			fv = cw.visitField(ACC_PRIVATE, "eventBus", "Lorg/axonframework/eventhandling/EventBus;", null, null);
-			fv.visitEnd();
+
+		define_field(cw, EventBus.class, "eventBus");
+
+		define_init(cw, typeDomain, typeHandler);
+
+		for (Command command : commands) {
+			if (command.ctorMethod) {
+				dumpCtorMethod(cw, typeDomain, typeHandler, command);
+			} else {
+				dumpMethod(cw, typeDomain, typeHandler, command);
+			}
 		}
+
+		cw.visitEnd();
+
+		return cw.toByteArray();
+	}
+
+	private void define_init(ClassWriter cw, Type typeDomain, Type typeHandler) {
+		MethodVisitor mv;
 		{
 			mv = cw.visitMethod(ACC_PUBLIC, "<init>", "(Lorg/axonframework/commandhandling/model/Repository;Lorg/axonframework/eventhandling/EventBus;)V",
 					"(Lorg/axonframework/commandhandling/model/Repository<" + typeDomain.getDescriptor() + ">;Lorg/axonframework/eventhandling/EventBus;)V",
@@ -71,18 +90,6 @@ public class CQRSCommandHandlerBuilder implements Opcodes {
 			mv.visitMaxs(2, 3);
 			mv.visitEnd();
 		}
-
-		for (Command command : commands) {
-			if (command.ctorMethod) {
-				dumpCtorMethod(cw, typeDomain, typeHandler, command);
-			} else {
-				dumpMethod(cw, typeDomain, typeHandler, command);
-			}
-		}
-
-		cw.visitEnd();
-
-		return cw.toByteArray();
 	}
 
 	void dumpCtorMethod(ClassWriter cw, Type typeDomain, Type typeHandler, Command command) {
@@ -143,13 +150,14 @@ public class CQRSCommandHandlerBuilder implements Opcodes {
 			Label l0 = new Label();
 			mv.visitLabel(l0);
 			mv.visitLineNumber(61, l0);
+
 			mv.visitVarInsn(ALOAD, 0);
 			mv.visitFieldInsn(GETFIELD, typeHandler.getInternalName(), "repository", "Lorg/axonframework/commandhandling/model/Repository;");
 			mv.visitVarInsn(ALOAD, 1);
 
 			Field idField = command.fields.get(0);
-			mv.visitMethodInsn(INVOKEVIRTUAL, command.type.getInternalName(), "get" + CQRSDomainBuilder.toCamelUpper(idField.name), Type.getMethodDescriptor(idField.type),
-					false);
+			mv.visitMethodInsn(INVOKEVIRTUAL, command.type.getInternalName(), "get" + CQRSDomainBuilder.toCamelUpper(idField.name),
+					Type.getMethodDescriptor(idField.type), false);
 
 			mv.visitMethodInsn(INVOKEINTERFACE, "org/axonframework/commandhandling/model/Repository", "load",
 					Type.getMethodDescriptor(Type.getObjectType("org/axonframework/commandhandling/model/Aggregate"), idField.type), true);

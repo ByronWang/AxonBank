@@ -1,8 +1,7 @@
-package com.nebula.cqrs.axon;
+package com.nebula.cqrs.axon.asm;
 
 import static org.objectweb.asm.Opcodes.ACC_STATIC;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,7 +10,8 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
-import com.nebula.cqrs.axon.CQRSDomainBuilder.Field;
+import com.nebula.cqrs.axon.pojo.Field;
+import com.nebula.cqrs.axon.pojo.Method;
 
 public class CQRSDomainAnalyzer extends ClassVisitor {
 
@@ -23,22 +23,7 @@ public class CQRSDomainAnalyzer extends ClassVisitor {
 		super(api);
 	}
 
-	Map<String, Method> methods = new HashMap<>();
-
-	static class Method {
-		String name;
-		Field[] params;
-
-		public Method(String name) {
-			super();
-			this.name = name;
-		}
-
-		@Override
-		public String toString() {
-			return "Method [name=" + name + ", params=" + Arrays.toString(params) + "]\n";
-		}
-	}
+	public Map<String, Method> methods = new HashMap<>();
 
 	@Override
 	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {

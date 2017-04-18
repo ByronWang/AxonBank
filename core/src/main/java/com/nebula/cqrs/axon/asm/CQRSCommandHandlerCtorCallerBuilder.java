@@ -1,16 +1,15 @@
-package com.nebula.cqrs.axon;
+package com.nebula.cqrs.axon.asm;
 
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-import com.nebula.cqrs.axon.CQRSDomainBuilder.Command;
-import com.nebula.cqrs.axon.CQRSDomainBuilder.Field;
+import com.nebula.cqrs.axon.pojo.Command;
+import com.nebula.cqrs.axon.pojo.Field;
 
-public class CQRSCommandHandlerCallerBuilder implements Opcodes {
+public class CQRSCommandHandlerCtorCallerBuilder extends AsmBuilder {
 
 	public static byte[] dump(Type typeDomain, Type typeHandler, Command command) throws Exception {
 
@@ -22,10 +21,8 @@ public class CQRSCommandHandlerCallerBuilder implements Opcodes {
 
 		Type typeCommand = command.type;
 
-		cw.visit(52, ACC_SUPER, typeInner.getInternalName(), "Ljava/lang/Object;Ljava/util/function/Consumer<" + typeDomain.getDescriptor() + ">;",
-				"java/lang/Object", new String[] { "java/util/function/Consumer" });
-
-		cw.visitSource(CQRSDomainBuilder.toSimpleName(typeHandler.getClassName()) + ".java", null);
+		cw.visit(52, ACC_SUPER, typeInner.getInternalName(), "Ljava/lang/Object;Ljava/util/concurrent/Callable<" + typeDomain.getDescriptor() + ">;",
+				"java/lang/Object", new String[] { "java/util/concurrent/Callable" });
 
 		cw.visitOuterClass(typeHandler.getInternalName(), "handle", Type.getMethodDescriptor(Type.VOID_TYPE, typeCommand));
 
@@ -64,12 +61,13 @@ public class CQRSCommandHandlerCallerBuilder implements Opcodes {
 			mv.visitEnd();
 		}
 		{
-			mv = cw.visitMethod(ACC_PUBLIC, "accept", Type.getMethodDescriptor(Type.VOID_TYPE, typeDomain), null, null);
+			mv = cw.visitMethod(ACC_PUBLIC, "call", Type.getMethodDescriptor(typeDomain), null, new String[] { "java/lang/Exception" });
 			mv.visitCode();
 			Label l0 = new Label();
 			mv.visitLabel(l0);
 			mv.visitLineNumber(65, l0);
-			mv.visitVarInsn(ALOAD, 1);
+			mv.visitTypeInsn(NEW, typeDomain.getInternalName());
+			mv.visitInsn(DUP);
 
 			Type[] types = new Type[command.methodParams.length];
 			for (int i = 0; i < command.methodParams.length; i++) {
@@ -82,30 +80,27 @@ public class CQRSCommandHandlerCallerBuilder implements Opcodes {
 						Type.getMethodDescriptor(param.type), false);
 			}
 
-			mv.visitMethodInsn(INVOKEVIRTUAL, typeDomain.getInternalName(), command.methodName, Type.getMethodDescriptor(command.returnType, types), false);
+			mv.visitMethodInsn(INVOKESPECIAL, typeDomain.getInternalName(), "<init>", Type.getMethodDescriptor(Type.VOID_TYPE, types), false);
+
+			AsmBuilder.printStaticMessage(mv, typeCommand.getInternalName() + " create new object");
+
+			mv.visitInsn(ARETURN);
 			Label l1 = new Label();
 			mv.visitLabel(l1);
-			mv.visitLineNumber(66, l1);
-			mv.visitInsn(RETURN);
-			Label l2 = new Label();
-			mv.visitLabel(l2);
-			mv.visitLocalVariable("this", typeInner.getDescriptor(), null, l0, l2, 0);
-			mv.visitLocalVariable(CQRSDomainBuilder.toCamelLower(CQRSDomainBuilder.toSimpleName(typeDomain.getClassName())), typeDomain.getDescriptor(), null, l0, l2, 1);
-			mv.visitMaxs(3, 2);
+			mv.visitLocalVariable("this", typeInner.getDescriptor(), null, l0, l1, 0);
+			mv.visitMaxs(5, 1);
 			mv.visitEnd();
 		}
 		{
-			mv = cw.visitMethod(ACC_PUBLIC + ACC_BRIDGE + ACC_SYNTHETIC, "accept", "(Ljava/lang/Object;)V", null, null);
+			mv = cw.visitMethod(ACC_PUBLIC + ACC_BRIDGE + ACC_SYNTHETIC, "call", "()Ljava/lang/Object;", null, new String[] { "java/lang/Exception" });
 			mv.visitCode();
 			Label l0 = new Label();
 			mv.visitLabel(l0);
 			mv.visitLineNumber(1, l0);
 			mv.visitVarInsn(ALOAD, 0);
-			mv.visitVarInsn(ALOAD, 1);
-			mv.visitTypeInsn(CHECKCAST, typeDomain.getInternalName());
-			mv.visitMethodInsn(INVOKEVIRTUAL, typeInner.getInternalName(), "accept", Type.getMethodDescriptor(Type.VOID_TYPE, typeDomain), false);
-			mv.visitInsn(RETURN);
-			mv.visitMaxs(2, 2);
+			mv.visitMethodInsn(INVOKEVIRTUAL, typeInner.getInternalName(), "call", Type.getMethodDescriptor(typeDomain), false);
+			mv.visitInsn(ARETURN);
+			mv.visitMaxs(1, 1);
 			mv.visitEnd();
 		}
 		cw.visitEnd();

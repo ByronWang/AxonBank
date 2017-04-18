@@ -14,8 +14,16 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-import com.nebula.cqrs.axon.CQRSDomainBuilder.Command;
-import com.nebula.cqrs.axon.CQRSDomainBuilder.Event;
+import com.nebula.cqrs.axon.asm.CQRSCommandBuilder;
+import com.nebula.cqrs.axon.asm.CQRSCommandHandlerBuilder;
+import com.nebula.cqrs.axon.asm.CQRSCommandHandlerCallerBuilder;
+import com.nebula.cqrs.axon.asm.CQRSCommandHandlerCtorCallerBuilder;
+import com.nebula.cqrs.axon.asm.CQRSDomainAnalyzer;
+import com.nebula.cqrs.axon.asm.CQRSDomainBuilder;
+import com.nebula.cqrs.axon.asm.CQRSEventAliasBuilder;
+import com.nebula.cqrs.axon.asm.CQRSEventRealBuilder;
+import com.nebula.cqrs.axon.pojo.Command;
+import com.nebula.cqrs.axon.pojo.Event;
 
 public class CQRSBuilder implements CQRSContext {
 	final MyClassLoader classLoader;

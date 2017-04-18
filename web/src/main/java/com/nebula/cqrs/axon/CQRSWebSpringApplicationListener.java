@@ -1,5 +1,6 @@
 package com.nebula.cqrs.axon;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,9 +13,18 @@ import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.boot.context.event.ApplicationPreparedEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.data.repository.core.EntityInformation;
+import org.springframework.data.repository.core.RepositoryInformation;
+import org.springframework.data.repository.core.RepositoryMetadata;
+import org.springframework.data.repository.core.support.RepositoryFactorySupport;
 
-import com.nebula.cqrs.axon.CQRSDomainBuilder.Command;
-import com.nebula.cqrs.axon.CQRSDomainBuilder.Field;
+import com.nebula.cqrs.axon.asm.CQRSAxonConfigBuilder;
+import com.nebula.cqrs.axon.asm.CQRSDomainBuilder;
+import com.nebula.cqrs.axon.asm.CQRSRepositoryBuilder;
+import com.nebula.cqrs.axon.asm.CQRSWebControllerBuilder;
+import com.nebula.cqrs.axon.asm.PojoBuilder;
+import com.nebula.cqrs.axon.pojo.Command;
+import com.nebula.cqrs.axon.pojo.Field;
 
 public class CQRSWebSpringApplicationListener implements ApplicationListener<ApplicationPreparedEvent>, DomainListener {
 
@@ -83,6 +93,10 @@ public class CQRSWebSpringApplicationListener implements ApplicationListener<App
 		for (Type type : beanTypes) {
 			register(beanFactory, type.getClassName());
 		}
+		
+
+//		RepositoryFactorySupport factorySupport = new RepositoryFactorySupport() {
+
 	}
 
 	private void register(ConfigurableListableBeanFactory beanFactory, String name) {
