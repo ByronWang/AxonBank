@@ -23,6 +23,7 @@ public class CQRSBuilder implements CQRSContext {
 	public CQRSBuilder() {
 		super();
 		this.classLoader = new MyClassLoader();
+		Thread.currentThread().setContextClassLoader(classLoader);
 		listeners.add(new CommandHandlerListener());
 	}
 
