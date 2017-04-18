@@ -15,11 +15,12 @@ import java.lang.reflect.InvocationTargetException;
 
 public class ControllerDomainListenerTest {
 	
-	CQRSWebDomainListener listener;
+	CQRSWebSpringApplicationListener listener;
+	CQRSBuilder cqrsBuilder = new CQRSBuilder();
 	
     @Before
     public void setUp() throws Exception {
-    	listener = new CQRSWebDomainListener();
+    	listener = new CQRSWebSpringApplicationListener(cqrsBuilder);
     }
 	@Test
 	public void testDefine() throws ClassNotFoundException, NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
@@ -29,7 +30,6 @@ public class ControllerDomainListenerTest {
 		String repositoryName = domainName + "Repository";
 		String entryName = domainName + "Entry";
 		
-		CQRSBuilder cqrsBuilder = new CQRSBuilder();
 		cqrsBuilder.add(listener);
 		cqrsBuilder.makeDomainCQRSHelper(domainName);
 
@@ -38,7 +38,7 @@ public class ControllerDomainListenerTest {
 		CommandBus commandBus = mock(CommandBus.class);
         
 		Class<?> clz = cqrsBuilder.loadClass(controllerName);
-		Constructor<?> con =  clz.getConstructor(CommandBus.class,clzRepository);
-		Object controller =  con.newInstance(commandBus,repository);
+		Constructor<?> con =  clz.getConstructor(CommandBus.class);
+		Object controller =  con.newInstance(commandBus);
 	}
 }

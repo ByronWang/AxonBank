@@ -25,6 +25,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nebula.cqrs.axon.CQRSBuilder;
+import com.nebula.cqrs.axon.CQRSWebSpringApplicationListener;
 
 //@SpringBootApplication
 @Configuration
