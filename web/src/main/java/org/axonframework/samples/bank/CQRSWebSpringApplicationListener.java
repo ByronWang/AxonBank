@@ -35,7 +35,7 @@ public class CQRSWebSpringApplicationListener implements ApplicationListener<App
 		
 		String nameController =domainName + "Controller";
 
-		String nameRepository = domainName + "Repository";
+//		String nameRepository = domainName + "Repository";
 		
 //		cqrsBuilder.makeDomainCQRSHelper("org.axonframework.samples.bank.command.BankAccount");
 		cqrsBuilder.makeDomainCQRSHelper(domainName);
@@ -45,7 +45,7 @@ public class CQRSWebSpringApplicationListener implements ApplicationListener<App
 						
 		register(beanFactory, nameController);
 
-		register(beanFactory, nameRepository);
+//		register(beanFactory, nameRepository);
 		
 		register(beanFactory, typeAxonConfig);
 //

@@ -1,5 +1,21 @@
 package com.nebula.cqrs.axon;
 
+import static org.objectweb.asm.Opcodes.ACC_FINAL;
+import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
+import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
+import static org.objectweb.asm.Opcodes.ACC_SUPER;
+import static org.objectweb.asm.Opcodes.ALOAD;
+import static org.objectweb.asm.Opcodes.ARETURN;
+import static org.objectweb.asm.Opcodes.DUP;
+import static org.objectweb.asm.Opcodes.GETFIELD;
+import static org.objectweb.asm.Opcodes.ILOAD;
+import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
+import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
+import static org.objectweb.asm.Opcodes.IRETURN;
+import static org.objectweb.asm.Opcodes.NEW;
+import static org.objectweb.asm.Opcodes.PUTFIELD;
+import static org.objectweb.asm.Opcodes.RETURN;
+
 import java.util.List;
 
 import org.objectweb.asm.AnnotationVisitor;
@@ -11,14 +27,12 @@ import org.objectweb.asm.Type;
 
 import com.nebula.cqrs.axon.CQRSDomainBuilder.Field;
 
-import static org.objectweb.asm.Opcodes.*;
-
 public class PojoBuilder extends AsmBuilder {
 
 	public static byte[] dump(Type pojoType, List<Field> fields) {
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
 
-		cw.visit(52, ACC_PUBLIC + ACC_SUPER + ACC_ABSTRACT, pojoType.getInternalName(), null, "java/lang/Object", null);
+		cw.visit(52, ACC_PUBLIC + ACC_SUPER, pojoType.getInternalName(), null, "java/lang/Object", null);
 
 		cw.visitSource(pojoType.getClassName(), null);
 

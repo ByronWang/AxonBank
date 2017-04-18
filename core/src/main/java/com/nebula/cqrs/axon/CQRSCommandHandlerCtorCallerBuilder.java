@@ -84,6 +84,9 @@ public class CQRSCommandHandlerCtorCallerBuilder implements Opcodes {
 			}
 
 			mv.visitMethodInsn(INVOKESPECIAL, typeDomain.getInternalName(), "<init>", Type.getMethodDescriptor(Type.VOID_TYPE, types), false);
+			
+			AsmBuilder.printStaticMessage(mv,typeCommand.getInternalName() +  " create new object");
+			
 			mv.visitInsn(ARETURN);
 			Label l1 = new Label();
 			mv.visitLabel(l1);

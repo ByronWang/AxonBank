@@ -53,7 +53,7 @@ public class CQRSWebControllerBuilder implements Opcodes {
 			fv.visitEnd();
 		}
 		{
-			mv = cw.visitMethod(ACC_PUBLIC, "<init>", Type.getMethodDescriptor(Type.VOID_TYPE, typeCommandBus, typeRepository), null, null);
+			mv = cw.visitMethod(ACC_PUBLIC, "<init>", Type.getMethodDescriptor(Type.VOID_TYPE, typeCommandBus), null, null);
 			{
 				av0 = mv.visitAnnotation(Type.getDescriptor(Autowired.class), true);
 				av0.visitEnd();
@@ -70,12 +70,7 @@ public class CQRSWebControllerBuilder implements Opcodes {
 			mv.visitVarInsn(ALOAD, 0);
 			mv.visitVarInsn(ALOAD, 1);
 			mv.visitFieldInsn(PUTFIELD, typeController.getInternalName(), "commandBus", typeCommandBus.getDescriptor());
-			Label l2 = new Label();
-			mv.visitLabel(l2);
-			mv.visitLineNumber(48, l2);
-			mv.visitVarInsn(ALOAD, 0);
-			mv.visitVarInsn(ALOAD, 2);
-			mv.visitFieldInsn(PUTFIELD, typeController.getInternalName(), "repository", typeRepository.getDescriptor());
+
 			Label l3 = new Label();
 			mv.visitLabel(l3);
 			mv.visitLineNumber(49, l3);
@@ -88,58 +83,58 @@ public class CQRSWebControllerBuilder implements Opcodes {
 			mv.visitMaxs(2, 3);
 			mv.visitEnd();
 		}
-		{
-			mv = cw.visitMethod(ACC_PUBLIC, "all", "()Ljava/lang/Iterable;", "()Ljava/lang/Iterable<" + typeEntry.getDescriptor() + ">;", null);
-			{
-				av0 = mv.visitAnnotation(Type.getDescriptor(SubscribeMapping.class), true);
-				av0.visitEnd();
-			}
-			mv.visitCode();
-			Label l0 = new Label();
-			mv.visitLabel(l0);
-			mv.visitLineNumber(53, l0);
-			mv.visitVarInsn(ALOAD, 0);
-			mv.visitFieldInsn(GETFIELD, typeController.getInternalName(), "repository", typeRepository.getDescriptor());
-			mv.visitMethodInsn(INVOKEINTERFACE, typeRepository.getInternalName(), "findAllByOrderByIdAsc", "()Ljava/lang/Iterable;", true);
-			mv.visitInsn(ARETURN);
-			Label l1 = new Label();
-			mv.visitLabel(l1);
-			mv.visitLocalVariable("this", typeController.getDescriptor(), null, l0, l1, 0);
-			mv.visitMaxs(1, 1);
-			mv.visitEnd();
-		}
-		{
-			mv = cw.visitMethod(ACC_PUBLIC, "get", Type.getMethodDescriptor(typeEntry, Type.getType(String.class)), null, null);
-			{
-				av0 = mv.visitAnnotation(Type.getDescriptor(SubscribeMapping.class), true);
-				{
-					AnnotationVisitor av1 = av0.visitArray("value");
-					av1.visit(null, "/{id}");
-					av1.visitEnd();
-				}
-				av0.visitEnd();
-			}
-			{
-				av0 = mv.visitParameterAnnotation(0, Type.getDescriptor(DestinationVariable.class), true);
-				av0.visitEnd();
-			}
-			mv.visitCode();
-			Label l0 = new Label();
-			mv.visitLabel(l0);
-			mv.visitLineNumber(58, l0);
-			mv.visitVarInsn(ALOAD, 0);
-			mv.visitFieldInsn(GETFIELD, typeController.getInternalName(), "repository", typeRepository.getDescriptor());
-			mv.visitVarInsn(ALOAD, 1);
-			mv.visitMethodInsn(INVOKEINTERFACE, typeRepository.getInternalName(), "findOne", "(Ljava/io/Serializable;)Ljava/lang/Object;", true);
-			mv.visitTypeInsn(CHECKCAST, typeEntry.getInternalName());
-			mv.visitInsn(ARETURN);
-			Label l1 = new Label();
-			mv.visitLabel(l1);
-			mv.visitLocalVariable("this", typeController.getDescriptor(), null, l0, l1, 0);
-			mv.visitLocalVariable("id", "Ljava/lang/String;", null, l0, l1, 1);
-			mv.visitMaxs(2, 2);
-			mv.visitEnd();
-		}
+//		{
+//			mv = cw.visitMethod(ACC_PUBLIC, "all", "()Ljava/lang/Iterable;", "()Ljava/lang/Iterable<" + typeEntry.getDescriptor() + ">;", null);
+//			{
+//				av0 = mv.visitAnnotation(Type.getDescriptor(SubscribeMapping.class), true);
+//				av0.visitEnd();
+//			}
+//			mv.visitCode();
+//			Label l0 = new Label();
+//			mv.visitLabel(l0);
+//			mv.visitLineNumber(53, l0);
+//			mv.visitVarInsn(ALOAD, 0);
+//			mv.visitFieldInsn(GETFIELD, typeController.getInternalName(), "repository", typeRepository.getDescriptor());
+//			mv.visitMethodInsn(INVOKEINTERFACE, typeRepository.getInternalName(), "findAllByOrderByIdAsc", "()Ljava/lang/Iterable;", true);
+//			mv.visitInsn(ARETURN);
+//			Label l1 = new Label();
+//			mv.visitLabel(l1);
+//			mv.visitLocalVariable("this", typeController.getDescriptor(), null, l0, l1, 0);
+//			mv.visitMaxs(1, 1);
+//			mv.visitEnd();
+//		}
+//		{
+//			mv = cw.visitMethod(ACC_PUBLIC, "get", Type.getMethodDescriptor(typeEntry, Type.getType(String.class)), null, null);
+//			{
+//				av0 = mv.visitAnnotation(Type.getDescriptor(SubscribeMapping.class), true);
+//				{
+//					AnnotationVisitor av1 = av0.visitArray("value");
+//					av1.visit(null, "/{id}");
+//					av1.visitEnd();
+//				}
+//				av0.visitEnd();
+//			}
+//			{
+//				av0 = mv.visitParameterAnnotation(0, Type.getDescriptor(DestinationVariable.class), true);
+//				av0.visitEnd();
+//			}
+//			mv.visitCode();
+//			Label l0 = new Label();
+//			mv.visitLabel(l0);
+//			mv.visitLineNumber(58, l0);
+//			mv.visitVarInsn(ALOAD, 0);
+//			mv.visitFieldInsn(GETFIELD, typeController.getInternalName(), "repository", typeRepository.getDescriptor());
+//			mv.visitVarInsn(ALOAD, 1);
+//			mv.visitMethodInsn(INVOKEINTERFACE, typeRepository.getInternalName(), "findOne", "(Ljava/io/Serializable;)Ljava/lang/Object;", true);
+//			mv.visitTypeInsn(CHECKCAST, typeEntry.getInternalName());
+//			mv.visitInsn(ARETURN);
+//			Label l1 = new Label();
+//			mv.visitLabel(l1);
+//			mv.visitLocalVariable("this", typeController.getDescriptor(), null, l0, l1, 0);
+//			mv.visitLocalVariable("id", "Ljava/lang/String;", null, l0, l1, 1);
+//			mv.visitMaxs(2, 2);
+//			mv.visitEnd();
+//		}
 
 		for (Command command : cqrs.commands) {
 			if (!command.ctorMethod) continue;
@@ -171,9 +166,9 @@ public class CQRSWebControllerBuilder implements Opcodes {
 
 			mv.visitVarInsn(ALOAD, 2);
 			for (Field field : command.fields) {
-				if (!field.idField) AsmBuilder.visitInvoke_getField(mv, 1, typeDto, field);
+				if (!field.idField) AsmBuilder.getField(mv, 1, typeDto, field);
 			}
-			AsmBuilder.visitInvoke_init(mv, command.type, command.fields);
+			AsmBuilder.init(mv, command.type, command.fields);
 
 			mv.visitVarInsn(ASTORE, 3);
 			Label l2 = new Label();
@@ -222,10 +217,10 @@ public class CQRSWebControllerBuilder implements Opcodes {
 			mv.visitInsn(DUP);
 
 			for (Field field : command.fields) {
-				AsmBuilder.visitInvoke_getField(mv, 1, typeDto, field);
+				AsmBuilder.getField(mv, 1, typeDto, field);
 			}
 
-			AsmBuilder.visitInvoke_init(mv, command.type, command.fields);
+			AsmBuilder.init(mv, command.type, command.fields);
 
 			mv.visitVarInsn(ASTORE, 2);
 			Label l1 = new Label();

@@ -17,7 +17,7 @@ public class TodoTest {
 
 	@Test
 	public void testPrintTodo() throws IOException {
-		ClassReader cr = new ClassReader(AxonConfig.class.getName());
+		ClassReader cr = new ClassReader(TestPrint.class.getName());
 		ClassVisitor visitor = new TraceClassVisitor(null, new ASMifier(), new PrintWriter(System.out));
 		cr.accept(visitor, ClassReader.EXPAND_FRAMES);
 	}
