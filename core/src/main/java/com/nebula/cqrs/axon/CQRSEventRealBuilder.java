@@ -1,12 +1,6 @@
 package com.nebula.cqrs.axon;
 
-import java.util.List;
-
-import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.FieldVisitor;
-import org.objectweb.asm.Label;
-import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
@@ -22,11 +16,14 @@ public class CQRSEventRealBuilder implements Opcodes {
 		cw.visit(52, ACC_PUBLIC + ACC_SUPER + ACC_ABSTRACT, type.getInternalName(), null, "java/lang/Object", null);
 
 		cw.visitSource(type.getClassName(), null);
-
-		PojoBuilder.visit_fields(cw, type, target.fields);
-		PojoBuilder.visit_getField(cw, type, target.fields);
-		PojoBuilder.visit_init(cw, type, target.fields);
-		PojoBuilder.visit_toString(cw, type, target.fields);
+		
+		for (Field field : target.fields) {
+			PojoBuilder.visitDefine_field(cw, type, field);
+			PojoBuilder.visitDefiine_getField(cw, type, field);
+		}
+		
+		PojoBuilder.visitDefine_init(cw, type, target.fields);
+		PojoBuilder.visitDefine_toString(cw, type, target.fields);
 		return cw.toByteArray();
 	}
 }

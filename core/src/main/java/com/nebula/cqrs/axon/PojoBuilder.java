@@ -13,44 +13,35 @@ import com.nebula.cqrs.axon.CQRSDomainBuilder.Field;
 
 import static org.objectweb.asm.Opcodes.*;
 
-public class PojoBuilder {
+public class PojoBuilder extends AsmBuilder {
 
-	public static byte[] dump(Type pojoType,List<Field>	fields) {
+	public static byte[] dump(Type pojoType, List<Field> fields) {
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
 
 		cw.visit(52, ACC_PUBLIC + ACC_SUPER + ACC_ABSTRACT, pojoType.getInternalName(), null, "java/lang/Object", null);
 
 		cw.visitSource(pojoType.getClassName(), null);
 
-		visit_fields(cw, pojoType, fields);
-		visit_getField(cw, pojoType, fields);
-		visit_init(cw, pojoType, fields);
-		visit_toString(cw, pojoType, fields);
+		for (Field field : fields) {
+			visitDefine_field(cw, pojoType, field);
+			visitDefiine_getField(cw, pojoType, field);
+		}
+		visitDefine_init(cw, pojoType, fields);
+		visitDefine_toString(cw, pojoType, fields);
 		return cw.toByteArray();
 	}
-	
-	public static void visit_fields(ClassWriter cw, Type type, List<Field> fields) {
-		for (Field field : fields) {
-			FieldVisitor fv;
-			{
-				fv = cw.visitField(ACC_PRIVATE + ACC_FINAL, field.name, field.type.getDescriptor(), null, null);
-				fv.visitEnd();
-			}
+
+	public static void visitDefine_field(ClassWriter cw, Type type, Field field) {
+		FieldVisitor fv;
+		{
+			fv = cw.visitField(ACC_PRIVATE + ACC_FINAL, field.name, field.type.getDescriptor(), null, null);
+			fv.visitEnd();
 		}
 	}
 
-	public static String toGetName(String fieldName) {
-		return "get" + toBeanProperties(fieldName);
-	}
-
-	static String toBeanProperties(String name) {
-		return Character.toUpperCase(name.charAt(0)) + name.substring(1);
-	}
-
-	public static void visit_getField(ClassWriter cw, Type type, List<Field> fields) {
+	public static void visitDefiine_getField(ClassWriter cw, Type type, Field field) {
 		MethodVisitor mv;
 
-		for (Field field : fields) {
 			String methodDescriptor = Type.getMethodDescriptor(field.type, new Type[] {});
 			mv = cw.visitMethod(ACC_PUBLIC, toGetName(field.name), methodDescriptor, null, null);
 			mv.visitCode();
@@ -65,10 +56,9 @@ public class PojoBuilder {
 			mv.visitLocalVariable("this", type.getDescriptor(), null, l0, l1, 0);
 			mv.visitMaxs(0, 0);
 			mv.visitEnd();
-		}
 	}
 
-	public static void visit_init(ClassWriter cw, Type type, List<Field> fields) {
+	public static void visitDefine_init(ClassWriter cw, Type type, List<Field> fields) {
 		MethodVisitor mv;
 		AnnotationVisitor av0;
 		{
@@ -120,7 +110,7 @@ public class PojoBuilder {
 		cw.visitEnd();
 	}
 
-	public static void visit_toString(ClassWriter cw, Type type, List<Field> fields) {
+	public static void visitDefine_toString(ClassWriter cw, Type type, List<Field> fields) {
 		MethodVisitor mv;
 		{
 			mv = cw.visitMethod(ACC_PUBLIC, "toString", "()Ljava/lang/String;", null, null);
@@ -161,5 +151,13 @@ public class PojoBuilder {
 			mv.visitMaxs(3, 1);
 			mv.visitEnd();
 		}
+	}
+
+	public static String toGetName(String fieldName) {
+		return "get" + toBeanProperties(fieldName);
+	}
+
+	static String toBeanProperties(String name) {
+		return Character.toUpperCase(name.charAt(0)) + name.substring(1);
 	}
 }

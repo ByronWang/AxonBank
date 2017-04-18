@@ -17,7 +17,7 @@ public class CQRSEventAliasBuilder implements Opcodes {
 
 		cw.visitSource(type.getClassName(), null);
 
-		visitinit(cw, type, typeSuper, event.fields);
+		visitDefine_init(cw, type, typeSuper, event.fields);
 		return cw.toByteArray();
 	}
 
@@ -29,7 +29,7 @@ public class CQRSEventAliasBuilder implements Opcodes {
 		return Character.toUpperCase(name.charAt(0)) + name.substring(1);
 	}
 
-	public static void visitinit(ClassWriter cw, Type type, Type typeSuper, List<Field> fields) {
+	public static void visitDefine_init(ClassWriter cw, Type type, Type typeSuper, List<Field> fields) {
 		MethodVisitor mv;
 		{
 			Type[] params = new Type[fields.size()];
