@@ -17,7 +17,7 @@ public class CQRSRepositoryBuilder extends AsmBuilder {
 				"Ljava/lang/Object;Lorg/springframework/data/repository/CrudRepository<" + typeEntry.getDescriptor() + "Ljava/lang/String;>;",
 				"java/lang/Object", new String[] { Type.getInternalName(CrudRepository.class) });
 
-		annotations(cw, Repository.class);
+		visitAnnotation(cw, Repository.class);
 
 		{
 			mv = cw.visitMethod(ACC_PUBLIC + ACC_ABSTRACT, "findAllByOrderByIdAsc", "()Ljava/lang/Iterable;",

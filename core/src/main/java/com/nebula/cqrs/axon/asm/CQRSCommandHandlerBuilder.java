@@ -34,7 +34,7 @@ public class CQRSCommandHandlerBuilder extends AsmBuilder {
 			fv.visitEnd();
 		}
 
-		define_field(cw, EventBus.class, "eventBus");
+		visitDefineField(cw, EventBus.class, "eventBus");
 
 		define_init(cw, typeDomain, typeHandler);
 

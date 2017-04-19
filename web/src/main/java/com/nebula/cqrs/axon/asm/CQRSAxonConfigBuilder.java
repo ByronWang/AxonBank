@@ -21,11 +21,11 @@ public class CQRSAxonConfigBuilder extends AsmBuilder {
 
 		cw.visitSource("AxonConfig.java", null);
 
-		annotation(cw, Configuration.class);
-		define_field(cw, AxonConfiguration.class, "axonConfiguration", Autowired.class);
-		define_field(cw, EventBus.class, "eventBus", Autowired.class);
+		visitAnnotation(cw, Configuration.class);
+		visitDefineField(cw, AxonConfiguration.class, "axonConfiguration", Autowired.class);
+		visitDefineField(cw, EventBus.class, "eventBus", Autowired.class);
 
-		define_init_nothing(cw, typeConfig);
+		visitDefineInitWithNothing(cw, typeConfig);
 
 		define_bankAccountCommandHandler(cw, typeDomain, typeConfig, typeCommandHandler);
 		
@@ -38,25 +38,25 @@ public class CQRSAxonConfigBuilder extends AsmBuilder {
 		MethodVisitor mv;
 		{
 			mv = cw.visitMethod(ACC_PUBLIC, "bankAccountCommandHandler", Type.getMethodDescriptor(typeCommandHandler), null, null);
-			annotation(mv, Bean.class);
+			visitAnnotation(mv, Bean.class);
 			mv.visitCode();
 			Label l0 = new Label();
 			mv.visitLabel(l0);
 			mv.visitLineNumber(37, l0);
 
-			NEW_type(mv, typeCommandHandler);
+			visitNewObject(mv, typeCommandHandler);
 
 			mv.visitInsn(DUP);
 
-			GET_FIELD(mv, typeConfig, 0, AxonConfiguration.class, "axonConfiguration");
+			visitGetField(mv, typeConfig, 0, AxonConfiguration.class, "axonConfiguration");
 
 			mv.visitLdcInsn(typeDomain);
 
-			INVOKE_VIRTUAL(mv, AxonConfiguration.class, Repository.class, "repository", Class.class);
+			visitInvokeVirtual(mv, AxonConfiguration.class, Repository.class, "repository", Class.class);
 
-			GET_FIELD(mv, typeConfig, 0, EventBus.class, "eventBus");
+			visitGetField(mv, typeConfig, 0, EventBus.class, "eventBus");
 
-			INVOKE_init_typeWithAllfield(mv, typeCommandHandler, Repository.class, EventBus.class);
+			visitInitTypeWithAllFields(mv, typeCommandHandler, Repository.class, EventBus.class);
 
 			mv.visitInsn(ARETURN);
 			Label l1 = new Label();

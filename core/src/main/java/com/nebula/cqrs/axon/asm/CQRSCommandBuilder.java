@@ -15,18 +15,18 @@ public class CQRSCommandBuilder extends PojoBuilder {
 
 		cw.visit(52, ACC_PUBLIC + ACC_SUPER, type.getInternalName(), null, "java/lang/Object", null);
 
-		define_field(cw, target.fields.get(0), TargetAggregateIdentifier.class);
+		visitDefineField(cw, target.fields.get(0), TargetAggregateIdentifier.class);
 
 		for (int i = 1; i < target.fields.size(); i++) {
-			define_field(cw, target.fields.get(i));
+			visitDefineField(cw, target.fields.get(i));
 		}
 
 		for (Field field : target.fields) {
-			define_getField(cw, type, field);
+			visitDefinePropetyGet(cw, type, field);
 		}
 
-		define_init_allfield(cw, type, target.fields);
-		define_toString_allfield(cw, type, target.fields);
+		visitDefineInitWithAllFields(cw, type, target.fields);
+		visitDefineToStringWithAllFields(cw, type, target.fields);
 
 		return cw.toByteArray();
 	}

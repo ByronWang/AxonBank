@@ -15,12 +15,12 @@ public class CQRSEventRealBuilder extends PojoBuilder {
 		cw.visit(52, ACC_PUBLIC + ACC_SUPER + ACC_ABSTRACT, type.getInternalName(), null, "java/lang/Object", null);
 
 		for (Field field : target.fields) {
-			define_field(cw, field);
-			define_getField(cw, type, field);
+			visitDefineField(cw, field);
+			visitDefinePropetyGet(cw, type, field);
 		}
 
-		define_init_allfield(cw, type, target.fields);
-		define_toString_allfield(cw, type, target.fields);
+		visitDefineInitWithAllFields(cw, type, target.fields);
+		visitDefineToStringWithAllFields(cw, type, target.fields);
 		return cw.toByteArray();
 	}
 }

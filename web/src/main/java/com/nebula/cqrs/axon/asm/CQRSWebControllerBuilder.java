@@ -22,11 +22,11 @@ public class CQRSWebControllerBuilder extends AsmBuilder {
 
 		cw.visit(52, ACC_PUBLIC + ACC_SUPER, typeController.getInternalName(), null, "java/lang/Object", null);
 
-		annotation(cw, Controller.class);
-		annotation(cw, MessageMapping.class, "/bank-accounts");
+		visitAnnotation(cw, Controller.class);
+		visitAnnotation(cw, MessageMapping.class, "/bank-accounts");
 
-		define_field(cw, CommandBus.class, "commandBus");
-		define_field(cw, typeRepository, "repository");
+		visitDefineField(cw, CommandBus.class, "commandBus");
+		visitDefineField(cw, typeRepository, "repository");
 
 		define_init(cw, typeController, typeRepository);
 
@@ -48,19 +48,19 @@ public class CQRSWebControllerBuilder extends AsmBuilder {
 		MethodVisitor mv;
 		{
 			mv = cw.visitMethod(ACC_PUBLIC, "<init>", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(CommandBus.class)), null, null);
-			annotation(mv, Autowired.class);
+			visitAnnotation(mv, Autowired.class);
 			mv.visitCode();
 			Label l0 = new Label();
 			mv.visitLabel(l0);
 			mv.visitLineNumber(45, l0);
 
-			INVOKE_init_Object(mv, 0);
+			visitInitObject(mv, 0);
 
 			Label l1 = new Label();
 			mv.visitLabel(l1);
 			mv.visitLineNumber(47, l1);
 
-			PUT_FIELD(mv, typeController, 0, CommandBus.class, "commandBus", 1);
+			visitPutField(mv, typeController, 0, CommandBus.class, "commandBus", 1);
 
 			Label l3 = new Label();
 			mv.visitLabel(l3);
@@ -82,22 +82,22 @@ public class CQRSWebControllerBuilder extends AsmBuilder {
 		{
 			mv = cw.visitMethod(ACC_PUBLIC, command.actionName, Type.getMethodDescriptor(Type.VOID_TYPE, typeDto), null, null);
 
-			annotation(mv, SubscribeMapping.class, "/" + command.actionName);
+			visitAnnotation(mv, SubscribeMapping.class, "/" + command.actionName);
 
 			mv.visitCode();
 			Label l0 = new Label();
 			mv.visitLabel(l0);
 			mv.visitLineNumber(70, l0);
 
-			NEW_type(mv, command.type);
+			visitNewObject(mv, command.type);
 
 			mv.visitInsn(DUP);
 
 			for (Field field : command.fields) {
-				invoke_getField(mv, 1, typeDto, field);
+				visitGetProperty(mv, 1, typeDto, field);
 			}
 
-			INVOKE_init_typeWithAllfield(mv, command.type, command.fields);
+			visitInitTypeWithAllFields(mv, command.type, command.fields);
 
 			mv.visitVarInsn(ASTORE, 2);
 
@@ -105,13 +105,13 @@ public class CQRSWebControllerBuilder extends AsmBuilder {
 			mv.visitLabel(l1);
 			mv.visitLineNumber(71, l1);
 
-			GET_FIELD(mv, typeController, 0, CommandBus.class, "commandBus");
+			visitGetField(mv, typeController, 0, CommandBus.class, "commandBus");
 
 			mv.visitVarInsn(ALOAD, 2);
 
-			INVOKE_STATIC(mv, GenericCommandMessage.class, CommandMessage.class, "asCommandMessage", Object.class);
+			visitInvokeStatic(mv, GenericCommandMessage.class, CommandMessage.class, "asCommandMessage", Object.class);
 
-			INVOKE_INTERFACE(mv, CommandBus.class, "dispatch", CommandMessage.class);
+			visitInvokeInterface(mv, CommandBus.class, "dispatch", CommandMessage.class);
 
 			Label l2 = new Label();
 			mv.visitLabel(l2);
@@ -132,7 +132,7 @@ public class CQRSWebControllerBuilder extends AsmBuilder {
 		MethodVisitor mv;
 		{
 			mv = cw.visitMethod(ACC_PUBLIC, command.actionName, Type.getMethodDescriptor(Type.VOID_TYPE, typeDto), null, null);
-			annotation(mv, SubscribeMapping.class, "/" + command.actionName);
+			visitAnnotation(mv, SubscribeMapping.class, "/" + command.actionName);
 
 			mv.visitCode();
 			Label l0 = new Label();
@@ -147,7 +147,7 @@ public class CQRSWebControllerBuilder extends AsmBuilder {
 			mv.visitLabel(l1);
 			mv.visitLineNumber(64, l1);
 
-			NEW_type(mv, command.type);
+			visitNewObject(mv, command.type);
 
 			mv.visitInsn(DUP);
 
@@ -156,10 +156,10 @@ public class CQRSWebControllerBuilder extends AsmBuilder {
 			Field idField = command.fields.get(0);
 
 			for (Field field : command.fields) {
-				if (!field.idField) invoke_getField(mv, 1, typeDto, field);
+				if (!field.idField) visitGetProperty(mv, 1, typeDto, field);
 			}
 
-			INVOKE_init_typeWithAllfield(mv, command.type, command.fields);
+			visitInitTypeWithAllFields(mv, command.type, command.fields);
 
 			mv.visitVarInsn(ASTORE, 3);
 
@@ -167,12 +167,12 @@ public class CQRSWebControllerBuilder extends AsmBuilder {
 			mv.visitLabel(l2);
 			mv.visitLineNumber(65, l2);
 
-			GET_FIELD(mv, typeController, 0, CommandBus.class, "commandBus");
+			visitGetField(mv, typeController, 0, CommandBus.class, "commandBus");
 
 			mv.visitVarInsn(ALOAD, 3);
 
-			INVOKE_STATIC(mv, GenericCommandMessage.class, CommandMessage.class, "asCommandMessage", Object.class);
-			INVOKE_INTERFACE(mv, CommandBus.class, "dispatch", CommandMessage.class);
+			visitInvokeStatic(mv, GenericCommandMessage.class, CommandMessage.class, "asCommandMessage", Object.class);
+			visitInvokeInterface(mv, CommandBus.class, "dispatch", CommandMessage.class);
 
 			Label l3 = new Label();
 			mv.visitLabel(l3);

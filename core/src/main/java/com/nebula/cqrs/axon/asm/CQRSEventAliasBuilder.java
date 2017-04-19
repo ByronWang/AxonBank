@@ -14,7 +14,7 @@ public class CQRSEventAliasBuilder extends PojoBuilder {
 
 		cw.visit(52, ACC_PUBLIC + ACC_SUPER, type.getInternalName(), null, typeSuper.getInternalName(), null);
 
-		define_init_allfieldToSuper(cw, type, typeSuper, event.fields);
+		visitDefineInitWithAllFieldsToSuper(cw, type, typeSuper, event.fields);
 		
 		return cw.toByteArray();
 	}

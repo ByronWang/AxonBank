@@ -17,12 +17,12 @@ public class PojoBuilder extends AsmBuilder {
 		cw.visitSource(pojoType.getClassName(), null);
 
 		for (Field field : fields) {
-			define_field (cw,field);
-			define_getField(cw, pojoType, field);
+			visitDefineField (cw,field);
+			visitDefinePropetyGet(cw, pojoType, field);
 		}
-		define_init_nothing(cw, pojoType);
-		define_init_allfield(cw, pojoType, fields);
-		define_toString_allfield(cw, pojoType, fields);
+		visitDefineInitWithNothing(cw, pojoType);
+		visitDefineInitWithAllFields(cw, pojoType, fields);
+		visitDefineToStringWithAllFields(cw, pojoType, fields);
 		return cw.toByteArray();
 	}
 
