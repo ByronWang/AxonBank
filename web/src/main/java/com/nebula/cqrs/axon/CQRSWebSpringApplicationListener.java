@@ -13,6 +13,7 @@ import org.springframework.boot.context.event.ApplicationPreparedEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.ConfigurableApplicationContext;
 
+import com.nebula.cqrs.axon.asm.CQRSWebEntryBuilder;
 import com.nebula.cqrs.axon.asm.CQRSAxonConfigBuilder;
 import com.nebula.cqrs.axon.asm.CQRSDomainBuilder;
 import com.nebula.cqrs.axon.asm.CQRSRepositoryBuilder;
@@ -40,7 +41,7 @@ public class CQRSWebSpringApplicationListener implements ApplicationListener<App
 		Type typeCommandHandler = Type.getObjectType(typeDomain.getInternalName() + "CommandHandler");
 
 		try {
-			ctx.defineClass(typeEntry.getClassName(), PojoBuilder.dump(typeEntry, cqrs.domain.fields));
+			ctx.defineClass(typeEntry.getClassName(), CQRSWebEntryBuilder.dump(typeEntry, cqrs.domain.fields));
 
 			for (Command command : cqrs.commands) {
 				Type typeDto = Type.getObjectType(typeDomain.getInternalName() + CQRSDomainBuilder.toCamelUpper(command.actionName) + "Dto");
@@ -58,14 +59,16 @@ public class CQRSWebSpringApplicationListener implements ApplicationListener<App
 				ctx.defineClass(typeDto.getClassName(), PojoBuilder.dump(typeDto, fields));
 			}
 
-			ctx.defineClass(typeController.getClassName(), CQRSWebControllerBuilder.dump(typeController, typeDomain, typeRepository, typeEntry, cqrs.commands));
+			ctx.defineClass(typeController.getClassName(), CQRSWebControllerBuilder.dump(typeController, typeDomain, typeEntry, cqrs.commands));
 
 			ctx.defineClass(typeRepository.getClassName(), CQRSRepositoryBuilder.dump(typeRepository, typeEntry));
 
-			ctx.defineClass(typeConfig.getClassName(), CQRSAxonConfigBuilder.dump(typeConfig, typeDomain, typeCommandHandler));
+			ctx.defineClass(typeConfig.getClassName(), CQRSAxonConfigBuilder.dump(typeConfig, typeDomain, typeRepository, typeCommandHandler));
 
+			beanTypes.add(typeEntry);
 			beanTypes.add(typeConfig);
 			beanTypes.add(typeController);
+//			beanTypes.add(typeRepository);
 
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -86,9 +89,9 @@ public class CQRSWebSpringApplicationListener implements ApplicationListener<App
 		for (Type type : beanTypes) {
 			register(beanFactory, type.getClassName());
 		}
-		
 
-//		RepositoryFactorySupport factorySupport = new RepositoryFactorySupport() {
+		// RepositoryFactorySupport factorySupport = new
+		// RepositoryFactorySupport() {
 
 	}
 

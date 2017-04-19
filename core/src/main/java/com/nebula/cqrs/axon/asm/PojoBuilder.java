@@ -18,7 +18,7 @@ public class PojoBuilder extends AxonAsmBuilder {
 
 		for (Field field : fields) {
 			visitDefineField(cw, field);
-			visitDefinePropetyGet(cw, objectType, field);
+			visitDefinePropertyGet(cw, objectType, field);
 		}
 		visitDefine_init_withNothing(cw, objectType);
 		visitDefine_init_withAllFields(cw, objectType, fields);

@@ -15,6 +15,8 @@ public class AxonAsmBuilder extends AsmBuilder {
 	public static void visitDefine_init_withAllFields(ClassWriter cw, Type objectType, List<Field> fields) {
 		MethodVisitor mv;
 		{
+			int[] locals = computerLocals(objectType, fields);
+
 			Type[] params = new Type[fields.size()];
 
 			for (int i = 0; i < fields.size(); i++) {
@@ -25,43 +27,51 @@ public class AxonAsmBuilder extends AsmBuilder {
 
 			mv = cw.visitMethod(ACC_PUBLIC, "<init>", methodDescriptor, null, null);
 			mv.visitCode();
-			Label l0 = new Label();
-			mv.visitLabel(l0);
+			Label begigLabel = new Label();
+			mv.visitLabel(begigLabel);
+			{
+				visitInitObject(mv, 0);
 
-			visitInitObject(mv, 0);
+				for (int i = 0; i < fields.size(); i++) {
+					Field field = fields.get(i);
+					mv.visitVarInsn(ALOAD, 0);
+					mv.visitVarInsn(field.type.getOpcode(ILOAD),locals[i + 1]);
+					mv.visitFieldInsn(PUTFIELD, objectType.getInternalName(), field.name, field.type.getDescriptor());
+				}
 
+				visitReturn(mv);
+			}
+			Label endLabel = new Label();
+			mv.visitLabel(endLabel);
+
+			mv.visitLocalVariable("this", objectType.getDescriptor(), null, begigLabel, endLabel, 0);
 			for (int i = 0; i < fields.size(); i++) {
 				Field field = fields.get(i);
-				mv.visitVarInsn(ALOAD, 0);
-				mv.visitVarInsn(field.type.getOpcode(ILOAD), i + 1);
-				mv.visitFieldInsn(PUTFIELD, objectType.getInternalName(), field.name, field.type.getDescriptor());
+				mv.visitLocalVariable(field.name, field.type.getDescriptor(), null, begigLabel, endLabel, locals[i + 1]);
 			}
-
-			mv.visitInsn(RETURN);
-			Label l1 = new Label();
-			mv.visitLabel(l1);
-			mv.visitLocalVariable("this", objectType.getDescriptor(), null, l0, l1, 0);
-
-			for (int i = 0; i < fields.size(); i++) {
-				Field field = fields.get(i);
-				mv.visitLocalVariable(field.name, field.type.getDescriptor(), null, l0, l1, i + 1);
-			}
-			mv.visitMaxs(3, 4);
+			mv.visitMaxs(0, 0);
 			mv.visitEnd();
 		}
-		cw.visitEnd();
+	}
+
+	public static int[] computerLocals(Type objectType, List<Field> fields) {
+		return computerLocals(objectType, convert(fields));
+	}
+
+	protected static Type[] convert(List<Field> fields) {
+		Type[] types = new Type[fields.size()];
+		for (int i = 0; i < fields.size(); i++) {
+			types[i] = fields.get(i).type;
+		}
+		return types;
 	}
 
 	public static void visitDefine_init_withAllFieldsToSuper(ClassWriter cw, Type objectType, Type superType, List<Field> fields) {
 		MethodVisitor mv;
 		{
-			Type[] params = new Type[fields.size()];
+			int[] locals = computerLocals(objectType, fields);
 
-			for (int i = 0; i < fields.size(); i++) {
-				params[i] = fields.get(i).type;
-			}
-
-			String methodDescriptor = Type.getMethodDescriptor(Type.VOID_TYPE, params);
+			String methodDescriptor = Type.getMethodDescriptor(Type.VOID_TYPE, convert(fields));
 			mv = cw.visitMethod(ACC_PUBLIC, "<init>", methodDescriptor, null, null);
 			mv.visitCode();
 			Label l0 = new Label();
@@ -83,11 +93,10 @@ public class AxonAsmBuilder extends AsmBuilder {
 			mv.visitLocalVariable("this", objectType.getDescriptor(), null, l0, l2, 0);
 			for (int i = 0; i < fields.size(); i++) {
 				Field field = fields.get(i);
-				mv.visitLocalVariable(field.name, field.type.getDescriptor(), null, l0, l2, i + 1);
+				mv.visitLocalVariable(field.name, field.type.getDescriptor(), null, l0, l2, locals[i + 1]);
 			}
 			mv.visitMaxs(4, 4);
 			mv.visitEnd();
-
 		}
 	}
 
@@ -101,7 +110,7 @@ public class AxonAsmBuilder extends AsmBuilder {
 			mv.visitLineNumber(22, l0);
 			mv.visitTypeInsn(NEW, "java/lang/StringBuilder");
 			mv.visitInsn(DUP);
-			mv.visitLdcInsn(CQRSDomainBuilder.toSimpleName(objectType.getClassName()) + "(");
+			mv.visitLdcInsn(toSimpleName(objectType.getClassName()) + "(");
 			mv.visitMethodInsn(INVOKESPECIAL, "java/lang/StringBuilder", "<init>", "(Ljava/lang/String;)V", false);
 			{
 				for (int i = 0; i < fields.size(); i++) {
@@ -138,8 +147,8 @@ public class AxonAsmBuilder extends AsmBuilder {
 		visitDefineField(cw, field.name, field.type, annotations);
 	}
 
-	public static void visitDefinePropetyGet(ClassWriter cw, Type objectType, Field field) {
-		visitDefinePropetyGet(cw, objectType, field.name, field.type);
+	public static void visitDefinePropertyGet(ClassWriter cw, Type objectType, Field field) {
+		visitDefinePropertyGet(cw, objectType, field.name, field.type);
 	}
 
 	public static void visitGetProperty(MethodVisitor mv, int objectIndex, Type objectType, Field field) {
@@ -168,6 +177,10 @@ public class AxonAsmBuilder extends AsmBuilder {
 
 	public static void visitPutField(MethodVisitor mv, int objectIndex, Type objectType, int dataIndex, Field field) {
 		visitPutField(mv, objectIndex, objectType, dataIndex, field.name, field.type);
+	}
+
+	protected static void visitDefinePropertySet(ClassWriter cw, Type objectType, Field field) {
+		visitDefinePropertySet(cw, objectType, field.name, field.type);
 	}
 
 }

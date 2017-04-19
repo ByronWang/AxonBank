@@ -19,7 +19,7 @@ import com.nebula.cqrs.axon.pojo.Field;
 
 public class CQRSWebControllerBuilder extends AxonAsmBuilder {
 
-	public static byte[] dump(Type typeController, Type typeDomain, Type typeRepository, Type typeEntry, List<Command> commands) throws Exception {
+	public static byte[] dump(Type typeController, Type typeDomain, Type typeEntry, List<Command> commands) throws Exception {
 		ClassWriter cw = new ClassWriter(0);
 
 		cw.visit(52, ACC_PUBLIC + ACC_SUPER, typeController.getInternalName(), null, "java/lang/Object", null);
@@ -28,9 +28,9 @@ public class CQRSWebControllerBuilder extends AxonAsmBuilder {
 		visitAnnotation(cw, MessageMapping.class, "/bank-accounts");
 
 		visitDefineField(cw, "commandBus", CommandBus.class);
-		visitDefineField(cw, "repository", typeRepository);
+//		visitDefineField(cw, "repository", typeRepository);
 
-		define_init(cw, typeController, typeRepository);
+		define_init(cw, typeController);
 
 		for (Command command : commands) {
 			Type typeDto = Type.getObjectType(typeDomain.getInternalName() + CQRSDomainBuilder.toCamelUpper(command.actionName) + "Dto");
@@ -46,7 +46,7 @@ public class CQRSWebControllerBuilder extends AxonAsmBuilder {
 		return cw.toByteArray();
 	}
 
-	private static MethodVisitor define_init(ClassWriter cw, Type typeController, Type typeRepository) {
+	private static MethodVisitor define_init(ClassWriter cw, Type typeController) {
 		MethodVisitor mv;
 		{
 			mv = cw.visitMethod(ACC_PUBLIC, "<init>", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(CommandBus.class)), null, null);
@@ -64,7 +64,6 @@ public class CQRSWebControllerBuilder extends AxonAsmBuilder {
 			mv.visitLabel(l4);
 			mv.visitLocalVariable("this", typeController.getDescriptor(), null, l0, l4, 0);
 			mv.visitLocalVariable("commandBus", Type.getDescriptor(CommandBus.class), null, l0, l4, 1);
-			mv.visitLocalVariable("repository", typeRepository.getDescriptor(), null, l0, l4, 2);
 			mv.visitMaxs(2, 3);
 			mv.visitEnd();
 		}

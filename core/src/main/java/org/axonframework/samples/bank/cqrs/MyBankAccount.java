@@ -23,7 +23,7 @@ import org.axonframework.spring.stereotype.Aggregate;
 public class MyBankAccount {
 
 	@AggregateIdentifier
-	private String id;
+	private String axonBankAccountId;
 	private long overdraftLimit;
 	private long balanceInCents;
 
@@ -32,8 +32,8 @@ public class MyBankAccount {
 	}
 
 	// BankAccountCreateCommand
-	public MyBankAccount(String id, long overdraftLimit) {
-		onCreated(id, overdraftLimit);// BankAccountCreatedEvent
+	public MyBankAccount(String axonBankAccountId, long overdraftLimit) {
+		onCreated(axonBankAccountId, overdraftLimit);// BankAccountCreatedEvent
 	}
 
 	// BankAccountMoneyDepositCommand
@@ -90,8 +90,8 @@ public class MyBankAccount {
 	}
 
 	// BankAccountCreatedEvent
-	void onCreated(String id, long overdraftLimit) {
-		this.id = id;
+	void onCreated(String axonBankAccountId, long overdraftLimit) {
+		this.axonBankAccountId = axonBankAccountId;
 		this.overdraftLimit = overdraftLimit;
 		this.balanceInCents = 0;
 	}

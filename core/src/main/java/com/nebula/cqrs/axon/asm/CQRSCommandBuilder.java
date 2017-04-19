@@ -19,11 +19,11 @@ public class CQRSCommandBuilder extends PojoBuilder {
 		cw.visit(52, ACC_PUBLIC + ACC_SUPER, objectType.getInternalName(), null, "java/lang/Object", null);
 
 		visitDefineField(cw, objectFields.get(0), TargetAggregateIdentifier.class);
-		visitDefinePropetyGet(cw, objectType, objectFields.get(0));
+		visitDefinePropertyGet(cw, objectType, objectFields.get(0));
 
 		for (int i = 1; i < objectFields.size(); i++) {
 			visitDefineField(cw, objectFields.get(i));
-			visitDefinePropetyGet(cw, objectType, objectFields.get(i));
+			visitDefinePropertyGet(cw, objectType, objectFields.get(i));
 		}
 
 		visitDefine_init_withAllFields(cw, objectType, objectFields);

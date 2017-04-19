@@ -19,10 +19,12 @@ package org.axonframework.samples.bank.config;
 import org.axonframework.eventhandling.EventBus;
 import org.axonframework.samples.bank.command.BankAccount;
 import org.axonframework.samples.bank.command.BankAccountCommandHandler;
+import org.axonframework.samples.bank.query.bankaccount.BankAccountRepository;
 import org.axonframework.spring.config.AxonConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.repository.core.support.RepositoryFactorySupport;
 
 @Configuration
 public class AxonConfig {
@@ -32,8 +34,16 @@ public class AxonConfig {
     @Autowired
     private EventBus eventBus;
 
+    @Autowired
+    private RepositoryFactorySupport repositoryFactory;
+    
     @Bean
     public BankAccountCommandHandler bankAccountCommandHandler() {
         return new BankAccountCommandHandler(axonConfiguration.repository(BankAccount.class), eventBus);
+    }
+    @Bean({"MybankAccountRepository"})
+    public BankAccountRepository MybankAccountRepository()
+    {
+      return this.repositoryFactory.getRepository(BankAccountRepository.class);
     }
 }

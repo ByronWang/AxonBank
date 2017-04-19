@@ -18,6 +18,10 @@ public class AsmBuilder implements Opcodes {
 		return Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1);
 	}
 
+	protected static String toPropertySetName(String fieldName) {
+		return "set" + toPropertyName(fieldName);
+	}
+
 	public static void visitAnnotation(ClassWriter cw, Class<?>... annotations) {
 		for (Class<?> annotation : annotations) {
 			AnnotationVisitor av0 = cw.visitAnnotation(Type.getDescriptor(annotation), true);
@@ -90,23 +94,43 @@ public class AsmBuilder implements Opcodes {
 		fv.visitEnd();
 	}
 
-	public static void visitDefinePropetyGet(ClassWriter cw, Type objectType, String fieldName, Type fieldType) {
+	public static void visitDefinePropertyGet(ClassWriter cw, Type objectType, String fieldName, Type fieldType) {
 		MethodVisitor mv;
-
-		String methodDescriptor = Type.getMethodDescriptor(fieldType, new Type[] {});
-		mv = cw.visitMethod(ACC_PUBLIC, toPropertyGetName(fieldName), methodDescriptor, null, null);
+		mv = cw.visitMethod(ACC_PUBLIC, toPropertyGetName(fieldName), Type.getMethodDescriptor(fieldType), null, null);
 		mv.visitCode();
 		Label l0 = new Label();
 		mv.visitLabel(l0);
 		mv.visitLineNumber(22, l0);
-		mv.visitVarInsn(ALOAD, 0);
-		mv.visitFieldInsn(GETFIELD, objectType.getInternalName(), fieldName, fieldType.getDescriptor());
-		mv.visitInsn(fieldType.getOpcode(IRETURN));
+		{
+			visitGetField(mv, 0, objectType, fieldName, fieldType);
+			visitReturn(mv, fieldType);
+		}
 		Label l1 = new Label();
 		mv.visitLabel(l1);
 		mv.visitLocalVariable("this", objectType.getDescriptor(), null, l0, l1, 0);
 		mv.visitMaxs(0, 0);
 		mv.visitEnd();
+	}
+
+	public static void visitDefinePropertySet(ClassWriter cw, Type objectType, String fieldName, Type fieldType) {
+		MethodVisitor mv;
+		{
+			mv = cw.visitMethod(ACC_PUBLIC, toPropertySetName(fieldName), Type.getMethodDescriptor(Type.VOID_TYPE, fieldType), null, null);
+			mv.visitCode();
+			Label l0 = new Label();
+			mv.visitLabel(l0);
+			mv.visitLineNumber(56, l0);
+			{
+				visitPutField(mv, 0, objectType, 1, fieldName, fieldType);
+				visitReturn(mv);
+			}
+			Label l2 = new Label();
+			mv.visitLabel(l2);
+			mv.visitLocalVariable("this", objectType.getDescriptor(), null, l0, l2, 0);
+			mv.visitLocalVariable(fieldName, fieldType.getDescriptor(), null, l0, l2, 1);
+			mv.visitMaxs(2, 2);
+			mv.visitEnd();
+		}
 	}
 
 	public static void visitGetField(MethodVisitor mv, int objectIndex, Type objectType, String fieldName, Class<?> fieldClass) {
@@ -130,6 +154,10 @@ public class AsmBuilder implements Opcodes {
 	public static void visitInitObject(MethodVisitor mv, int index) {
 		mv.visitVarInsn(ALOAD, index);
 		mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
+	}
+
+	public static void visitInitTypeWithAllFields(MethodVisitor mv, Class<?> objectClass, Class<?>... classes) {
+		visitInitTypeWithAllFields(mv, Type.getType(objectClass), classes);
 	}
 
 	public static void visitInitTypeWithAllFields(MethodVisitor mv, Type objectType, Class<?>... classes) {
@@ -224,6 +252,10 @@ public class AsmBuilder implements Opcodes {
 		visitInvokeVirtual(mv, Type.getType(objectClass), Type.getType(returnClass), methodName, classes);
 	}
 
+	public static void visitInvokeVirtual(MethodVisitor mv, Class<?> objectClass, Type returnType, String methodName, Class<?>... classes) {
+		visitInvokeVirtual(mv, Type.getType(objectClass), returnType, methodName, classes);
+	}
+
 	public static void visitInvokeVirtual(MethodVisitor mv, int objectIndex, Type objectType, String methodName, Type... params) {
 		visitInvokeVirtual(mv, objectIndex, objectType, Type.VOID_TYPE, methodName, params);
 	}
@@ -253,8 +285,12 @@ public class AsmBuilder implements Opcodes {
 		mv.visitMethodInsn(INVOKEVIRTUAL, objectType.getInternalName(), methodName, Type.getMethodDescriptor(returnType, params), false);
 	}
 
-	public static void visitNewObject(MethodVisitor mv, Type typeCommandHandler) {
-		mv.visitTypeInsn(NEW, typeCommandHandler.getInternalName());
+	public static void visitNewObject(MethodVisitor mv, Class<?> objectClass) {
+		visitNewObject(mv, Type.getType(objectClass));
+	}
+
+	public static void visitNewObject(MethodVisitor mv, Type objectType) {
+		mv.visitTypeInsn(NEW, objectType.getInternalName());
 	}
 
 	public static void visitPrintObject(MethodVisitor mv, int objectIndex) {
@@ -287,6 +323,29 @@ public class AsmBuilder implements Opcodes {
 
 	public static void visitReturn(MethodVisitor mv) {
 		mv.visitInsn(RETURN);
+	}
+
+	public static void visitReturn(MethodVisitor mv, Type fieldType) {
+		mv.visitInsn(fieldType.getOpcode(IRETURN));
+	}
+
+	public static String toSimpleName(String name) {
+		int index = name.lastIndexOf('.');
+		if (index < 0) index = name.lastIndexOf('/');
+
+		return name.substring(index + 1);
+	}
+	
+	public static int[] computerLocals(Type objectType, Type... types) {
+		int[] locals = new int[types.length + 1];
+		int cntLocal = 0;
+		locals[0] = 0;
+		cntLocal += objectType.getSize();
+		for (int i = 0; i < types.length; i++) {
+			locals[i + 1] = cntLocal;
+			cntLocal += types[i].getSize();
+		}
+		return locals;
 	}
 
 }

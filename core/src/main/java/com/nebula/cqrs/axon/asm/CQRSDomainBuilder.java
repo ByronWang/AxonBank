@@ -283,13 +283,6 @@ public class CQRSDomainBuilder extends ClassVisitor {
 		return Character.toLowerCase(name.charAt(0)) + name.substring(1);
 	}
 
-	public static String toSimpleName(String name) {
-		int index = name.lastIndexOf('.');
-		if (index < 0) index = name.lastIndexOf('/');
-
-		return name.substring(index + 1);
-	}
-
 	class CommandMethodVisitor extends MethodVisitor {
 		final Command command;
 		final Event event;

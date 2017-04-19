@@ -70,7 +70,7 @@ public class CQRSCommandHandlerCallerBuilder extends AxonAsmBuilder {
 			Label l2 = new Label();
 			mv.visitLabel(l2);
 			mv.visitLocalVariable("this", typeInner.getDescriptor(), null, l0, l2, 0);
-			mv.visitLocalVariable(CQRSDomainBuilder.toCamelLower(CQRSDomainBuilder.toSimpleName(typeDomain.getClassName())), typeDomain.getDescriptor(), null,
+			mv.visitLocalVariable(CQRSDomainBuilder.toCamelLower(toSimpleName(typeDomain.getClassName())), typeDomain.getDescriptor(), null,
 					l0, l2, 1);
 			mv.visitMaxs(3, 2);
 			mv.visitEnd();
