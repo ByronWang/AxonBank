@@ -19,8 +19,8 @@ public class CQRSEventRealBuilder extends PojoBuilder {
 			visitDefinePropetyGet(cw, type, field);
 		}
 
-		visitDefineInitWithAllFields(cw, type, target.fields);
-		visitDefineToStringWithAllFields(cw, type, target.fields);
+		visitDefine_init_withAllFields(cw, type, target.fields);
+		visitDefine_toString_WithAllFields(cw, type, target.fields);
 		return cw.toByteArray();
 	}
 }

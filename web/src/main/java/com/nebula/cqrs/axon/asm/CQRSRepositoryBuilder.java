@@ -6,7 +6,7 @@ import org.objectweb.asm.Type;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
-public class CQRSRepositoryBuilder extends AsmBuilder {
+public class CQRSRepositoryBuilder extends AxonAsmBuilder {
 
 	public static byte[] dump(Type typeRepository, Type typeEntry) throws Exception {
 

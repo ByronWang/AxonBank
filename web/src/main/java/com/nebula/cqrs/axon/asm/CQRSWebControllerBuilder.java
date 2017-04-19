@@ -15,7 +15,7 @@ import org.springframework.stereotype.Controller;
 import com.nebula.cqrs.axon.pojo.Command;
 import com.nebula.cqrs.axon.pojo.Field;
 
-public class CQRSWebControllerBuilder extends AsmBuilder {
+public class CQRSWebControllerBuilder extends AxonAsmBuilder {
 
 	public static byte[] dump(Type typeDomain, Type typeController, Type typeRepository, Type typeEntry, CQRSDomainBuilder cqrs) throws Exception {
 		ClassWriter cw = new ClassWriter(0);
@@ -25,8 +25,8 @@ public class CQRSWebControllerBuilder extends AsmBuilder {
 		visitAnnotation(cw, Controller.class);
 		visitAnnotation(cw, MessageMapping.class, "/bank-accounts");
 
-		visitDefineField(cw, CommandBus.class, "commandBus");
-		visitDefineField(cw, typeRepository, "repository");
+		visitDefineField(cw, "commandBus", CommandBus.class);
+		visitDefineField(cw, "repository", typeRepository);
 
 		define_init(cw, typeController, typeRepository);
 
@@ -53,19 +53,11 @@ public class CQRSWebControllerBuilder extends AsmBuilder {
 			Label l0 = new Label();
 			mv.visitLabel(l0);
 			mv.visitLineNumber(45, l0);
-
-			visitInitObject(mv, 0);
-
-			Label l1 = new Label();
-			mv.visitLabel(l1);
-			mv.visitLineNumber(47, l1);
-
-			visitPutField(mv, typeController, 0, CommandBus.class, "commandBus", 1);
-
-			Label l3 = new Label();
-			mv.visitLabel(l3);
-			mv.visitLineNumber(49, l3);
-			mv.visitInsn(RETURN);
+			{
+				visitInitObject(mv, 0);
+				visitPutField(mv, 0, typeController, 1, "commandBus", CommandBus.class);
+				visitReturn(mv);
+			}
 			Label l4 = new Label();
 			mv.visitLabel(l4);
 			mv.visitLocalVariable("this", typeController.getDescriptor(), null, l0, l4, 0);
@@ -89,40 +81,27 @@ public class CQRSWebControllerBuilder extends AsmBuilder {
 			mv.visitLabel(l0);
 			mv.visitLineNumber(70, l0);
 
-			visitNewObject(mv, command.type);
+			{
+				visitNewObject(mv, command.type);
+				mv.visitInsn(DUP);
+				for (Field field : command.fields) {
+					visitGetProperty(mv, 1, typeDto, field);
+				}
+				visitInitTypeWithAllFields(mv, command.type, command.fields);
+				mv.visitVarInsn(ASTORE, 2);
 
-			mv.visitInsn(DUP);
+				visitGetField(mv, 0, typeController, "commandBus", CommandBus.class);
+				mv.visitVarInsn(ALOAD, 2);
+				visitInvokeStatic(mv, GenericCommandMessage.class, CommandMessage.class, "asCommandMessage", Object.class);
 
-			for (Field field : command.fields) {
-				visitGetProperty(mv, 1, typeDto, field);
+				visitInvokeInterface(mv, CommandBus.class, "dispatch", CommandMessage.class);
+				visitReturn(mv);
 			}
-
-			visitInitTypeWithAllFields(mv, command.type, command.fields);
-
-			mv.visitVarInsn(ASTORE, 2);
-
-			Label l1 = new Label();
-			mv.visitLabel(l1);
-			mv.visitLineNumber(71, l1);
-
-			visitGetField(mv, typeController, 0, CommandBus.class, "commandBus");
-
-			mv.visitVarInsn(ALOAD, 2);
-
-			visitInvokeStatic(mv, GenericCommandMessage.class, CommandMessage.class, "asCommandMessage", Object.class);
-
-			visitInvokeInterface(mv, CommandBus.class, "dispatch", CommandMessage.class);
-
-			Label l2 = new Label();
-			mv.visitLabel(l2);
-			mv.visitLineNumber(72, l2);
-
-			mv.visitInsn(RETURN);
 			Label l3 = new Label();
 			mv.visitLabel(l3);
 			mv.visitLocalVariable("this", typeController.getDescriptor(), null, l0, l3, 0);
 			mv.visitLocalVariable("dto", typeDto.getDescriptor(), null, l0, l3, 1);
-			mv.visitLocalVariable("command", command.type.getDescriptor(), null, l1, l3, 2);
+			mv.visitLocalVariable("command", command.type.getDescriptor(), null, l0, l3, 2);
 			mv.visitMaxs(5, 3);
 			mv.visitEnd();
 		}
@@ -131,6 +110,7 @@ public class CQRSWebControllerBuilder extends AsmBuilder {
 	private static MethodVisitor define_action_create(ClassWriter cw, Type typeController, Type typeDto, Command command) {
 		MethodVisitor mv;
 		{
+			Field idField = command.fields.get(0);
 			mv = cw.visitMethod(ACC_PUBLIC, command.actionName, Type.getMethodDescriptor(Type.VOID_TYPE, typeDto), null, null);
 			visitAnnotation(mv, SubscribeMapping.class, "/" + command.actionName);
 
@@ -138,52 +118,41 @@ public class CQRSWebControllerBuilder extends AsmBuilder {
 			Label l0 = new Label();
 			mv.visitLabel(l0);
 			mv.visitLineNumber(63, l0);
-			mv.visitMethodInsn(INVOKESTATIC, "java/util/UUID", "randomUUID", "()Ljava/util/UUID;", false);
-			mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/UUID", "toString", "()Ljava/lang/String;", false);
 
-			mv.visitVarInsn(ASTORE, 2);
+			{
+				mv.visitMethodInsn(INVOKESTATIC, "java/util/UUID", "randomUUID", "()Ljava/util/UUID;", false);
+				mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/UUID", "toString", "()Ljava/lang/String;", false);
+				mv.visitVarInsn(ASTORE, 2);
 
-			Label l1 = new Label();
-			mv.visitLabel(l1);
-			mv.visitLineNumber(64, l1);
+				visitNewObject(mv, command.type);
 
-			visitNewObject(mv, command.type);
+				mv.visitInsn(DUP);
 
-			mv.visitInsn(DUP);
+				mv.visitVarInsn(ALOAD, 2); // load key
 
-			mv.visitVarInsn(ALOAD, 2); // load key
+				for (Field field : command.fields) {
+					if (!field.idField) visitGetProperty(mv, 1, typeDto, field);
+				}
 
-			Field idField = command.fields.get(0);
+				visitInitTypeWithAllFields(mv, command.type, command.fields);
 
-			for (Field field : command.fields) {
-				if (!field.idField) visitGetProperty(mv, 1, typeDto, field);
+				mv.visitVarInsn(ASTORE, 3);
+
+				visitGetField(mv, 0, typeController, "commandBus", CommandBus.class);
+
+				mv.visitVarInsn(ALOAD, 3);
+
+				visitInvokeStatic(mv, GenericCommandMessage.class, CommandMessage.class, "asCommandMessage", Object.class);
+				visitInvokeInterface(mv, CommandBus.class, "dispatch", CommandMessage.class);
+
+				mv.visitInsn(RETURN);
 			}
-
-			visitInitTypeWithAllFields(mv, command.type, command.fields);
-
-			mv.visitVarInsn(ASTORE, 3);
-
-			Label l2 = new Label();
-			mv.visitLabel(l2);
-			mv.visitLineNumber(65, l2);
-
-			visitGetField(mv, typeController, 0, CommandBus.class, "commandBus");
-
-			mv.visitVarInsn(ALOAD, 3);
-
-			visitInvokeStatic(mv, GenericCommandMessage.class, CommandMessage.class, "asCommandMessage", Object.class);
-			visitInvokeInterface(mv, CommandBus.class, "dispatch", CommandMessage.class);
-
-			Label l3 = new Label();
-			mv.visitLabel(l3);
-			mv.visitLineNumber(66, l3);
-			mv.visitInsn(RETURN);
 			Label l4 = new Label();
 			mv.visitLabel(l4);
 			mv.visitLocalVariable("this", typeController.getDescriptor(), null, l0, l4, 0);
 			mv.visitLocalVariable("dto", typeDto.getDescriptor(), null, l0, l4, 1);
-			mv.visitLocalVariable(idField.name, idField.type.getDescriptor(), null, l1, l4, 2);
-			mv.visitLocalVariable("command", command.type.getDescriptor(), null, l2, l4, 3);
+			mv.visitLocalVariable(idField.name, idField.type.getDescriptor(), null, l0, l4, 2);
+			mv.visitLocalVariable("command", command.type.getDescriptor(), null, l0, l4, 3);
 			mv.visitMaxs(5, 4);
 			mv.visitEnd();
 		}

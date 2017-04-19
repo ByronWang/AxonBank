@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-public class CQRSAxonConfigBuilder extends AsmBuilder {
+public class CQRSAxonConfigBuilder extends AxonAsmBuilder {
 
 	public static byte[] dump(Type typeDomain, Type typeConfig, Type typeCommandHandler) throws Exception {
 
@@ -22,13 +22,13 @@ public class CQRSAxonConfigBuilder extends AsmBuilder {
 		cw.visitSource("AxonConfig.java", null);
 
 		visitAnnotation(cw, Configuration.class);
-		visitDefineField(cw, AxonConfiguration.class, "axonConfiguration", Autowired.class);
-		visitDefineField(cw, EventBus.class, "eventBus", Autowired.class);
+		visitDefineField(cw, "axonConfiguration", AxonConfiguration.class, Autowired.class);
+		visitDefineField(cw, "eventBus", EventBus.class, Autowired.class);
 
-		visitDefineInitWithNothing(cw, typeConfig);
+		visitDefineInit_WithNothing(cw, typeConfig);
 
 		define_bankAccountCommandHandler(cw, typeDomain, typeConfig, typeCommandHandler);
-		
+
 		cw.visitEnd();
 
 		return cw.toByteArray();
@@ -43,22 +43,21 @@ public class CQRSAxonConfigBuilder extends AsmBuilder {
 			Label l0 = new Label();
 			mv.visitLabel(l0);
 			mv.visitLineNumber(37, l0);
+			{
+				visitNewObject(mv, typeCommandHandler);
 
-			visitNewObject(mv, typeCommandHandler);
+				mv.visitInsn(DUP);
 
-			mv.visitInsn(DUP);
+				visitGetField(mv, 0, typeConfig, "axonConfiguration", AxonConfiguration.class);
+				mv.visitLdcInsn(typeDomain);
+				visitInvokeVirtual(mv, AxonConfiguration.class, Repository.class, "repository", Class.class);
 
-			visitGetField(mv, typeConfig, 0, AxonConfiguration.class, "axonConfiguration");
+				visitGetField(mv, 0, typeConfig, "eventBus", EventBus.class);
 
-			mv.visitLdcInsn(typeDomain);
+				visitInitTypeWithAllFields(mv, typeCommandHandler, Repository.class, EventBus.class);
+				visitAReturn(mv);
 
-			visitInvokeVirtual(mv, AxonConfiguration.class, Repository.class, "repository", Class.class);
-
-			visitGetField(mv, typeConfig, 0, EventBus.class, "eventBus");
-
-			visitInitTypeWithAllFields(mv, typeCommandHandler, Repository.class, EventBus.class);
-
-			mv.visitInsn(ARETURN);
+			}
 			Label l1 = new Label();
 			mv.visitLabel(l1);
 			mv.visitLocalVariable("this", typeConfig.getDescriptor(), null, l0, l1, 0);

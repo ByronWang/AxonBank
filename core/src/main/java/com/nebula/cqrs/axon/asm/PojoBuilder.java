@@ -7,22 +7,22 @@ import org.objectweb.asm.Type;
 
 import com.nebula.cqrs.axon.pojo.Field;
 
-public class PojoBuilder extends AsmBuilder {
+public class PojoBuilder extends AxonAsmBuilder {
 
-	public static byte[] dump(Type pojoType, List<Field> fields) {
+	public static byte[] dump(Type objectType, List<Field> fields) {
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
 
-		cw.visit(52, ACC_PUBLIC + ACC_SUPER, pojoType.getInternalName(), null, "java/lang/Object", null);
+		cw.visit(52, ACC_PUBLIC + ACC_SUPER, objectType.getInternalName(), null, "java/lang/Object", null);
 
-		cw.visitSource(pojoType.getClassName(), null);
+		cw.visitSource(objectType.getClassName(), null);
 
 		for (Field field : fields) {
-			visitDefineField (cw,field);
-			visitDefinePropetyGet(cw, pojoType, field);
+			visitDefineField(cw, field);
+			visitDefinePropetyGet(cw, objectType, field);
 		}
-		visitDefineInitWithNothing(cw, pojoType);
-		visitDefineInitWithAllFields(cw, pojoType, fields);
-		visitDefineToStringWithAllFields(cw, pojoType, fields);
+		visitDefineInit_WithNothing(cw, objectType);
+		visitDefine_init_withAllFields(cw, objectType, fields);
+		visitDefine_toString_WithAllFields(cw, objectType, fields);
 		return cw.toByteArray();
 	}
 

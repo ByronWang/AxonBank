@@ -9,13 +9,12 @@ import org.objectweb.asm.Type;
 import com.nebula.cqrs.axon.pojo.Command;
 import com.nebula.cqrs.axon.pojo.Field;
 
-public class CQRSCommandHandlerCallerBuilder extends AsmBuilder {
+public class CQRSCommandHandlerCallerBuilder extends AxonAsmBuilder {
 
 	public static byte[] dump(Type typeDomain, Type typeHandler, Command command) throws Exception {
 
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
 		FieldVisitor fv;
-		MethodVisitor mv;
 
 		Type typeInner = Type.getObjectType(typeHandler.getInternalName() + "$Inner" + command.simpleClassName);
 
@@ -36,54 +35,38 @@ public class CQRSCommandHandlerCallerBuilder extends AsmBuilder {
 			fv = cw.visitField(ACC_PRIVATE + ACC_FINAL + ACC_SYNTHETIC, "val$command", typeCommand.getDescriptor(), null, null);
 			fv.visitEnd();
 		}
-		{
-			mv = cw.visitMethod(0, "<init>", Type.getMethodDescriptor(Type.VOID_TYPE, typeHandler, typeCommand), null, null);
-			mv.visitCode();
-			Label l0 = new Label();
-			mv.visitLabel(l0);
-			mv.visitLineNumber(1, l0);
-			mv.visitVarInsn(ALOAD, 0);
-			mv.visitVarInsn(ALOAD, 1);
-			mv.visitFieldInsn(PUTFIELD, typeInner.getInternalName(), "this$0", typeHandler.getDescriptor());
-			mv.visitVarInsn(ALOAD, 0);
-			mv.visitVarInsn(ALOAD, 2);
-			mv.visitFieldInsn(PUTFIELD, typeInner.getInternalName(), "val$command", typeCommand.getDescriptor());
-			Label l1 = new Label();
-			mv.visitLabel(l1);
-			mv.visitLineNumber(62, l1);
-			mv.visitVarInsn(ALOAD, 0);
-			mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
-			mv.visitInsn(RETURN);
-			Label l2 = new Label();
-			mv.visitLabel(l2);
-			mv.visitLocalVariable("this", typeInner.getDescriptor(), null, l0, l2, 0);
-			mv.visitMaxs(2, 3);
-			mv.visitEnd();
-		}
+		visitDefine_init(cw, typeInner, typeHandler, typeCommand);
+		visitDefine_accept(cw, typeInner, typeDomain, command, typeCommand);
+		visitDefine_accept_bridge(cw, typeInner, typeDomain);
+		cw.visitEnd();
+
+		return cw.toByteArray();
+	}
+
+	private static void visitDefine_accept(ClassWriter cw, Type typeInner, Type typeDomain, Command command, Type typeCommand) {
+		MethodVisitor mv;
 		{
 			mv = cw.visitMethod(ACC_PUBLIC, "accept", Type.getMethodDescriptor(Type.VOID_TYPE, typeDomain), null, null);
 			mv.visitCode();
 			Label l0 = new Label();
 			mv.visitLabel(l0);
 			mv.visitLineNumber(65, l0);
-			mv.visitVarInsn(ALOAD, 1);
+			{
+				mv.visitVarInsn(ALOAD, 1);
 
-			Type[] types = new Type[command.methodParams.length];
-			for (int i = 0; i < command.methodParams.length; i++) {
-				Field param = command.methodParams[i];
-				types[i] = command.methodParams[i].type;
+				Type[] types = new Type[command.methodParams.length];
+				for (int i = 0; i < command.methodParams.length; i++) {
+					Field field = command.methodParams[i];
+					types[i] = command.methodParams[i].type;
 
-				mv.visitVarInsn(ALOAD, 0);
-				mv.visitFieldInsn(GETFIELD, typeInner.getInternalName(), "val$command", typeCommand.getDescriptor());
-				mv.visitMethodInsn(INVOKEVIRTUAL, typeCommand.getInternalName(), "get" + CQRSDomainBuilder.toCamelUpper(param.name),
-						Type.getMethodDescriptor(param.type), false);
+					visitGetField(mv, 0, typeInner, "val$command", typeCommand);
+					visitGetProperty(mv, typeCommand, field);
+				}
+
+				visitInvokeVirtual(mv, typeDomain, command.returnType, command.methodName, types);
+
+				visitReturn(mv);
 			}
-
-			mv.visitMethodInsn(INVOKEVIRTUAL, typeDomain.getInternalName(), command.methodName, Type.getMethodDescriptor(command.returnType, types), false);
-			Label l1 = new Label();
-			mv.visitLabel(l1);
-			mv.visitLineNumber(66, l1);
-			mv.visitInsn(RETURN);
 			Label l2 = new Label();
 			mv.visitLabel(l2);
 			mv.visitLocalVariable("this", typeInner.getDescriptor(), null, l0, l2, 0);
@@ -92,22 +75,49 @@ public class CQRSCommandHandlerCallerBuilder extends AsmBuilder {
 			mv.visitMaxs(3, 2);
 			mv.visitEnd();
 		}
+	}
+
+	private static void visitDefine_accept_bridge(ClassWriter cw, Type typeInner, Type typeDomain) {
+		MethodVisitor mv;
 		{
 			mv = cw.visitMethod(ACC_PUBLIC + ACC_BRIDGE + ACC_SYNTHETIC, "accept", "(Ljava/lang/Object;)V", null, null);
 			mv.visitCode();
 			Label l0 = new Label();
 			mv.visitLabel(l0);
 			mv.visitLineNumber(1, l0);
-			mv.visitVarInsn(ALOAD, 0);
-			mv.visitVarInsn(ALOAD, 1);
-			mv.visitTypeInsn(CHECKCAST, typeDomain.getInternalName());
-			mv.visitMethodInsn(INVOKEVIRTUAL, typeInner.getInternalName(), "accept", Type.getMethodDescriptor(Type.VOID_TYPE, typeDomain), false);
-			mv.visitInsn(RETURN);
+			{
+				mv.visitVarInsn(ALOAD, 0);
+				mv.visitVarInsn(ALOAD, 1);
+				mv.visitTypeInsn(CHECKCAST, typeDomain.getInternalName());
+
+				visitInvokeVirtual(mv, typeInner, "accept", typeDomain);
+
+				visitReturn(mv);
+			}
 			mv.visitMaxs(2, 2);
 			mv.visitEnd();
 		}
-		cw.visitEnd();
+	}
 
-		return cw.toByteArray();
+	private static void visitDefine_init(ClassWriter cw, Type typeInner, Type typeHandler, Type typeCommand) {
+		MethodVisitor mv;
+		{
+			mv = cw.visitMethod(0, "<init>", Type.getMethodDescriptor(Type.VOID_TYPE, typeHandler, typeCommand), null, null);
+			mv.visitCode();
+			Label l0 = new Label();
+			mv.visitLabel(l0);
+			mv.visitLineNumber(1, l0);
+			{
+				visitPutField(mv, 0, typeInner, 1, "this$0", typeHandler);
+				visitPutField(mv, 0, typeInner, 2, "val$command", typeCommand);
+				visitInitObject(mv, 0);
+				visitReturn(mv);
+			}
+			Label l2 = new Label();
+			mv.visitLabel(l2);
+			mv.visitLocalVariable("this", typeInner.getDescriptor(), null, l0, l2, 0);
+			mv.visitMaxs(2, 3);
+			mv.visitEnd();
+		}
 	}
 }
