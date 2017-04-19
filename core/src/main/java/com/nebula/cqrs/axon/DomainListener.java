@@ -1,10 +1,7 @@
 package com.nebula.cqrs.axon;
 
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.Type;
-
-import com.nebula.cqrs.axon.asm.CQRSDomainBuilder;
+import com.nebula.cqrs.axon.pojo.DomainDefinition;
 
 public interface DomainListener {
-	void define(CQRSContext ctx, Type typeDomain ,CQRSDomainBuilder cqrs,ClassReader domainClassReader);
+	void define(CQRSContext ctx, DomainDefinition domainDefinition);
 }

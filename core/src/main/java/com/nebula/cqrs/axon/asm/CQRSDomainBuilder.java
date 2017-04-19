@@ -17,7 +17,6 @@ import static org.objectweb.asm.Opcodes.RETURN;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.axonframework.commandhandling.model.AggregateIdentifier;
 import org.objectweb.asm.AnnotationVisitor;
@@ -28,18 +27,19 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
 import com.nebula.cqrs.axon.pojo.Command;
-import com.nebula.cqrs.axon.pojo.Domain;
+import com.nebula.cqrs.axon.pojo.DomainDefinition;
 import com.nebula.cqrs.axon.pojo.Event;
 import com.nebula.cqrs.axon.pojo.Field;
 import com.nebula.cqrs.axon.pojo.Method;
 
 public class CQRSDomainBuilder extends ClassVisitor {
-	Type typeDomain;
+	private final Type typeDomain;
+	private final DomainDefinition domainDefinition;
 
-	public List<Command> commands = new ArrayList<>();
-	public List<Event> events = new ArrayList<>();
-	public Domain domain;
-	public Field newfieldID;
+	private final List<Command> commands = new ArrayList<>();
+	private final List<Event> events = new ArrayList<>();
+	private final List<Field> fields = new ArrayList<>();
+	private Field newfieldID;
 
 	public void setKeyField(Field field) {
 		if (newfieldID != null && newfieldID != field) {
@@ -50,36 +50,40 @@ public class CQRSDomainBuilder extends ClassVisitor {
 		this.newfieldID = field;
 	}
 
-	Map<String, Method> methods;
-
 	@Override
 	public String toString() {
-		return "TypeMaker [commands=" + commands + ", events=" + events + ", domain=" + domain + "]";
+		return "TypeMaker [commands=" + commands + ", events=" + events + ", domain=" + domainDefinition + "]";
 	}
 
-	public CQRSDomainBuilder(int api, ClassVisitor cv, Map<String, Method> methods) {
+	public CQRSDomainBuilder(int api, ClassVisitor cv, DomainDefinition domainDefinition) {
 		super(api, cv);
-		this.methods = methods;
+		this.domainDefinition = domainDefinition;
+		this.typeDomain = domainDefinition.type;
 	}
 
-	public CQRSDomainBuilder(int api, Map<String, Method> methods) {
-		this(api, null, methods);
+	public CQRSDomainBuilder(int api, DomainDefinition domainDefinition) {
+		this(api, null, domainDefinition);
+	}
+
+	public DomainDefinition finished() {
+		domainDefinition.commands = this.commands.toArray(new Command[0]);
+		domainDefinition.events = this.events.toArray(new Event[0]);
+		domainDefinition.fields = this.fields.toArray(new Field[0]);
+		return domainDefinition;
 	}
 
 	@Override
 	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-		typeDomain = Type.getObjectType(name);
-		domain = new Domain(name.substring(name.lastIndexOf('/') + 1));
 		super.visit(version, access, name, signature, superName, interfaces);
 	}
 
 	@Override
 	public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
 		Field field = new Field(name, Type.getType(desc));
-		if (domain.fields.size() == 0) {
+		if (fields.size() == 0) {
 			this.setKeyField(field);
 		}
-		domain.fields.add(field);
+		fields.add(field);
 		FieldVisitor fieldVisitor = super.visitField(access, name, desc, signature, value);
 		return new CustomFieldVisitor(api, fieldVisitor, field, access, name, desc, signature, value);
 	}
@@ -122,7 +126,7 @@ public class CQRSDomainBuilder extends ClassVisitor {
 				actionName = methodName;
 			}
 
-			commandName = domain.name + toCamelUpper(actionName);
+			commandName = domainDefinition.name + toCamelUpper(actionName);
 			String simpleClassName = commandName + "Command";;
 
 			Type type = typeOf(simpleClassName);
@@ -143,7 +147,7 @@ public class CQRSDomainBuilder extends ClassVisitor {
 			String newMethodName = "on";
 			boolean innerEvent = true;
 			String eventName = toCamelUpper(name.substring(2));
-			String simpleClassName = domain.name + eventName + "Event";
+			String simpleClassName = domainDefinition.name + eventName + "Event";
 			Type type = typeOf(simpleClassName);
 
 			Event event = new Event(eventName, originMethodName, newMethodName, innerEvent, simpleClassName, type);
@@ -165,14 +169,16 @@ public class CQRSDomainBuilder extends ClassVisitor {
 	@Override
 	public void visitEnd() {
 		for (Event event : events) {
+			List<Field> fields = new ArrayList<>();
 			if (event.methodParams.length == 0 || !(event.methodParams[0].name == newfieldID.name
 					&& event.methodParams[0].type.getInternalName().equals(newfieldID.type.getInternalName()))) {
-				event.fields.add(newfieldID);
+				fields.add(newfieldID);
 				event.withoutID = true;
 			}
 			for (int i = 0; i < event.methodParams.length; i++) {
-				event.fields.add(event.methodParams[i]);
+				fields.add(event.methodParams[i]);
 			}
+			event.fields = fields.toArray(new Field[0]);
 		}
 		for (Event event : events) {
 			if (event.innerEvent) {
@@ -190,17 +196,19 @@ public class CQRSDomainBuilder extends ClassVisitor {
 			}
 		}
 		for (Command command : commands) {
+			List<Field> fields = new ArrayList<>();
 			if (command.methodParams.length == 0 || !(command.methodParams[0].name == newfieldID.name
 					&& command.methodParams[0].type.getInternalName().equals(newfieldID.type.getInternalName()))) {
-				command.fields.add(newfieldID);
+				fields.add(newfieldID);
 				command.withoutID = true;
 			}
 			for (int i = 0; i < command.methodParams.length; i++) {
-				command.fields.add(command.methodParams[i]);
+				fields.add(command.methodParams[i]);
 			}
-			if (command.fields.get(0).name == newfieldID.name && command.fields.get(0).type.getInternalName().equals(newfieldID.type.getInternalName())) {
-				command.fields.get(0).idField = true;
+			if (fields.get(0).name == newfieldID.name && fields.get(0).type.getInternalName().equals(newfieldID.type.getInternalName())) {
+				fields.get(0).idField = true;
 			}
+			command.fields = fields.toArray(new Field[0]);
 		}
 
 		super.visitEnd();
@@ -249,9 +257,9 @@ public class CQRSDomainBuilder extends ClassVisitor {
 				mv.visitVarInsn(parameter.type.getOpcode(ILOAD), i + 1);
 			}
 
-			Type[] eventParams = new Type[event.fields.size()];
-			for (int i = 0; i < event.fields.size(); i++) {
-				eventParams[i] = event.fields.get(i).type;
+			Type[] eventParams = new Type[event.fields.length];
+			for (int i = 0; i < event.fields.length; i++) {
+				eventParams[i] = event.fields[i].type;
 			}
 			String eventMethodDescriptor = Type.getMethodDescriptor(Type.VOID_TYPE, eventParams);
 
@@ -302,18 +310,18 @@ public class CQRSDomainBuilder extends ClassVisitor {
 			Type type = typeOf(simpleClassName);
 			this.event = new Event(eventName, originMethodName, newMethodName, innerEvent, simpleClassName, type);
 
-			Method method = methods.get(command.methodName);
+			Method method = domainDefinition.menthods.get(command.methodName);
 			command.methodParams = method.params;
 		}
 
 		@Override
 		public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-			Method method = methods.get(name);
+			Method method = domainDefinition.menthods.get(name);
 			event.methodParams = method.params;
 
 			if (owner.equals(typeDomain.getInternalName()) && name.startsWith("on")) {
 				// set super name
-				event.realEvent = typeOf(domain.name + toCamelUpper(name.substring(2)) + "Event");
+				event.realEvent = typeOf(domainDefinition.name + toCamelUpper(name.substring(2)) + "Event");
 
 				super.visitMethodInsn(opcode, owner, "apply" + event.simpleClassName, desc, itf);
 
@@ -334,7 +342,7 @@ public class CQRSDomainBuilder extends ClassVisitor {
 			super(api, mv);
 			this.event = event;
 
-			Method method = methods.get(event.originMethodName);
+			Method method = domainDefinition.menthods.get(event.originMethodName);
 			event.methodParams = method.params;
 			{
 				AnnotationVisitor av0;

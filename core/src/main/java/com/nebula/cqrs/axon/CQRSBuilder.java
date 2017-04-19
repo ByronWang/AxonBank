@@ -23,6 +23,7 @@ import com.nebula.cqrs.axon.asm.CQRSDomainBuilder;
 import com.nebula.cqrs.axon.asm.CQRSEventAliasBuilder;
 import com.nebula.cqrs.axon.asm.CQRSEventRealBuilder;
 import com.nebula.cqrs.axon.pojo.Command;
+import com.nebula.cqrs.axon.pojo.DomainDefinition;
 import com.nebula.cqrs.axon.pojo.Event;
 
 public class CQRSBuilder implements CQRSContext {
@@ -43,27 +44,27 @@ public class CQRSBuilder implements CQRSContext {
 
 	static class CommandHandlerListener implements DomainListener {
 		@Override
-		public void define(CQRSContext ctx, Type typeDomain, CQRSDomainBuilder cqrs, ClassReader domainClassReader) {
+		public void define(CQRSContext ctx, DomainDefinition domainDefinition) {
 			try {
 				Class<?> clzHandle = null;
 
-				Type typeHandler = Type.getObjectType(typeDomain.getInternalName() + "CommandHandler");
+				Type typeHandler = Type.getObjectType(domainDefinition.type.getInternalName() + "CommandHandler");
 
-				for (Command command : cqrs.commands) {
+				for (Command command : domainDefinition.commands) {
 					if (command.ctorMethod) {
 						Type typeInvoke = Type.getObjectType(typeHandler.getInternalName() + "$Inner" + command.simpleClassName);
-						byte[] codeCommandHandlerInvoke = CQRSCommandHandlerCtorCallerBuilder.dump(typeDomain, typeHandler, command);
+						byte[] codeCommandHandlerInvoke = CQRSCommandHandlerCtorCallerBuilder.dump(domainDefinition.type, typeHandler, command);
 						Class<?> clzCommandHandlerInvoke = ctx.defineClass(typeInvoke.getClassName(), codeCommandHandlerInvoke);
 						ctx.doResolveClass(clzCommandHandlerInvoke);
 					} else {
 						Type typeInvoke = Type.getObjectType(typeHandler.getInternalName() + "$Inner" + command.simpleClassName);
-						byte[] codeCommandHandlerInvoke = CQRSCommandHandlerCallerBuilder.dump(typeDomain, typeHandler, command);
+						byte[] codeCommandHandlerInvoke = CQRSCommandHandlerCallerBuilder.dump(domainDefinition.type, typeHandler, command);
 						Class<?> clzCommandHandlerInvoke = ctx.defineClass(typeInvoke.getClassName(), codeCommandHandlerInvoke);
 						ctx.doResolveClass(clzCommandHandlerInvoke);
 					}
 				}
 
-				byte[] codeHandler = new CQRSCommandHandlerBuilder().dump(cqrs.commands, typeDomain, typeHandler);
+				byte[] codeHandler = new CQRSCommandHandlerBuilder().dump(domainDefinition.commands, domainDefinition.type, typeHandler);
 				clzHandle = ctx.defineClass(typeHandler.getClassName(), codeHandler);
 				ctx.doResolveClass(clzHandle);
 
@@ -77,32 +78,38 @@ public class CQRSBuilder implements CQRSContext {
 	public void makeDomainCQRSHelper(String domainClassName) {
 
 		try {
-			Type typeDomain = Type.getObjectType(domainClassName.replace('.', '/'));
 
-			ClassReader cr = new ClassReader(typeDomain.getClassName());
-			CQRSDomainAnalyzer analyzer = new CQRSDomainAnalyzer(Opcodes.ASM5);
+			String domainName = domainClassName.substring(domainClassName.lastIndexOf('.') + 1);
+			Type domainType = Type.getObjectType(domainClassName.replace('.', '/'));
+
+			final DomainDefinition domainDefinition = new DomainDefinition(domainName, domainType);
+
+			ClassReader cr = new ClassReader(domainType.getClassName());
+			CQRSDomainAnalyzer analyzer = new CQRSDomainAnalyzer(Opcodes.ASM5, domainDefinition);
 			cr.accept(analyzer, 0);
+			analyzer.finished();
 
 			ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
-			CQRSDomainBuilder cqrs = new CQRSDomainBuilder(Opcodes.ASM5, cw, analyzer.methods);
+			CQRSDomainBuilder cqrs = new CQRSDomainBuilder(Opcodes.ASM5, cw, domainDefinition);
 			cr.accept(cqrs, 0);
+			cqrs.finished();
 
 			byte[] code = cw.toByteArray();
 
 			{
-				for (Event event : cqrs.events) {
+				for (Event event : domainDefinition.events) {
 					if (event.realEvent == null) {
 						byte[] eventCode = CQRSEventRealBuilder.dump(event);
 						classLoader.defineClass(cqrs.fullnameOf(event.simpleClassName), eventCode);
 					}
 				}
-				for (Event event : cqrs.events) {
+				for (Event event : domainDefinition.events) {
 					if (event.realEvent != null) {
 						byte[] eventCode = CQRSEventAliasBuilder.dump(event);
 						classLoader.defineClass(cqrs.fullnameOf(event.simpleClassName), eventCode);
 					}
 				}
-				for (Command command : cqrs.commands) {
+				for (Command command : domainDefinition.commands) {
 					if (command.ctorMethod) {
 						byte[] codeCommand = CQRSCommandBuilder.dump(command);
 						Class<?> clzCommand = classLoader.defineClass(command.type.getClassName(), codeCommand);
@@ -115,10 +122,10 @@ public class CQRSBuilder implements CQRSContext {
 				}
 			}
 
-			Class<?> clzDomain = classLoader.defineClass(typeDomain.getClassName(), code);
+			Class<?> clzDomain = classLoader.defineClass(domainType.getClassName(), code);
 			classLoader.doResolveClass(clzDomain);
 
-			listeners.forEach(l -> l.define(CQRSBuilder.this, typeDomain, cqrs, cr));
+			listeners.forEach(l -> l.define(CQRSBuilder.this, domainDefinition));
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

@@ -9,6 +9,7 @@ import org.objectweb.asm.Type;
 
 import com.nebula.cqrs.axon.CQRSBuilder;
 import com.nebula.cqrs.axon.pojo.Field;
+import com.nebula.cqrs.axonweb.asm.CQRSWebEntryBuilder;
 
 public class CQRSWebEntryBuilderTest {
 
@@ -25,7 +26,7 @@ public class CQRSWebEntryBuilderTest {
 		Type objectType = Type.getObjectType("test/test/MyAccount");
 		List<Field> objectFields = new ArrayList<>();
 
-		CQRSWebEntryBuilder.dump(objectType, objectFields);
+		CQRSWebEntryBuilder.dump(objectType, objectFields.toArray(new Field[0]));
 	}
 
 	@Test
@@ -39,7 +40,7 @@ public class CQRSWebEntryBuilderTest {
 		objectFields.add(new Field("balanceInCents", Type.getType(long.class)));
 		objectFields.add(new Field("balanceInCentsxx", Type.getType(long.class)));
 
-		byte[] code = CQRSWebEntryBuilder.dump(objectType, objectFields);
+		byte[] code = CQRSWebEntryBuilder.dump(objectType, objectFields.toArray(new Field[0]));
 
 		Class<?> clz = cqrs.defineClass(objectType.getClassName(), code);
 		clz.newInstance();

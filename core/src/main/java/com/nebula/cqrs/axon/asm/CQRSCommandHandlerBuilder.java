@@ -1,6 +1,5 @@
 package com.nebula.cqrs.axon.asm;
 
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
@@ -14,12 +13,13 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
+import com.nebula.cqrs.axon.pojo.AxonAsmBuilder;
 import com.nebula.cqrs.axon.pojo.Command;
 import com.nebula.cqrs.axon.pojo.Field;
 
 public class CQRSCommandHandlerBuilder extends AxonAsmBuilder {
 
-	public byte[] dump(List<Command> commands, Type typeDomain, Type typeHandler) {
+	public byte[] dump(Command[] commands, Type typeDomain, Type typeHandler) {
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
 		FieldVisitor fv;
 
@@ -128,7 +128,7 @@ public class CQRSCommandHandlerBuilder extends AxonAsmBuilder {
 	void dumpMethod(ClassWriter cw, Type typeDomain, Type typeHandler, Command command) {
 		MethodVisitor mv;
 		{
-			Field idField = command.fields.get(0);
+			Field idField = command.fields[0];
 
 			Type inner = Type.getObjectType(typeHandler.getInternalName() + "$Inner" + command.simpleClassName);
 

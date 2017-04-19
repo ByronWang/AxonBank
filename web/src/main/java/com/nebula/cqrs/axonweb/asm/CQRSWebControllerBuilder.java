@@ -1,6 +1,4 @@
-package com.nebula.cqrs.axon.asm;
-
-import java.util.List;
+package com.nebula.cqrs.axonweb.asm;
 
 import org.axonframework.commandhandling.CommandBus;
 import org.axonframework.commandhandling.CommandMessage;
@@ -14,12 +12,14 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.annotation.SubscribeMapping;
 import org.springframework.stereotype.Controller;
 
+import com.nebula.cqrs.axon.asm.CQRSDomainBuilder;
+import com.nebula.cqrs.axon.pojo.AxonAsmBuilder;
 import com.nebula.cqrs.axon.pojo.Command;
 import com.nebula.cqrs.axon.pojo.Field;
 
 public class CQRSWebControllerBuilder extends AxonAsmBuilder {
 
-	public static byte[] dump(Type typeController, Type typeDomain, Type typeEntry, List<Command> commands) throws Exception {
+	public static byte[] dump(Type typeController, Type typeDomain, Type typeEntry, Command[] commands) throws Exception {
 		ClassWriter cw = new ClassWriter(0);
 
 		cw.visit(52, ACC_PUBLIC + ACC_SUPER, typeController.getInternalName(), null, "java/lang/Object", null);
@@ -111,7 +111,7 @@ public class CQRSWebControllerBuilder extends AxonAsmBuilder {
 	private static MethodVisitor define_action_create(ClassWriter cw, Type typeController, Type typeDto, Command command) {
 		MethodVisitor mv;
 		{
-			Field idField = command.fields.get(0);
+			Field idField = command.fields[0];
 			mv = cw.visitMethod(ACC_PUBLIC, command.actionName, Type.getMethodDescriptor(Type.VOID_TYPE, typeDto), null, null);
 			visitAnnotation(mv, SubscribeMapping.class, "/" + command.actionName);
 

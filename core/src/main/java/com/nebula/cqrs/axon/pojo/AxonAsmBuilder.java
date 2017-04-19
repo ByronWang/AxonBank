@@ -1,26 +1,23 @@
-package com.nebula.cqrs.axon.asm;
-
-import java.util.List;
+package com.nebula.cqrs.axon.pojo;
 
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
-import com.nebula.cqrs.axon.pojo.Field;
 import com.nebula.cqrs.core.asm.AsmBuilder;
 
 public class AxonAsmBuilder extends AsmBuilder {
 
-	public static void visitDefine_init_withAllFields(ClassWriter cw, Type objectType, List<Field> fields) {
+	public static void visitDefine_init_withAllFields(ClassWriter cw, Type objectType, Field[] fields) {
 		MethodVisitor mv;
 		{
 			int[] locals = computerLocals(objectType, fields);
 
-			Type[] params = new Type[fields.size()];
+			Type[] params = new Type[fields.length];
 
-			for (int i = 0; i < fields.size(); i++) {
-				params[i] = fields.get(i).type;
+			for (int i = 0; i < fields.length; i++) {
+				params[i] = fields[i].type;
 			}
 
 			String methodDescriptor = Type.getMethodDescriptor(Type.VOID_TYPE, params);
@@ -32,10 +29,10 @@ public class AxonAsmBuilder extends AsmBuilder {
 			{
 				visitInitObject(mv, 0);
 
-				for (int i = 0; i < fields.size(); i++) {
-					Field field = fields.get(i);
+				for (int i = 0; i < fields.length; i++) {
+					Field field = fields[i];
 					mv.visitVarInsn(ALOAD, 0);
-					mv.visitVarInsn(field.type.getOpcode(ILOAD),locals[i + 1]);
+					mv.visitVarInsn(field.type.getOpcode(ILOAD), locals[i + 1]);
 					mv.visitFieldInsn(PUTFIELD, objectType.getInternalName(), field.name, field.type.getDescriptor());
 				}
 
@@ -45,8 +42,8 @@ public class AxonAsmBuilder extends AsmBuilder {
 			mv.visitLabel(endLabel);
 
 			mv.visitLocalVariable("this", objectType.getDescriptor(), null, begigLabel, endLabel, 0);
-			for (int i = 0; i < fields.size(); i++) {
-				Field field = fields.get(i);
+			for (int i = 0; i < fields.length; i++) {
+				Field field = fields[i];
 				mv.visitLocalVariable(field.name, field.type.getDescriptor(), null, begigLabel, endLabel, locals[i + 1]);
 			}
 			mv.visitMaxs(0, 0);
@@ -54,19 +51,19 @@ public class AxonAsmBuilder extends AsmBuilder {
 		}
 	}
 
-	public static int[] computerLocals(Type objectType, List<Field> fields) {
+	public static int[] computerLocals(Type objectType, Field[] fields) {
 		return computerLocals(objectType, convert(fields));
 	}
 
-	protected static Type[] convert(List<Field> fields) {
-		Type[] types = new Type[fields.size()];
-		for (int i = 0; i < fields.size(); i++) {
-			types[i] = fields.get(i).type;
+	protected static Type[] convert(Field[] fields) {
+		Type[] types = new Type[fields.length];
+		for (int i = 0; i < fields.length; i++) {
+			types[i] = fields[i].type;
 		}
 		return types;
 	}
 
-	public static void visitDefine_init_withAllFieldsToSuper(ClassWriter cw, Type objectType, Type superType, List<Field> fields) {
+	public static void visitDefine_init_withAllFieldsToSuper(ClassWriter cw, Type objectType, Type superType, Field[] fields) {
 		MethodVisitor mv;
 		{
 			int[] locals = computerLocals(objectType, fields);
@@ -80,8 +77,8 @@ public class AxonAsmBuilder extends AsmBuilder {
 			{
 				mv.visitVarInsn(ALOAD, 0);
 
-				for (int i = 0; i < fields.size(); i++) {
-					Field field = fields.get(i);
+				for (int i = 0; i < fields.length; i++) {
+					Field field = fields[i];
 					mv.visitVarInsn(field.type.getOpcode(ILOAD), i + 1);
 				}
 				mv.visitMethodInsn(INVOKESPECIAL, superType.getInternalName(), "<init>", methodDescriptor, false);
@@ -91,8 +88,8 @@ public class AxonAsmBuilder extends AsmBuilder {
 			Label l2 = new Label();
 			mv.visitLabel(l2);
 			mv.visitLocalVariable("this", objectType.getDescriptor(), null, l0, l2, 0);
-			for (int i = 0; i < fields.size(); i++) {
-				Field field = fields.get(i);
+			for (int i = 0; i < fields.length; i++) {
+				Field field = fields[i];
 				mv.visitLocalVariable(field.name, field.type.getDescriptor(), null, l0, l2, locals[i + 1]);
 			}
 			mv.visitMaxs(4, 4);
@@ -100,7 +97,7 @@ public class AxonAsmBuilder extends AsmBuilder {
 		}
 	}
 
-	public static void visitDefine_toString_withAllFields(ClassWriter cw, Type objectType, List<Field> fields) {
+	public static void visitDefine_toString_withAllFields(ClassWriter cw, Type objectType, Field[] fields) {
 		MethodVisitor mv;
 		{
 			mv = cw.visitMethod(ACC_PUBLIC, "toString", "()Ljava/lang/String;", null, null);
@@ -113,8 +110,8 @@ public class AxonAsmBuilder extends AsmBuilder {
 			mv.visitLdcInsn(toSimpleName(objectType.getClassName()) + "(");
 			mv.visitMethodInsn(INVOKESPECIAL, "java/lang/StringBuilder", "<init>", "(Ljava/lang/String;)V", false);
 			{
-				for (int i = 0; i < fields.size(); i++) {
-					Field field = fields.get(i);
+				for (int i = 0; i < fields.length; i++) {
+					Field field = fields[i];
 					if (i != 0) {
 						mv.visitLdcInsn(",");
 						mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;", false);
@@ -160,19 +157,7 @@ public class AxonAsmBuilder extends AsmBuilder {
 	}
 
 	public static void visitInitTypeWithAllFields(MethodVisitor mv, Type objectType, Field... fields) {
-		Type[] params = new Type[fields.length];
-		for (int i = 0; i < fields.length; i++) {
-			params[i] = fields[i].type;
-		}
-		visitInitTypeWithAllFields(mv, objectType, params);
-	}
-
-	public static void visitInitTypeWithAllFields(MethodVisitor mv, Type objectType, List<Field> fields) {
-		Type[] params = new Type[fields.size()];
-		for (int i = 0; i < fields.size(); i++) {
-			params[i] = fields.get(i).type;
-		}
-		visitInitTypeWithAllFields(mv, objectType, params);
+		visitInitTypeWithAllFields(mv, objectType, convert(fields));
 	}
 
 	public static void visitPutField(MethodVisitor mv, int objectIndex, Type objectType, int dataIndex, Field field) {

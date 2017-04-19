@@ -1,15 +1,11 @@
-package com.nebula.cqrs.axon.asm;
-
-import java.util.List;
+package com.nebula.cqrs.axon.pojo;
 
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Type;
 
-import com.nebula.cqrs.axon.pojo.Field;
-
 public class PojoBuilder extends AxonAsmBuilder {
 
-	public static byte[] dump(Type objectType, List<Field> fields) {
+	public static byte[] dump(Type objectType, Field[] fields) {
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
 
 		cw.visit(52, ACC_PUBLIC + ACC_SUPER, objectType.getInternalName(), null, "java/lang/Object", null);

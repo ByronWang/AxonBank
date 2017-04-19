@@ -1,6 +1,4 @@
-package com.nebula.cqrs.axon.asm;
-
-import java.util.List;
+package com.nebula.cqrs.axonweb.asm;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -9,11 +7,12 @@ import javax.persistence.Id;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Type;
 
+import com.nebula.cqrs.axon.pojo.AxonAsmBuilder;
 import com.nebula.cqrs.axon.pojo.Field;
 
 public class CQRSWebEntryBuilder extends AxonAsmBuilder {
 
-	public static byte[] dump(Type objectType, List<Field> objectFields) throws Exception {
+	public static byte[] dump(Type objectType, Field[] objectFields) throws Exception {
 
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
 
@@ -25,10 +24,10 @@ public class CQRSWebEntryBuilder extends AxonAsmBuilder {
 		visitDefinePropertyGet(cw, objectType, "id", Type.getType(long.class));
 		visitDefinePropertySet(cw, objectType, "id", Type.getType(long.class));
 
-		for (int i = 0; i < objectFields.size(); i++) {
-			visitDefineField(cw, objectFields.get(i));
-			visitDefinePropertyGet(cw, objectType, objectFields.get(i));
-			visitDefinePropertySet(cw, objectType, objectFields.get(i));
+		for (Field field : objectFields) {
+			visitDefineField(cw,field);
+			visitDefinePropertyGet(cw, objectType, field);
+			visitDefinePropertySet(cw, objectType, field);
 		}
 
 		visitDefine_init_withNothing(cw, objectType);

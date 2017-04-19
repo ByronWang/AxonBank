@@ -1,11 +1,10 @@
-package com.nebula.cqrs.axon.asm;
+package com.nebula.cqrs.axonweb.asm;
 
 import javax.persistence.EntityManager;
 
 import org.axonframework.commandhandling.model.Repository;
 import org.axonframework.eventhandling.EventBus;
 import org.axonframework.spring.config.AxonConfiguration;
-import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
@@ -16,6 +15,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.support.JpaRepositoryFactory;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
 
+import com.nebula.cqrs.axon.pojo.AxonAsmBuilder;
+
 public class CQRSAxonConfigBuilder extends AxonAsmBuilder {
 
 	public static byte[] dump(Type typeConfig, Type typeDomain, Type typeRepository, Type typeCommandHandler) throws Exception {
@@ -23,8 +24,6 @@ public class CQRSAxonConfigBuilder extends AxonAsmBuilder {
 		ClassWriter cw = new ClassWriter(0);
 
 		cw.visit(52, ACC_PUBLIC + ACC_SUPER, typeConfig.getInternalName(), null, "java/lang/Object", null);
-
-		cw.visitSource("AxonConfig.java", null);
 
 		visitAnnotation(cw, Configuration.class);
 		visitDefineField(cw, "axonConfiguration", AxonConfiguration.class, Autowired.class);

@@ -1,8 +1,5 @@
 package com.nebula.cqrs.axon.pojo;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.objectweb.asm.Type;
 
 public class Event {
@@ -21,7 +18,7 @@ public class Event {
 	public boolean innerEvent = false;
 
 	public String simpleClassName;
-	public List<Field> fields = new ArrayList<>();
+	public Field[] fields;
 
 	public Event(String eventName, String originMethodName, String newMethodName, boolean innerEvent, String simpleClassName, Type type) {
 		super();

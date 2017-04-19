@@ -1,8 +1,5 @@
 package com.nebula.cqrs.axon.pojo;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.objectweb.asm.Type;
 
 public class Command {
@@ -20,7 +17,7 @@ public class Command {
 
 	public boolean ctorMethod = false;
 
-	public List<Field> fields = new ArrayList<>();
+	public Field[] fields;
 
 	public Command(String actionName, String methodName, String commandName, boolean ctorMethod, String simpleClassName, Type type, Type returnType) {
 		super();

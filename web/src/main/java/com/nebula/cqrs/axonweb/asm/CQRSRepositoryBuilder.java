@@ -1,10 +1,12 @@
-package com.nebula.cqrs.axon.asm;
+package com.nebula.cqrs.axonweb.asm;
 
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
+
+import com.nebula.cqrs.axon.pojo.AxonAsmBuilder;
 
 public class CQRSRepositoryBuilder extends AxonAsmBuilder {
 
