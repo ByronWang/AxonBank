@@ -28,7 +28,7 @@ public class CQRSCommandBuilder extends PojoBuilder {
 
 		visitDefine_init_withAllFields(cw, objectType, objectFields);
 		
-		visitDefine_toString_WithAllFields(cw, objectType, objectFields);
+		visitDefine_toString_withAllFields(cw, objectType, objectFields);
 
 		return cw.toByteArray();
 	}

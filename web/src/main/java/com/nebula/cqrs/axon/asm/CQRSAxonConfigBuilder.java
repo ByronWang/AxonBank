@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Configuration;
 
 public class CQRSAxonConfigBuilder extends AxonAsmBuilder {
 
-	public static byte[] dump(Type typeDomain, Type typeConfig, Type typeCommandHandler) throws Exception {
+	public static byte[] dump(Type typeConfig, Type typeDomain, Type typeCommandHandler) throws Exception {
 
 		ClassWriter cw = new ClassWriter(0);
 
@@ -25,7 +25,7 @@ public class CQRSAxonConfigBuilder extends AxonAsmBuilder {
 		visitDefineField(cw, "axonConfiguration", AxonConfiguration.class, Autowired.class);
 		visitDefineField(cw, "eventBus", EventBus.class, Autowired.class);
 
-		visitDefineInit_WithNothing(cw, typeConfig);
+		visitDefine_init_withNothing(cw, typeConfig);
 
 		define_bankAccountCommandHandler(cw, typeDomain, typeConfig, typeCommandHandler);
 

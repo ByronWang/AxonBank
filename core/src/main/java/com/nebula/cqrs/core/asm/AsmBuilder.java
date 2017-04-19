@@ -63,6 +63,23 @@ public class AsmBuilder implements Opcodes {
 		mv.visitInsn(ARETURN);
 	}
 
+	public static void visitDefine_init_withNothing(ClassWriter cw, Type objectType) {
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
+		mv.visitCode();
+		Label l0 = new Label();
+		mv.visitLabel(l0);
+		{
+			visitInitObject(mv, 0);
+
+			mv.visitInsn(RETURN);
+		}
+		Label l1 = new Label();
+		mv.visitLabel(l1);
+		mv.visitLocalVariable("this", objectType.getDescriptor(), null, l0, l1, 0);
+		mv.visitMaxs(1, 1);
+		mv.visitEnd();
+	}
+
 	public static void visitDefineField(ClassWriter cw, String fieldName, Class<?> fieldClass, Class<?>... annotations) {
 		visitDefineField(cw, fieldName, Type.getType(fieldClass), annotations);
 	}
@@ -71,23 +88,6 @@ public class AsmBuilder implements Opcodes {
 		FieldVisitor fv = cw.visitField(ACC_PRIVATE, fieldName, fieldType.getDescriptor(), null, null);
 		visitAnnotation(fv, annotations);
 		fv.visitEnd();
-	}
-
-	public static void visitDefineInit_WithNothing(ClassWriter cw, Type objectType) {
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
-		mv.visitCode();
-		Label l0 = new Label();
-		mv.visitLabel(l0);
-		mv.visitLineNumber(28, l0);
-
-		visitInitObject(mv, 0);
-
-		mv.visitInsn(RETURN);
-		Label l1 = new Label();
-		mv.visitLabel(l1);
-		mv.visitLocalVariable("this", objectType.getDescriptor(), null, l0, l1, 0);
-		mv.visitMaxs(1, 1);
-		mv.visitEnd();
 	}
 
 	public static void visitDefinePropetyGet(ClassWriter cw, Type objectType, String fieldName, Type fieldType) {

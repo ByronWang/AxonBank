@@ -33,8 +33,6 @@ public class CQRSWebSpringApplicationListener implements ApplicationListener<App
 
 	@Override
 	public void define(CQRSContext ctx, Type typeDomain, CQRSDomainBuilder cqrs, ClassReader domainClassReader) {
-		// String name =
-		// "org.axonframework.samples.bank.web.MyBankAccountController";
 		Type typeController = Type.getObjectType(typeDomain.getInternalName() + "Controller");
 		Type typeRepository = Type.getObjectType(typeDomain.getInternalName() + "Repository");
 		Type typeEntry = Type.getObjectType(typeDomain.getInternalName() + "Entry");
@@ -60,11 +58,11 @@ public class CQRSWebSpringApplicationListener implements ApplicationListener<App
 				ctx.defineClass(typeDto.getClassName(), PojoBuilder.dump(typeDto, fields));
 			}
 
-			ctx.defineClass(typeController.getClassName(), CQRSWebControllerBuilder.dump(typeDomain, typeController, typeRepository, typeEntry, cqrs));
+			ctx.defineClass(typeController.getClassName(), CQRSWebControllerBuilder.dump(typeController, typeDomain, typeRepository, typeEntry, cqrs.commands));
 
 			ctx.defineClass(typeRepository.getClassName(), CQRSRepositoryBuilder.dump(typeRepository, typeEntry));
 
-			ctx.defineClass(typeConfig.getClassName(), CQRSAxonConfigBuilder.dump(typeDomain, typeConfig, typeCommandHandler));
+			ctx.defineClass(typeConfig.getClassName(), CQRSAxonConfigBuilder.dump(typeConfig, typeDomain, typeCommandHandler));
 
 			beanTypes.add(typeConfig);
 			beanTypes.add(typeController);

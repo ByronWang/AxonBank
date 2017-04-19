@@ -1,5 +1,7 @@
 package com.nebula.cqrs.axon.asm;
 
+import java.util.List;
+
 import org.axonframework.commandhandling.CommandBus;
 import org.axonframework.commandhandling.CommandMessage;
 import org.axonframework.commandhandling.GenericCommandMessage;
@@ -17,7 +19,7 @@ import com.nebula.cqrs.axon.pojo.Field;
 
 public class CQRSWebControllerBuilder extends AxonAsmBuilder {
 
-	public static byte[] dump(Type typeDomain, Type typeController, Type typeRepository, Type typeEntry, CQRSDomainBuilder cqrs) throws Exception {
+	public static byte[] dump(Type typeController, Type typeDomain, Type typeRepository, Type typeEntry, List<Command> commands) throws Exception {
 		ClassWriter cw = new ClassWriter(0);
 
 		cw.visit(52, ACC_PUBLIC + ACC_SUPER, typeController.getInternalName(), null, "java/lang/Object", null);
@@ -30,7 +32,7 @@ public class CQRSWebControllerBuilder extends AxonAsmBuilder {
 
 		define_init(cw, typeController, typeRepository);
 
-		for (Command command : cqrs.commands) {
+		for (Command command : commands) {
 			Type typeDto = Type.getObjectType(typeDomain.getInternalName() + CQRSDomainBuilder.toCamelUpper(command.actionName) + "Dto");
 			if (command.ctorMethod) {
 				define_action_create(cw, typeController, typeDto, command);

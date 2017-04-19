@@ -91,7 +91,7 @@ public class AxonAsmBuilder extends AsmBuilder {
 		}
 	}
 
-	public static void visitDefine_toString_WithAllFields(ClassWriter cw, Type objectType, List<Field> fields) {
+	public static void visitDefine_toString_withAllFields(ClassWriter cw, Type objectType, List<Field> fields) {
 		MethodVisitor mv;
 		{
 			mv = cw.visitMethod(ACC_PUBLIC, "toString", "()Ljava/lang/String;", null, null);

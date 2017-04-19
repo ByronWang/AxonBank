@@ -20,7 +20,7 @@ public class CQRSEventRealBuilder extends PojoBuilder {
 		}
 
 		visitDefine_init_withAllFields(cw, type, target.fields);
-		visitDefine_toString_WithAllFields(cw, type, target.fields);
+		visitDefine_toString_withAllFields(cw, type, target.fields);
 		return cw.toByteArray();
 	}
 }
