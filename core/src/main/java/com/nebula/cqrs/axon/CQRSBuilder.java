@@ -8,6 +8,8 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.nebula.cqrs.axon.asm.CQRSCommandBuilder;
 import com.nebula.cqrs.axon.asm.CQRSCommandHandlerBuilder;
@@ -22,6 +24,8 @@ import com.nebula.cqrs.axon.pojo.DomainDefinition;
 import com.nebula.cqrs.axon.pojo.Event;
 
 public class CQRSBuilder implements CQRSContext {
+	private final static Logger LOGGER = LoggerFactory.getLogger(CQRSBuilder.class);
+
 	final MyClassLoader classLoader = new MyClassLoader();
 
 	public CQRSBuilder() {
@@ -50,15 +54,18 @@ public class CQRSBuilder implements CQRSContext {
 					if (command.ctorMethod) {
 						Type typeInvoke = Type.getObjectType(typeHandler.getInternalName() + "$Inner" + command.simpleClassName);
 						byte[] codeCommandHandlerInvoke = CQRSCommandHandlerCtorCallerBuilder.dump(domainDefinition.type, typeHandler, command);
+						LOGGER.debug("Create command inner class [{}]", typeInvoke.getClassName());
 						ctx.defineClass(typeInvoke.getClassName(), codeCommandHandlerInvoke);
 					} else {
 						Type typeInvoke = Type.getObjectType(typeHandler.getInternalName() + "$Inner" + command.simpleClassName);
 						byte[] codeCommandHandlerInvoke = CQRSCommandHandlerCallerBuilder.dump(domainDefinition.type, typeHandler, command);
+						LOGGER.debug("Create command inner class [{}]", typeInvoke.getClassName());
 						ctx.defineClass(typeInvoke.getClassName(), codeCommandHandlerInvoke);
 					}
 				}
 
 				byte[] codeHandler = new CQRSCommandHandlerBuilder().dump(domainDefinition.commands, domainDefinition.type, typeHandler);
+				LOGGER.debug("Create command handler [{}]", typeHandler.getClassName());
 				ctx.defineClass(typeHandler.getClassName(), codeHandler);
 
 			} catch (Exception e) {
@@ -69,6 +76,7 @@ public class CQRSBuilder implements CQRSContext {
 	}
 
 	public void makeDomainCQRSHelper(String srcDomainClassName) {
+		LOGGER.debug("Start make domain [{}]", srcDomainClassName);
 
 		try {
 			final DomainDefinition domainDefinition;
@@ -80,7 +88,7 @@ public class CQRSBuilder implements CQRSContext {
 				Type srcDomainType = Type.getObjectType(srcDomainClassName.replace('.', '/'));
 				Type implDomainType = Type.getObjectType(domainImplClassName.replace('.', '/'));
 
-				domainDefinition = new DomainDefinition(srcDomainName, srcDomainType,implDomainType);
+				domainDefinition = new DomainDefinition(srcDomainName, srcDomainType, implDomainType);
 
 				ClassReader classReaderSource = new ClassReader(srcDomainType.getClassName());
 				ClassWriter classWriterImplDomainType = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
@@ -88,6 +96,8 @@ public class CQRSBuilder implements CQRSContext {
 						implDomainType.getInternalName());
 				classReaderSource.accept(renameClassVisitor, 0);
 				binaryRepresentationAfterRenameToImpl = classWriterImplDomainType.toByteArray();
+
+				LOGGER.debug("Rename domain class from {} to impl class [{}]", srcDomainType.getClassName(), implDomainType.getClassName());
 			}
 			CQRSDomainBuilder cqrs;
 			{
@@ -102,27 +112,32 @@ public class CQRSBuilder implements CQRSContext {
 				cqrs.finished();
 
 				byte[] domainRepresentationAfterMakeCqrs = cw.toByteArray();
+				LOGGER.debug("Made cqrs domain class [{}]", domainDefinition.type.getClassName());
 				classLoader.define(domainDefinition.type.getClassName(), domainRepresentationAfterMakeCqrs);
 			}
 			{
 				for (Event event : domainDefinition.events) {
 					if (event.realEvent == null) {
 						byte[] eventCode = CQRSEventRealBuilder.dump(event);
-						classLoader.define(cqrs.fullnameOf(event.simpleClassName), eventCode);
+						LOGGER.debug("Create event [{}]", cqrs.fullnameOf(event.simpleClassName));
+						classLoader.define(event.type.getClassName(), eventCode);
 					}
 				}
 				for (Event event : domainDefinition.events) {
 					if (event.realEvent != null) {
 						byte[] eventCode = CQRSEventAliasBuilder.dump(event);
-						classLoader.define(cqrs.fullnameOf(event.simpleClassName), eventCode);
+						LOGGER.debug("Create command handler [{}]", cqrs.fullnameOf(event.simpleClassName));
+						classLoader.define(event.type.getClassName(), eventCode);
 					}
 				}
 				for (Command command : domainDefinition.commands) {
 					if (command.ctorMethod) {
 						byte[] codeCommand = CQRSCommandBuilder.dump(command);
+						LOGGER.debug("Create command handler [{}]", command.type.getClassName());
 						classLoader.define(command.type.getClassName(), codeCommand);
 					} else {
 						byte[] codeCommand = CQRSCommandBuilder.dump(command);
+						LOGGER.debug("Create command handler [{}]", command.type.getClassName());
 						classLoader.define(command.type.getClassName(), codeCommand);
 					}
 				}

@@ -8,7 +8,12 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 class MyClassLoader extends ClassLoader {
+	private final static Logger LOGGER = LoggerFactory.getLogger(MyClassLoader.class);
+
 	File root = new File("target/generated-auto-classes/");
 
 	protected final ConcurrentMap<String, byte[]> typeDefinitions;
@@ -23,7 +28,8 @@ class MyClassLoader extends ClassLoader {
 
 	public Class<?> define(String name, byte[] binaryRepresentation) {
 		writeToWithPackage(root, name, binaryRepresentation);
-		System.out.println("defineClass > " + name);
+		LOGGER.debug("Define class [{}]", name);
+		// System.out.println("defineClass > " + name);
 		typeDefinitions.putIfAbsent(name, binaryRepresentation);
 		Class<?> type = defineClass(name, binaryRepresentation, 0, binaryRepresentation.length);;
 		return type;
@@ -31,9 +37,7 @@ class MyClassLoader extends ClassLoader {
 
 	@Override
 	protected Class<?> findClass(String name) throws ClassNotFoundException {
-		if (name.startsWith("hello")) {
-			System.out.println(name);
-		}
+		LOGGER.debug("Find class [{}]", name);
 		if (typeDefinitions.containsKey(name)) {
 			byte[] binaryRepresentation = typeDefinitions.get(name);
 			Class<?> type = defineClass(name, binaryRepresentation, 0, binaryRepresentation.length);;
