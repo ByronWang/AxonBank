@@ -1,5 +1,6 @@
 package com.nebula.cqrs.axon.pojo;
 
+import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
@@ -63,7 +64,7 @@ public class AxonAsmBuilder extends AsmBuilder {
 		return types;
 	}
 
-	public static void visitDefine_init_withAllFieldsToSuper(ClassWriter cw, Type objectType, Type superType, Field[] fields) {
+	public static void visitDefine_init_withAllFieldsToSuper(ClassVisitor cw, Type objectType, Type superType, Field[] fields) {
 		MethodVisitor mv;
 		{
 			int[] locals = computerLocals(objectType, fields);
@@ -97,7 +98,49 @@ public class AxonAsmBuilder extends AsmBuilder {
 		}
 	}
 
-	public static void visitDefine_toString_withAllFields(ClassWriter cw, Type objectType, Field[] fields) {
+	public static void visitDefine_toString_withAllFields(ClassVisitor cw, Type objectType, Field[] fields) {
+		MethodVisitor mv;
+		{
+			mv = cw.visitMethod(ACC_PUBLIC, "toString", "()Ljava/lang/String;", null, null);
+			mv.visitCode();
+			Label l0 = new Label();
+			mv.visitLabel(l0);
+			mv.visitLineNumber(22, l0);
+			mv.visitTypeInsn(NEW, "java/lang/StringBuilder");
+			mv.visitInsn(DUP);
+			mv.visitLdcInsn(toSimpleName(objectType.getClassName()) + "(");
+			mv.visitMethodInsn(INVOKESPECIAL, "java/lang/StringBuilder", "<init>", "(Ljava/lang/String;)V", false);
+			{
+				for (int i = 0; i < fields.length; i++) {
+					Field field = fields[i];
+					if (i != 0) {
+						mv.visitLdcInsn(",");
+						mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;", false);
+					}
+
+					mv.visitLdcInsn(field.name + "=");
+					mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;", false);
+
+					visitGetField(mv, 0, objectType, field.name, field.type);
+					mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append",
+							Type.getMethodDescriptor(Type.getObjectType("java/lang/StringBuilder"), field.type), false);
+
+				}
+			}
+
+			mv.visitLdcInsn(")");
+			mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;", false);
+			mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "toString", "()Ljava/lang/String;", false);
+			mv.visitInsn(ARETURN);
+			Label l1 = new Label();
+			mv.visitLabel(l1);
+			mv.visitLocalVariable("this", objectType.getDescriptor(), null, l0, l1, 0);
+			mv.visitMaxs(3, 1);
+			mv.visitEnd();
+		}
+	}
+	
+	public static void visitDefine_toString_withAllProperties(ClassVisitor cw, Type objectType, Field[] fields) {
 		MethodVisitor mv;
 		{
 			mv = cw.visitMethod(ACC_PUBLIC, "toString", "()Ljava/lang/String;", null, null);

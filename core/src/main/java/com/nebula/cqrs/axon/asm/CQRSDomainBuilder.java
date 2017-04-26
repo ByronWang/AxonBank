@@ -24,13 +24,17 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
+import com.nebula.cqrs.axon.pojo.AxonAsmBuilder;
 import com.nebula.cqrs.axon.pojo.Command;
 import com.nebula.cqrs.axon.pojo.DomainDefinition;
 import com.nebula.cqrs.axon.pojo.Event;
 import com.nebula.cqrs.axon.pojo.Field;
 import com.nebula.cqrs.axon.pojo.Method;
+import com.nebula.cqrs.axon.pojo.PojoBuilder;
+import com.nebula.cqrs.core.asm.AsmBuilder;
 
 public class CQRSDomainBuilder extends ClassVisitor {
 	private final Type typeDomain;
@@ -66,9 +70,6 @@ public class CQRSDomainBuilder extends ClassVisitor {
 	}
 
 	public DomainDefinition finished() {
-		domainDefinition.commands = this.commands.toArray(new Command[0]);
-		domainDefinition.events = this.events.toArray(new Event[0]);
-		domainDefinition.fields = this.fields.toArray(new Field[0]);
 		return domainDefinition;
 	}
 
@@ -211,6 +212,11 @@ public class CQRSDomainBuilder extends ClassVisitor {
 			command.fields = fields.toArray(new Field[0]);
 		}
 
+		domainDefinition.commands = this.commands.toArray(new Command[0]);
+		domainDefinition.events = this.events.toArray(new Event[0]);
+		domainDefinition.fields = this.fields.toArray(new Field[0]);
+
+		AxonAsmBuilder.visitDefine_toString_withAllFields(cv, this.typeDomain, domainDefinition.fields);
 		super.visitEnd();
 	}
 
@@ -325,6 +331,7 @@ public class CQRSDomainBuilder extends ClassVisitor {
 
 				super.visitMethodInsn(opcode, owner, "apply" + event.simpleClassName, desc, itf);
 
+				AsmBuilder.visitPrintObject(mv, 0);
 			} else {
 
 				super.visitMethodInsn(opcode, owner, name, desc, itf);
@@ -394,8 +401,11 @@ public class CQRSDomainBuilder extends ClassVisitor {
 		}
 
 		@Override
-		public void visitFieldInsn(int opcode, String owner, String name, String desc) {
-			super.visitFieldInsn(opcode, owner, name, desc);
+		public void visitInsn(int opcode) {
+			if (opcode == Opcodes.RETURN) {
+				AsmBuilder.visitPrintObject(mv, 0);
+			}
+			super.visitInsn(opcode);
 		}
 	}
 

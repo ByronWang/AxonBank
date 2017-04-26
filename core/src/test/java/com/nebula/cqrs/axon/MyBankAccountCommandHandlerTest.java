@@ -42,12 +42,14 @@ public class MyBankAccountCommandHandlerTest {
 	public void setUp() throws Exception {
 
 		String domainClassName = "org.axonframework.samples.bank.cqrs.MyBankAccount";
-		packageName = domainClassName.substring(0, domainClassName.lastIndexOf('.'));
-		cqrs = new CQRSBuilder();
-		cqrs.makeDomainCQRSHelper(domainClassName);
+		{
+			packageName = domainClassName.substring(0, domainClassName.lastIndexOf('.'));
+			cqrs = new CQRSBuilder();
+			cqrs.makeDomainCQRSHelper(domainClassName);
+		}
 
-		clzDomain = cqrs.loadClass(domainClassName);
-		clzHandle = cqrs.loadClass(domainClassName + "CommandHandler");
+		clzDomain = cqrs.loadClass(domainClassName + "Impl");
+		clzHandle = cqrs.loadClass(domainClassName + "ImplCommandHandler");
 
 		testFixture = new AggregateTestFixture<>(clzDomain);
 
