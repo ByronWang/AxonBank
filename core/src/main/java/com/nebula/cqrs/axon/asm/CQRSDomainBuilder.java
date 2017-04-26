@@ -33,6 +33,7 @@ import com.nebula.cqrs.axon.pojo.DomainDefinition;
 import com.nebula.cqrs.axon.pojo.Event;
 import com.nebula.cqrs.axon.pojo.Field;
 import com.nebula.cqrs.axon.pojo.Method;
+import com.nebula.cqrs.core.CqrsEntity;
 import com.nebula.cqrs.core.asm.AsmBuilder;
 
 public class CQRSDomainBuilder extends ClassVisitor {
@@ -75,6 +76,16 @@ public class CQRSDomainBuilder extends ClassVisitor {
 	@Override
 	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
 		super.visit(version, access, name, signature, superName, interfaces);
+	}
+
+	@Override
+	public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+		String cqrs = Type.getDescriptor(CqrsEntity.class);
+		if(!cqrs.equals(desc)){
+			return super.visitAnnotation(desc, visible);			
+		}else{
+			return null;
+		}
 	}
 
 	@Override

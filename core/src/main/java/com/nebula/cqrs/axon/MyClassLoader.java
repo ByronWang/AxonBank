@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 class MyClassLoader extends ClassLoader {
 	private final static Logger LOGGER = LoggerFactory.getLogger(MyClassLoader.class);
 
-	File root = new File("target/generated-auto-classes/");
+	File root = new File("target/classes/");
 
 	protected final ConcurrentMap<String, byte[]> typeDefinitions;
 
@@ -24,6 +24,8 @@ class MyClassLoader extends ClassLoader {
 
 	public MyClassLoader() {
 		this.typeDefinitions = new ConcurrentHashMap<>();
+		String cp = System.getProperty("java.class.path");
+		cp.concat(";").concat(root.getName());
 	}
 
 	public Class<?> define(String name, byte[] binaryRepresentation) {

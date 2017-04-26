@@ -63,7 +63,7 @@ public class CQRSWebSpringApplicationListener implements ApplicationListener<App
 			}
 
 			ctx.defineClass(typeController.getClassName(),
-					CQRSWebControllerBuilder.dump(typeController, domainDefinition.type, typeEntry, domainDefinition.commands));
+					CQRSWebControllerBuilder.dump(typeController,domainDefinition, domainDefinition.type, typeEntry, domainDefinition.commands));
 
 			ctx.defineClass(typeRepository.getClassName(), CQRSRepositoryBuilder.dump(typeRepository, typeEntry));
 
@@ -82,10 +82,13 @@ public class CQRSWebSpringApplicationListener implements ApplicationListener<App
 	@Override
 	public void onApplicationEvent(ApplicationPreparedEvent e) {
 		ConfigurableApplicationContext applicationContext = e.getApplicationContext();
-		cqrsBuilder.add(this);
-		String domainName = "org.axonframework.samples.bank.cqrs.MyBankAccount";
-
-		cqrsBuilder.makeDomainCQRSHelper(domainName);
+//		cqrsBuilder.add(this);
+//		String domainName = "org.axonframework.samples.bank.cqrs.MyBankAccount";
+//
+////		PathMatchingResourcePatternResolver pathMatchingResourcePatternResolver = new PathMatchingResourcePatternResolver();
+////		Resource[] resources = pathMatchingResourcePatternResolver.getResources("classpath*:org/axonframework/samples/**/**.class");
+//		
+//		cqrsBuilder.makeDomainCQRSHelper(domainName);
 
 		ConfigurableListableBeanFactory beanFactory = applicationContext.getBeanFactory();
 

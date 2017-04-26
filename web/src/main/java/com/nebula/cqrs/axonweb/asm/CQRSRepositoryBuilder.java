@@ -26,10 +26,10 @@ public class CQRSRepositoryBuilder extends AxonAsmBuilder {
 					"()Ljava/lang/Iterable<" + typeEntry.getDescriptor() + ">;", null);
 			mv.visitEnd();
 		}
-		{
-			mv = cw.visitMethod(ACC_PUBLIC + ACC_ABSTRACT, "findOneByAxonId", Type.getMethodDescriptor(typeEntry, Type.getType(String.class)), null, null);
-			mv.visitEnd();
-		}
+//		{
+//			mv = cw.visitMethod(ACC_PUBLIC + ACC_ABSTRACT, "findOneByAxonId", Type.getMethodDescriptor(typeEntry, Type.getType(String.class)), null, null);
+//			mv.visitEnd();
+//		}
 		cw.visitEnd();
 
 		return cw.toByteArray();

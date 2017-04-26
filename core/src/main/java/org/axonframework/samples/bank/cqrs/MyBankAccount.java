@@ -19,6 +19,9 @@ package org.axonframework.samples.bank.cqrs;
 import org.axonframework.commandhandling.model.AggregateIdentifier;
 import org.axonframework.spring.stereotype.Aggregate;
 
+import com.nebula.cqrs.core.CqrsEntity;
+
+@CqrsEntity
 @Aggregate
 public class MyBankAccount {
 

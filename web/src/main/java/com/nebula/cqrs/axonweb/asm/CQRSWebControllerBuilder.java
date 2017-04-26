@@ -15,11 +15,12 @@ import org.springframework.stereotype.Controller;
 import com.nebula.cqrs.axon.asm.CQRSDomainBuilder;
 import com.nebula.cqrs.axon.pojo.AxonAsmBuilder;
 import com.nebula.cqrs.axon.pojo.Command;
+import com.nebula.cqrs.axon.pojo.DomainDefinition;
 import com.nebula.cqrs.axon.pojo.Field;
 
 public class CQRSWebControllerBuilder extends AxonAsmBuilder {
 
-	public static byte[] dump(Type typeController, Type typeDomain, Type typeEntry, Command[] commands) throws Exception {
+	public static byte[] dump(Type typeController, DomainDefinition domainDefinition,Type typeDomain, Type typeEntry, Command[] commands) throws Exception {
 		ClassWriter cw = new ClassWriter(0);
 
 		cw.visit(52, ACC_PUBLIC + ACC_SUPER, typeController.getInternalName(), null, "java/lang/Object", null);
@@ -33,7 +34,7 @@ public class CQRSWebControllerBuilder extends AxonAsmBuilder {
 		define_init(cw, typeController);
 
 		for (Command command : commands) {
-			Type typeDto = Type.getObjectType(typeDomain.getInternalName() + CQRSDomainBuilder.toCamelUpper(command.actionName) + "Dto");
+			Type typeDto = Type.getObjectType(domainDefinition.srcDomainType.getInternalName() + CQRSDomainBuilder.toCamelUpper(command.actionName) + "Dto");
 			if (command.ctorMethod) {
 				define_action_create(cw, typeController, typeDto, command);
 			} else {
