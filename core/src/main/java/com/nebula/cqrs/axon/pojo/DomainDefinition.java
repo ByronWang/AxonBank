@@ -7,11 +7,13 @@ import org.objectweb.asm.Type;
 public class DomainDefinition {
 	public final String name;
 	public final Type type;
+	public final Type srcDomainType;
 
-	public DomainDefinition(String name, Type type) {
+	public DomainDefinition(String name, Type srcDomainType, Type type) {
 		super();
 		this.name = name;
 		this.type = type;
+		this.srcDomainType = srcDomainType;
 	}
 
 	public static String toCamelUpper(String name) {

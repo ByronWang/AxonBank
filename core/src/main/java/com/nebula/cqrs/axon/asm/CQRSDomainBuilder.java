@@ -33,7 +33,6 @@ import com.nebula.cqrs.axon.pojo.DomainDefinition;
 import com.nebula.cqrs.axon.pojo.Event;
 import com.nebula.cqrs.axon.pojo.Field;
 import com.nebula.cqrs.axon.pojo.Method;
-import com.nebula.cqrs.axon.pojo.PojoBuilder;
 import com.nebula.cqrs.core.asm.AsmBuilder;
 
 public class CQRSDomainBuilder extends ClassVisitor {

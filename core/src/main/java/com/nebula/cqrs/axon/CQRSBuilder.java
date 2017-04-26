@@ -33,7 +33,7 @@ public class CQRSBuilder implements CQRSContext {
 	public ClassLoader getClassLoader() {
 		return classLoader;
 	}
-	
+
 	final List<DomainListener> listeners = new ArrayList<>();
 
 	public void add(DomainListener domainListener) {
@@ -44,7 +44,7 @@ public class CQRSBuilder implements CQRSContext {
 		@Override
 		public void define(CQRSContext ctx, DomainDefinition domainDefinition) {
 			try {
-				Type typeHandler = Type.getObjectType(domainDefinition.type.getInternalName() + "CommandHandler");
+				Type typeHandler = Type.getObjectType(domainDefinition.srcDomainType.getInternalName() + "CommandHandler");
 
 				for (Command command : domainDefinition.commands) {
 					if (command.ctorMethod) {
@@ -80,7 +80,7 @@ public class CQRSBuilder implements CQRSContext {
 				Type srcDomainType = Type.getObjectType(srcDomainClassName.replace('.', '/'));
 				Type implDomainType = Type.getObjectType(domainImplClassName.replace('.', '/'));
 
-				domainDefinition = new DomainDefinition(srcDomainName, implDomainType);
+				domainDefinition = new DomainDefinition(srcDomainName, srcDomainType,implDomainType);
 
 				ClassReader classReaderSource = new ClassReader(srcDomainType.getClassName());
 				ClassWriter classWriterImplDomainType = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);

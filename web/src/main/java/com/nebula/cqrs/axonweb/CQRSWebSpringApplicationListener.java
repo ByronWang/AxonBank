@@ -36,17 +36,17 @@ public class CQRSWebSpringApplicationListener implements ApplicationListener<App
 
 	@Override
 	public void define(CQRSContext ctx, DomainDefinition domainDefinition) {
-		Type typeController = Type.getObjectType(domainDefinition.type.getInternalName() + "Controller");
-		Type typeRepository = Type.getObjectType(domainDefinition.type.getInternalName() + "Repository");
-		Type typeEntry = Type.getObjectType(domainDefinition.type.getInternalName() + "Entry");
-		Type typeConfig = Type.getObjectType(domainDefinition.type.getInternalName() + "AxonConfig");
-		Type typeCommandHandler = Type.getObjectType(domainDefinition.type.getInternalName() + "CommandHandler");
+		Type typeController = Type.getObjectType(domainDefinition.srcDomainType.getInternalName() + "Controller");
+		Type typeRepository = Type.getObjectType(domainDefinition.srcDomainType.getInternalName() + "Repository");
+		Type typeEntry = Type.getObjectType(domainDefinition.srcDomainType.getInternalName() + "Entry");
+		Type typeConfig = Type.getObjectType(domainDefinition.srcDomainType.getInternalName() + "AxonConfig");
+		Type typeCommandHandler = Type.getObjectType(domainDefinition.srcDomainType.getInternalName() + "CommandHandler");
 
 		try {
 			ctx.defineClass(typeEntry.getClassName(), CQRSWebEntryBuilder.dump(typeEntry, domainDefinition.fields));
 
 			for (Command command : domainDefinition.commands) {
-				Type typeDto = Type.getObjectType(domainDefinition.type.getInternalName() + DomainDefinition.toCamelUpper(command.actionName) + "Dto");
+				Type typeDto = Type.getObjectType(domainDefinition.srcDomainType.getInternalName() + DomainDefinition.toCamelUpper(command.actionName) + "Dto");
 				Field[] fields;
 				if (command.ctorMethod) {
 					List<Field> ctorFields = new ArrayList<>();

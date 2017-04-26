@@ -49,7 +49,7 @@ public class MyBankAccountCommandHandlerTest {
 		}
 
 		clzDomain = cqrs.loadClass(domainClassName + "Impl");
-		clzHandle = cqrs.loadClass(domainClassName + "ImplCommandHandler");
+		clzHandle = cqrs.loadClass(domainClassName + "CommandHandler");
 
 		testFixture = new AggregateTestFixture<>(clzDomain);
 
