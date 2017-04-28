@@ -36,17 +36,17 @@ public class CQRSWebSpringApplicationListener implements ApplicationListener<App
 
 	@Override
 	public void define(CQRSContext ctx, DomainDefinition domainDefinition) {
-		Type typeController = Type.getObjectType(domainDefinition.srcDomainType.getInternalName() + "Controller");
-		Type typeRepository = Type.getObjectType(domainDefinition.srcDomainType.getInternalName() + "Repository");
-		Type typeEntry = Type.getObjectType(domainDefinition.srcDomainType.getInternalName() + "Entry");
-		Type typeConfig = Type.getObjectType(domainDefinition.srcDomainType.getInternalName() + "AxonConfig");
-		Type typeCommandHandler = Type.getObjectType(domainDefinition.srcDomainType.getInternalName() + "CommandHandler");
+		Type typeController = domainDefinition.typeOf("Controller");
+		Type typeRepository = domainDefinition.typeOf("Repository");
+		Type typeEntry = domainDefinition.typeOf("Entry");
+		Type typeConfig = domainDefinition.typeOf("AxonConfig");
+		Type typeCommandHandler = domainDefinition.typeOf("CommandHandler");
 
 		try {
 			ctx.defineClass(typeEntry.getClassName(), CQRSWebEntryBuilder.dump(typeEntry, domainDefinition.fields));
 
 			for (Command command : domainDefinition.commands) {
-				Type typeDto = Type.getObjectType(domainDefinition.srcDomainType.getInternalName() + DomainDefinition.toCamelUpper(command.actionName) + "Dto");
+				Type typeDto = domainDefinition.typeOf(DomainDefinition.toCamelUpper(command.actionName) + "Dto");
 				Field[] fields;
 				if (command.ctorMethod) {
 					List<Field> ctorFields = new ArrayList<>();
@@ -63,11 +63,11 @@ public class CQRSWebSpringApplicationListener implements ApplicationListener<App
 			}
 
 			ctx.defineClass(typeController.getClassName(),
-					CQRSWebControllerBuilder.dump(typeController,domainDefinition, domainDefinition.type, typeEntry, domainDefinition.commands));
+					CQRSWebControllerBuilder.dump(typeController, domainDefinition, typeEntry, domainDefinition.commands));
 
 			ctx.defineClass(typeRepository.getClassName(), CQRSRepositoryBuilder.dump(typeRepository, typeEntry));
 
-			ctx.defineClass(typeConfig.getClassName(), CQRSAxonConfigBuilder.dump(typeConfig, domainDefinition.type, typeRepository, typeCommandHandler));
+			ctx.defineClass(typeConfig.getClassName(), CQRSAxonConfigBuilder.dump(typeConfig, domainDefinition.implDomainType, typeRepository, typeCommandHandler));
 
 			beanTypes.add(typeEntry);
 			beanTypes.add(typeConfig);
@@ -82,13 +82,17 @@ public class CQRSWebSpringApplicationListener implements ApplicationListener<App
 	@Override
 	public void onApplicationEvent(ApplicationPreparedEvent e) {
 		ConfigurableApplicationContext applicationContext = e.getApplicationContext();
-//		cqrsBuilder.add(this);
-//		String domainName = "org.axonframework.samples.bank.cqrs.MyBankAccount";
-//
-////		PathMatchingResourcePatternResolver pathMatchingResourcePatternResolver = new PathMatchingResourcePatternResolver();
-////		Resource[] resources = pathMatchingResourcePatternResolver.getResources("classpath*:org/axonframework/samples/**/**.class");
-//		
-//		cqrsBuilder.makeDomainCQRSHelper(domainName);
+		// cqrsBuilder.add(this);
+		// String domainName =
+		// "org.axonframework.samples.bank.cqrs.MyBankAccount";
+		//
+		//// PathMatchingResourcePatternResolver
+		// pathMatchingResourcePatternResolver = new
+		// PathMatchingResourcePatternResolver();
+		//// Resource[] resources =
+		// pathMatchingResourcePatternResolver.getResources("classpath*:org/axonframework/samples/**/**.class");
+		//
+		// cqrsBuilder.makeDomainCQRSHelper(domainName);
 
 		ConfigurableListableBeanFactory beanFactory = applicationContext.getBeanFactory();
 

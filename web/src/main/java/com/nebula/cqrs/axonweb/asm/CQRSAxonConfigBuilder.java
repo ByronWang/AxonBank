@@ -12,14 +12,12 @@ import org.objectweb.asm.Type;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.jpa.repository.support.JpaRepositoryFactory;
-import org.springframework.data.repository.core.support.RepositoryFactorySupport;
 
 import com.nebula.cqrs.axon.pojo.AxonAsmBuilder;
 
 public class CQRSAxonConfigBuilder extends AxonAsmBuilder {
 
-	public static byte[] dump(Type typeConfig, Type typeDomain, Type typeRepository, Type typeCommandHandler) throws Exception {
+	public static byte[] dump(Type typeConfig, Type implDomainType, Type typeRepository, Type typeCommandHandler) throws Exception {
 
 		ClassWriter cw = new ClassWriter(0);
 
@@ -32,14 +30,14 @@ public class CQRSAxonConfigBuilder extends AxonAsmBuilder {
 
 		visitDefine_init_withNothing(cw, typeConfig);
 
-		define_bankAccountCommandHandler(cw, typeDomain, typeConfig, typeCommandHandler);
+		define_bankAccountCommandHandler(cw, implDomainType, typeConfig, typeCommandHandler);
 
 		cw.visitEnd();
 
 		return cw.toByteArray();
 	}
 
-	private static void define_bankAccountCommandHandler(ClassWriter cw, Type typeDomain, Type typeConfig, Type typeCommandHandler) {
+	private static void define_bankAccountCommandHandler(ClassWriter cw, Type implDomainType, Type typeConfig, Type typeCommandHandler) {
 		MethodVisitor mv;
 		{
 			
@@ -55,7 +53,7 @@ public class CQRSAxonConfigBuilder extends AxonAsmBuilder {
 				mv.visitInsn(DUP);
 
 				visitGetField(mv, 0, typeConfig, "axonConfiguration", AxonConfiguration.class);
-				mv.visitLdcInsn(typeDomain);
+				mv.visitLdcInsn(implDomainType);
 				visitInvokeVirtual(mv, AxonConfiguration.class, Repository.class, "repository", Class.class);
 
 				visitGetField(mv, 0, typeConfig, "eventBus", EventBus.class);

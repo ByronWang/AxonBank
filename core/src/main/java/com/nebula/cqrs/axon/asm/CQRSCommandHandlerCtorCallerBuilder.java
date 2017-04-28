@@ -11,16 +11,14 @@ import com.nebula.cqrs.axon.pojo.Command;
 
 public class CQRSCommandHandlerCtorCallerBuilder extends AxonAsmBuilder {
 
-	public static byte[] dump(Type typeDomain, Type typeHandler, Command command) throws Exception {
+	public static byte[] dump(Type typeInner,Type implDomainType, Type typeHandler, Command command) throws Exception {
 
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
 		FieldVisitor fv;
 
-		Type typeInner = Type.getObjectType(typeHandler.getInternalName() + "$Inner" + command.simpleClassName);
-
 		Type typeCommand = command.type;
 
-		cw.visit(52, ACC_SUPER, typeInner.getInternalName(), "Ljava/lang/Object;Ljava/util/concurrent/Callable<" + typeDomain.getDescriptor() + ">;",
+		cw.visit(52, ACC_SUPER, typeInner.getInternalName(), "Ljava/lang/Object;Ljava/util/concurrent/Callable<" + implDomainType.getDescriptor() + ">;",
 				"java/lang/Object", new String[] { "java/util/concurrent/Callable" });
 
 		cw.visitOuterClass(typeHandler.getInternalName(), "handle", Type.getMethodDescriptor(Type.VOID_TYPE, typeCommand));
@@ -37,24 +35,24 @@ public class CQRSCommandHandlerCtorCallerBuilder extends AxonAsmBuilder {
 		}
 
 		visitDefine_init(cw, typeInner, typeHandler, typeCommand);
-		visitDefine_call(cw, typeInner, typeDomain, command, typeCommand);
-		visitDefine_call_bridge(cw, typeInner, typeDomain);
+		visitDefine_call(cw, typeInner, implDomainType, command, typeCommand);
+		visitDefine_call_bridge(cw, typeInner, implDomainType);
 
 		cw.visitEnd();
 
 		return cw.toByteArray();
 	}
 
-	private static void visitDefine_call(ClassWriter cw, Type typeInner, Type typeDomain, Command command, Type typeCommand) {
+	private static void visitDefine_call(ClassWriter cw, Type typeInner, Type implDomainType, Command command, Type typeCommand) {
 		MethodVisitor mv;
 		{
-			mv = cw.visitMethod(ACC_PUBLIC, "call", Type.getMethodDescriptor(typeDomain), null, new String[] { "java/lang/Exception" });
+			mv = cw.visitMethod(ACC_PUBLIC, "call", Type.getMethodDescriptor(implDomainType), null, new String[] { "java/lang/Exception" });
 			mv.visitCode();
 			Label l0 = new Label();
 			mv.visitLabel(l0);
 			mv.visitLineNumber(65, l0);
 			{
-				visitNewObject(mv, typeDomain);
+				visitNewObject(mv, implDomainType);
 				mv.visitInsn(DUP);
 
 				for (int i = 0; i < command.methodParams.length; i++) {
@@ -62,7 +60,7 @@ public class CQRSCommandHandlerCtorCallerBuilder extends AxonAsmBuilder {
 					visitGetProperty(mv, typeCommand, command.methodParams[i]);
 				}
 
-				visitInitTypeWithAllFields(mv, typeDomain, command.methodParams);
+				visitInitTypeWithAllFields(mv, implDomainType, command.methodParams);
 
 				visitPrintStaticMessage(mv, typeCommand.getInternalName() + " create new object");
 
@@ -76,7 +74,7 @@ public class CQRSCommandHandlerCtorCallerBuilder extends AxonAsmBuilder {
 		}
 	}
 
-	private static void visitDefine_call_bridge(ClassWriter cw, Type typeInner, Type typeDomain) {
+	private static void visitDefine_call_bridge(ClassWriter cw, Type typeInner, Type implDomainType) {
 		MethodVisitor mv;
 		{
 			mv = cw.visitMethod(ACC_PUBLIC + ACC_BRIDGE + ACC_SYNTHETIC, "call", "()Ljava/lang/Object;", null, new String[] { "java/lang/Exception" });
@@ -85,7 +83,7 @@ public class CQRSCommandHandlerCtorCallerBuilder extends AxonAsmBuilder {
 			mv.visitLabel(l0);
 			mv.visitLineNumber(1, l0);
 			{
-				visitInvokeVirtual(mv, 0, typeInner, typeDomain, "call");
+				visitInvokeVirtual(mv, 0, typeInner, implDomainType, "call");
 				visitAReturn(mv);
 			}
 			mv.visitMaxs(1, 1);

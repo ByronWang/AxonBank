@@ -37,7 +37,7 @@ import com.nebula.cqrs.core.CqrsEntity;
 import com.nebula.cqrs.core.asm.AsmBuilder;
 
 public class CQRSDomainBuilder extends ClassVisitor {
-	private final Type typeDomain;
+	private final Type implDomainType;
 	private final DomainDefinition domainDefinition;
 
 	private final List<Command> commands = new ArrayList<>();
@@ -62,7 +62,7 @@ public class CQRSDomainBuilder extends ClassVisitor {
 	public CQRSDomainBuilder(int api, ClassVisitor cv, DomainDefinition domainDefinition) {
 		super(api, cv);
 		this.domainDefinition = domainDefinition;
-		this.typeDomain = domainDefinition.type;
+		this.implDomainType = domainDefinition.implDomainType;
 	}
 
 	public CQRSDomainBuilder(int api, DomainDefinition domainDefinition) {
@@ -81,9 +81,9 @@ public class CQRSDomainBuilder extends ClassVisitor {
 	@Override
 	public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
 		String cqrs = Type.getDescriptor(CqrsEntity.class);
-		if(!cqrs.equals(desc)){
-			return super.visitAnnotation(desc, visible);			
-		}else{
+		if (!cqrs.equals(desc)) {
+			return super.visitAnnotation(desc, visible);
+		} else {
 			return null;
 		}
 	}
@@ -137,14 +137,13 @@ public class CQRSDomainBuilder extends ClassVisitor {
 				actionName = methodName;
 			}
 
-			commandName = domainDefinition.name + toCamelUpper(actionName);
-			String simpleClassName = commandName + "Command";;
+			commandName = toCamelUpper(actionName);
 
-			Type type = typeOf(simpleClassName);
+			Type type = domainDefinition.typeOf(commandName + "Command");
 
 			Type returnType = Type.getReturnType(desc);
 
-			Command command = new Command(actionName, methodName, commandName, ctorMethod, simpleClassName, type, returnType);
+			Command command = new Command(actionName, methodName, commandName, ctorMethod, type, returnType);
 
 			MethodVisitor methodVisitor = super.visitMethod(access, name, desc, signature, exceptions);
 			CommandMethodVisitor commandMethodVisitor = new CommandMethodVisitor(api, methodVisitor, access, command, desc, signature, exceptions);
@@ -158,10 +157,9 @@ public class CQRSDomainBuilder extends ClassVisitor {
 			String newMethodName = "on";
 			boolean innerEvent = true;
 			String eventName = toCamelUpper(name.substring(2));
-			String simpleClassName = domainDefinition.name + eventName + "Event";
-			Type type = typeOf(simpleClassName);
+			Type type = domainDefinition.typeOf(eventName + "Event");
 
-			Event event = new Event(eventName, originMethodName, newMethodName, innerEvent, simpleClassName, type);
+			Event event = new Event(eventName, originMethodName, newMethodName, innerEvent, type);
 
 			String newDescriptor = Type.getMethodDescriptor(Type.VOID_TYPE, new Type[] { type });
 
@@ -226,19 +224,8 @@ public class CQRSDomainBuilder extends ClassVisitor {
 		domainDefinition.events = this.events.toArray(new Event[0]);
 		domainDefinition.fields = this.fields.toArray(new Field[0]);
 
-		AxonAsmBuilder.visitDefine_toString_withAllFields(cv, this.typeDomain, domainDefinition.fields);
+		AxonAsmBuilder.visitDefine_toString_withAllFields(cv, implDomainType, domainDefinition.fields);
 		super.visitEnd();
-	}
-
-	public Type typeOf(String name) {
-		return Type.getObjectType(fullnameOf(name).replace('.', '/'));
-	}
-
-	public String fullnameOf(String name) {
-		// Call event
-		String typename = typeDomain.getClassName();
-		String packageName = typename.substring(0, typename.lastIndexOf('.'));
-		return packageName + "." + name;
 	}
 
 	private void makeApplyEventMethod(Event event) {
@@ -255,7 +242,7 @@ public class CQRSDomainBuilder extends ClassVisitor {
 			}
 			final String methodDescriptor = Type.getMethodDescriptor(Type.VOID_TYPE, params);
 
-			mv = super.visitMethod(ACC_PRIVATE + ACC_FINAL, "apply" + event.simpleClassName, methodDescriptor, null, null);
+			mv = super.visitMethod(ACC_PRIVATE + ACC_FINAL, "apply" + event.eventName, methodDescriptor, null, null);
 			mv.visitCode();
 			Label l0 = new Label();
 			mv.visitLabel(l0);
@@ -265,7 +252,7 @@ public class CQRSDomainBuilder extends ClassVisitor {
 
 			if (event.withoutID) {
 				mv.visitVarInsn(ALOAD, 0);
-				mv.visitFieldInsn(GETFIELD, typeDomain.getInternalName(), newfieldID.name, newfieldID.type.getDescriptor());
+				mv.visitFieldInsn(GETFIELD, implDomainType.getInternalName(), newfieldID.name, newfieldID.type.getDescriptor());
 			}
 
 			for (int i = 0; i < event.methodParams.length; i++) {
@@ -289,7 +276,7 @@ public class CQRSDomainBuilder extends ClassVisitor {
 			mv.visitInsn(RETURN);
 			Label l2 = new Label();
 			mv.visitLabel(l2);
-			mv.visitLocalVariable("this", typeDomain.getDescriptor(), null, l0, l2, 0);
+			mv.visitLocalVariable("this", implDomainType.getDescriptor(), null, l0, l2, 0);
 			for (int i = 0; i < event.methodParams.length; i++) {
 				Field field = event.methodParams[i];
 				mv.visitLocalVariable(field.name, field.type.getDescriptor(), null, l0, l2, i + 1);
@@ -323,8 +310,8 @@ public class CQRSDomainBuilder extends ClassVisitor {
 			String newMethodName = null;
 			boolean innerEvent = false;
 			String simpleClassName = eventName + "Event";
-			Type type = typeOf(simpleClassName);
-			this.event = new Event(eventName, originMethodName, newMethodName, innerEvent, simpleClassName, type);
+			Type type = domainDefinition.typeOf(simpleClassName);
+			this.event = new Event(eventName, originMethodName, newMethodName, innerEvent, type);
 
 			Method method = domainDefinition.menthods.get(command.methodName);
 			command.methodParams = method.params;
@@ -335,11 +322,11 @@ public class CQRSDomainBuilder extends ClassVisitor {
 			Method method = domainDefinition.menthods.get(name);
 			event.methodParams = method.params;
 
-			if (owner.equals(typeDomain.getInternalName()) && name.startsWith("on")) {
+			if (owner.equals(implDomainType.getInternalName()) && name.startsWith("on")) {
 				// set super name
-				event.realEvent = typeOf(domainDefinition.name + toCamelUpper(name.substring(2)) + "Event");
+				event.realEvent = domainDefinition.typeOf(toCamelUpper(name.substring(2)) + "Event");
 
-				super.visitMethodInsn(opcode, owner, "apply" + event.simpleClassName, desc, itf);
+				super.visitMethodInsn(opcode, owner, "apply" + event.eventName, desc, itf);
 
 				AsmBuilder.visitPrintObject(mv, 0);
 			} else {

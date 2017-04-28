@@ -19,34 +19,35 @@ import com.nebula.cqrs.axon.pojo.Field;
 
 public class CQRSCommandHandlerBuilder extends AxonAsmBuilder {
 
-	public byte[] dump(Command[] commands, Type typeDomain, Type typeHandler) {
+	public byte[] dump(Command[] commands, Type implDomainType, Type typeHandler) {
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
 		FieldVisitor fv;
 
 		cw.visit(52, ACC_PUBLIC + ACC_SUPER, typeHandler.getInternalName(), null, "java/lang/Object", null);
 
 		for (Command command : commands) {
-			if (!command.ctorMethod) {
-				Type inner = Type.getObjectType(typeHandler.getInternalName() + "$Inner" + command.simpleClassName);
+//			if (!command.ctorMethod) {
+				Type inner = Type.getObjectType(typeHandler.getInternalName() + "$Inner" + command.commandName);
 				cw.visitInnerClass(inner.getInternalName(), null, null, 0);
-			}
+//			}
 		}
 
 		{
 			fv = cw.visitField(ACC_PRIVATE, "repository", "Lorg/axonframework/commandhandling/model/Repository;",
-					"Lorg/axonframework/commandhandling/model/Repository<" + typeDomain.getDescriptor() + ">;", null);
+					"Lorg/axonframework/commandhandling/model/Repository<" + implDomainType.getDescriptor() + ">;", null);
 			fv.visitEnd();
 		}
 
 		visitDefineField(cw, "eventBus", EventBus.class);
 
-		define_init(cw, typeDomain, typeHandler);
+		define_init(cw, implDomainType, typeHandler);
 
 		for (Command command : commands) {
+			Type inner = Type.getObjectType(typeHandler.getInternalName() + "$Inner" + command.commandName);
 			if (command.ctorMethod) {
-				dumpCtorMethod(cw, typeDomain, typeHandler, command);
+				dumpCtorMethod(cw, typeHandler, inner, command);
 			} else {
-				dumpMethod(cw, typeDomain, typeHandler, command);
+				dumpMethod(cw, implDomainType, typeHandler, inner, command);
 			}
 		}
 
@@ -55,7 +56,7 @@ public class CQRSCommandHandlerBuilder extends AxonAsmBuilder {
 		return cw.toByteArray();
 	}
 
-	private void define_init(ClassWriter cw, Type typeDomain, Type typeHandler) {
+	private void define_init(ClassWriter cw, Type implDomainType, Type typeHandler) {
 		MethodVisitor mv;
 		{
 			final int _this = 0;
@@ -63,7 +64,7 @@ public class CQRSCommandHandlerBuilder extends AxonAsmBuilder {
 			final int _eventBus = 2;
 
 			mv = cw.visitMethod(ACC_PUBLIC, "<init>", "(Lorg/axonframework/commandhandling/model/Repository;Lorg/axonframework/eventhandling/EventBus;)V",
-					"(Lorg/axonframework/commandhandling/model/Repository<" + typeDomain.getDescriptor() + ">;Lorg/axonframework/eventhandling/EventBus;)V",
+					"(Lorg/axonframework/commandhandling/model/Repository<" + implDomainType.getDescriptor() + ">;Lorg/axonframework/eventhandling/EventBus;)V",
 					null);
 			mv.visitParameter("repository", 0);
 			mv.visitParameter("eventBus", 0);
@@ -82,17 +83,16 @@ public class CQRSCommandHandlerBuilder extends AxonAsmBuilder {
 			mv.visitLabel(l4);
 			mv.visitLocalVariable("this", typeHandler.getDescriptor(), null, l0, l4, _this);
 			mv.visitLocalVariable("repository", "Lorg/axonframework/commandhandling/model/Repository;",
-					"Lorg/axonframework/commandhandling/model/Repository<" + typeDomain.getDescriptor() + ">;", l0, l4, _repository);
+					"Lorg/axonframework/commandhandling/model/Repository<" + implDomainType.getDescriptor() + ">;", l0, l4, _repository);
 			mv.visitLocalVariable("eventBus", "Lorg/axonframework/eventhandling/EventBus;", null, l0, l4, _eventBus);
 			mv.visitMaxs(2, 3);
 			mv.visitEnd();
 		}
 	}
 
-	void dumpCtorMethod(ClassWriter cw, Type typeDomain, Type typeHandler, Command command) {
+	void dumpCtorMethod(ClassWriter cw, Type typeHandler, Type typeInner, Command command) {
 		MethodVisitor mv;
 
-		Type typeInner = Type.getObjectType(typeHandler.getInternalName() + "$Inner" + command.simpleClassName);
 		{
 
 			mv = cw.visitMethod(ACC_PUBLIC, "handle", Type.getMethodDescriptor(Type.VOID_TYPE, command.type), null, new String[] { "java/lang/Exception" });
@@ -125,12 +125,10 @@ public class CQRSCommandHandlerBuilder extends AxonAsmBuilder {
 		}
 	}
 
-	void dumpMethod(ClassWriter cw, Type typeDomain, Type typeHandler, Command command) {
+	void dumpMethod(ClassWriter cw, Type implDomainType, Type typeHandler, Type inner, Command command) {
 		MethodVisitor mv;
 		{
 			Field idField = command.fields[0];
-
-			Type inner = Type.getObjectType(typeHandler.getInternalName() + "$Inner" + command.simpleClassName);
 
 			mv = cw.visitMethod(ACC_PUBLIC, "handle", Type.getMethodDescriptor(Type.VOID_TYPE, command.type), null, null);
 			mv.visitParameter("command", 0);
@@ -163,7 +161,7 @@ public class CQRSCommandHandlerBuilder extends AxonAsmBuilder {
 			mv.visitLocalVariable("this", typeHandler.getDescriptor(), null, l0, l3, 0);
 			mv.visitLocalVariable("command", command.type.getDescriptor(), null, l0, l3, 1);
 			mv.visitLocalVariable("bankAccountAggregate", "Lorg/axonframework/commandhandling/model/Aggregate;",
-					"Lorg/axonframework/commandhandling/model/Aggregate<" + typeDomain.getDescriptor() + ">;", l0, l3, 2);
+					"Lorg/axonframework/commandhandling/model/Aggregate<" + implDomainType.getDescriptor() + ">;", l0, l3, 2);
 			mv.visitMaxs(5, 3);
 			mv.visitEnd();
 

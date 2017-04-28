@@ -5,13 +5,13 @@ import org.objectweb.asm.Type;
 public class Command {
 	@Override
 	public String toString() {
-		return "Command [simpleClassName=" + simpleClassName + ", fields=" + fields + ", parameters=" + methodParams + "]";
+		return "Command [fields=" + fields + ", parameters=" + methodParams + "]";
 	}
 
 	public final String methodName;
 	public final String actionName;
 	public final String commandName;
-	public final String simpleClassName;
+	// private final String simpleClassName;
 
 	public Field[] methodParams;
 
@@ -19,13 +19,12 @@ public class Command {
 
 	public Field[] fields;
 
-	public Command(String actionName, String methodName, String commandName, boolean ctorMethod, String simpleClassName, Type type, Type returnType) {
+	public Command(String actionName, String methodName, String commandName, boolean ctorMethod, Type type, Type returnType) {
 		super();
 		this.actionName = actionName;
 		this.methodName = methodName;
 		this.commandName = commandName;
 		this.ctorMethod = ctorMethod;
-		this.simpleClassName = simpleClassName;
 		this.type = type;
 		this.returnType = returnType;
 	}

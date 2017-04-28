@@ -20,7 +20,7 @@ import com.nebula.cqrs.axon.pojo.Field;
 
 public class CQRSWebControllerBuilder extends AxonAsmBuilder {
 
-	public static byte[] dump(Type typeController, DomainDefinition domainDefinition,Type typeDomain, Type typeEntry, Command[] commands) throws Exception {
+	public static byte[] dump(Type typeController, DomainDefinition domainDefinition, Type typeEntry, Command[] commands) throws Exception {
 		ClassWriter cw = new ClassWriter(0);
 
 		cw.visit(52, ACC_PUBLIC + ACC_SUPER, typeController.getInternalName(), null, "java/lang/Object", null);
@@ -29,12 +29,11 @@ public class CQRSWebControllerBuilder extends AxonAsmBuilder {
 		visitAnnotation(cw, MessageMapping.class, "/bank-accounts");
 
 		visitDefineField(cw, "commandBus", CommandBus.class);
-//		visitDefineField(cw, "repository", typeRepository);
 
 		define_init(cw, typeController);
 
 		for (Command command : commands) {
-			Type typeDto = Type.getObjectType(domainDefinition.srcDomainType.getInternalName() + CQRSDomainBuilder.toCamelUpper(command.actionName) + "Dto");
+			Type typeDto = domainDefinition.typeOf(CQRSDomainBuilder.toCamelUpper(command.actionName) + "Dto");
 			if (command.ctorMethod) {
 				define_action_create(cw, typeController, typeDto, command);
 			} else {

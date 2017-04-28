@@ -12,16 +12,14 @@ import com.nebula.cqrs.axon.pojo.Field;
 
 public class CQRSCommandHandlerCallerBuilder extends AxonAsmBuilder {
 
-	public static byte[] dump(Type typeDomain, Type typeHandler, Command command) throws Exception {
+	public static byte[] dump(Type typeInner,Type implDomainType, Type typeHandler, Command command) throws Exception {
 
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
 		FieldVisitor fv;
 
-		Type typeInner = Type.getObjectType(typeHandler.getInternalName() + "$Inner" + command.simpleClassName);
-
 		Type typeCommand = command.type;
 
-		cw.visit(52, ACC_SUPER, typeInner.getInternalName(), "Ljava/lang/Object;Ljava/util/function/Consumer<" + typeDomain.getDescriptor() + ">;",
+		cw.visit(52, ACC_SUPER, typeInner.getInternalName(), "Ljava/lang/Object;Ljava/util/function/Consumer<" + implDomainType.getDescriptor() + ">;",
 				"java/lang/Object", new String[] { "java/util/function/Consumer" });
 
 		cw.visitOuterClass(typeHandler.getInternalName(), "handle", Type.getMethodDescriptor(Type.VOID_TYPE, typeCommand));
@@ -37,8 +35,8 @@ public class CQRSCommandHandlerCallerBuilder extends AxonAsmBuilder {
 			fv.visitEnd();
 		}
 		visitDefine_init(cw, typeInner, typeHandler, typeCommand);
-		visitDefine_accept(cw, typeInner, typeDomain, command, typeCommand);
-		visitDefine_accept_bridge(cw, typeInner, typeDomain);
+		visitDefine_accept(cw, typeInner, implDomainType, command, typeCommand);
+		visitDefine_accept_bridge(cw, typeInner, implDomainType);
 		cw.visitEnd();
 
 		return cw.toByteArray();

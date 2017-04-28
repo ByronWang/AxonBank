@@ -7,7 +7,7 @@ public class Event {
 
 	@Override
 	public String toString() {
-		return "Command [simpleClassName=" + simpleClassName + ", fields=" + fields + ", parameters=" + methodParams + "]";
+		return "Event [fields=" + fields + ", parameters=" + methodParams + "]";
 	}
 
 	public String originMethodName;
@@ -17,16 +17,15 @@ public class Event {
 
 	public boolean innerEvent = false;
 
-	public String simpleClassName;
+	// public String simpleClassName;
 	public Field[] fields;
 
-	public Event(String eventName, String originMethodName, String newMethodName, boolean innerEvent, String simpleClassName, Type type) {
+	public Event(String eventName, String originMethodName, String newMethodName, boolean innerEvent, Type type) {
 		super();
 		this.eventName = eventName;
 		this.originMethodName = originMethodName;
 		this.newMethodName = newMethodName;
 		this.innerEvent = innerEvent;
-		this.simpleClassName = simpleClassName;
 		this.type = type;
 	}
 
