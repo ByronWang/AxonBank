@@ -24,7 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Component;
 
-//@Component
+@Component
 public class BankAccountEventListener {
 
     private BankAccountRepository repository;

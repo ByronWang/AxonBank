@@ -69,9 +69,9 @@ public class CQRSWebSpringApplicationListener implements ApplicationListener<App
 
 			ctx.defineClass(typeConfig.getClassName(), CQRSAxonConfigBuilder.dump(typeConfig, domainDefinition.implDomainType, typeRepository, typeCommandHandler));
 
-			beanTypes.add(typeEntry);
-			beanTypes.add(typeConfig);
-			beanTypes.add(typeController);
+//			beanTypes.add(typeEntry);
+//			beanTypes.add(typeConfig);
+//			beanTypes.add(typeController);
 			// beanTypes.add(typeRepository);
 
 		} catch (Exception e) {

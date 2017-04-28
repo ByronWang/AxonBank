@@ -17,23 +17,17 @@
 package org.axonframework.samples.bank;
 
 import java.io.IOException;
-import java.util.Arrays;
 
-import org.axonframework.spring.stereotype.Aggregate;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.ComponentScan.Filter;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.core.type.classreading.SimpleMetadataReaderFactory;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.stereotype.Controller;
-import org.springframework.util.ClassUtils;
-import org.springframework.web.bind.annotation.RestController;
 
 import com.nebula.cqrs.axon.CQRSBuilder;
 import com.nebula.cqrs.axonweb.CQRSWebSpringApplicationListener;
@@ -42,30 +36,33 @@ import com.nebula.cqrs.core.CqrsEntity;
 //@SpringBootApplication
 @Configuration
 @EnableAutoConfiguration
-@ComponentScan(excludeFilters = { @Filter(RestController.class), @Filter(Controller.class) })
+@ComponentScan//(excludeFilters = { @Filter(RestController.class), @Filter(Controller.class) })
 public class AxonBankApplication {
 
 	private static final String CLASS_RESOURCE_PATTERN = "/**/*.class";
+
 	public static void main(String[] args) {
 		try {
 			CQRSBuilder cqrsBuilder = new CQRSBuilder();
 			CQRSWebSpringApplicationListener applicationListener = new CQRSWebSpringApplicationListener(cqrsBuilder);
 			cqrsBuilder.add(applicationListener);
 
-//			String pattern = ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX +
-//					ClassUtils.convertClassNameToResourcePath(pkg) + CLASS_RESOURCE_PATTERN;
+			// String pattern = ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX
+			// +
+			// ClassUtils.convertClassNameToResourcePath(pkg) +
+			// CLASS_RESOURCE_PATTERN;
 			PathMatchingResourcePatternResolver pathMatchingResourcePatternResolver = new PathMatchingResourcePatternResolver();
-			Resource[] resources = pathMatchingResourcePatternResolver
-					.getResources("classpath*:" + AxonBankApplication.class.getPackage().getName().replace('.', '/') + "/**/**.class");
-			SimpleMetadataReaderFactory metadataReaderFactory = new SimpleMetadataReaderFactory();			
+			Resource[] resources = pathMatchingResourcePatternResolver.getResources(ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX
+					+ AxonBankApplication.class.getPackage().getName().replace('.', '/') + CLASS_RESOURCE_PATTERN);
+			SimpleMetadataReaderFactory metadataReaderFactory = new SimpleMetadataReaderFactory();
 			AnnotationTypeFilter annotationTypeFilter = new AnnotationTypeFilter(CqrsEntity.class);
 			for (Resource resource : resources) {
 				if (resource.isReadable()) {
 					MetadataReader reader = metadataReaderFactory.getMetadataReader(resource);
 					String className = reader.getClassMetadata().getClassName();
 					if (annotationTypeFilter.match(reader, metadataReaderFactory)) {
-						System.out.println("domain " + className);
-						cqrsBuilder.makeDomainCQRSHelper(className);
+//						System.out.println("domain " + className);
+						 cqrsBuilder.makeDomainCQRSHelper(className);
 					}
 				}
 			}

@@ -22,9 +22,8 @@ import org.axonframework.samples.bank.command.BankAccountCommandHandler;
 import org.axonframework.spring.config.AxonConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
-@Configuration
+//@Configuration
 public class AxonConfig {
 
     @Autowired
