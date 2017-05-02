@@ -1,7 +1,6 @@
 package com.nebula.cqrs.axon.pojo;
 
 import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
@@ -10,7 +9,7 @@ import com.nebula.cqrs.core.asm.AsmBuilder;
 
 public class AxonAsmBuilder extends AsmBuilder {
 
-	public static void visitDefine_init_withAllFields(ClassWriter cw, Type objectType, Field[] fields) {
+	public static void visitDefine_init_withAllFields(ClassVisitor cw, Type objectType, Field[] fields) {
 		MethodVisitor mv;
 		{
 			int[] locals = computerLocals(objectType, fields);
@@ -183,11 +182,11 @@ public class AxonAsmBuilder extends AsmBuilder {
 		}
 	}
 
-	public static void visitDefineField(ClassWriter cw, Field field, Class<?>... annotations) {
+	public static void visitDefineField(ClassVisitor cw, Field field, Class<?>... annotations) {
 		visitDefineField(cw, field.name, field.type, annotations);
 	}
 
-	public static void visitDefinePropertyGet(ClassWriter cw, Type objectType, Field field) {
+	public static void visitDefinePropertyGet(ClassVisitor cw, Type objectType, Field field) {
 		visitDefinePropertyGet(cw, objectType, field.name, field.type);
 	}
 
@@ -207,7 +206,7 @@ public class AxonAsmBuilder extends AsmBuilder {
 		visitPutField(mv, objectIndex, objectType, dataIndex, field.name, field.type);
 	}
 
-	protected static void visitDefinePropertySet(ClassWriter cw, Type objectType, Field field) {
+	protected static void visitDefinePropertySet(ClassVisitor cw, Type objectType, Field field) {
 		visitDefinePropertySet(cw, objectType, field.name, field.type);
 	}
 

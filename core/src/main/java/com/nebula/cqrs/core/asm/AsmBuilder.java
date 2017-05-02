@@ -1,7 +1,7 @@
 package com.nebula.cqrs.core.asm;
 
 import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
@@ -22,14 +22,14 @@ public class AsmBuilder implements Opcodes {
 		return "set" + toPropertyName(fieldName);
 	}
 
-	public static void visitAnnotation(ClassWriter cw, Class<?>... annotations) {
+	public static void visitAnnotation(ClassVisitor cw, Class<?>... annotations) {
 		for (Class<?> annotation : annotations) {
 			AnnotationVisitor av0 = cw.visitAnnotation(Type.getDescriptor(annotation), true);
 			av0.visitEnd();
 		}
 	}
 
-	public static void visitAnnotation(ClassWriter cw, Class<?> annotation, String value) {
+	public static void visitAnnotation(ClassVisitor cw, Class<?> annotation, String value) {
 		AnnotationVisitor av0 = cw.visitAnnotation(Type.getDescriptor(annotation), true);
 		{
 			AnnotationVisitor av1 = av0.visitArray("value");
@@ -67,7 +67,7 @@ public class AsmBuilder implements Opcodes {
 		mv.visitInsn(ARETURN);
 	}
 
-	public static void visitDefine_init_withNothing(ClassWriter cw, Type objectType) {
+	public static void visitDefine_init_withNothing(ClassVisitor cw, Type objectType) {
 		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
 		mv.visitCode();
 		Label l0 = new Label();
@@ -84,17 +84,17 @@ public class AsmBuilder implements Opcodes {
 		mv.visitEnd();
 	}
 
-	public static void visitDefineField(ClassWriter cw, String fieldName, Class<?> fieldClass, Class<?>... annotations) {
+	public static void visitDefineField(ClassVisitor cw, String fieldName, Class<?> fieldClass, Class<?>... annotations) {
 		visitDefineField(cw, fieldName, Type.getType(fieldClass), annotations);
 	}
 
-	public static void visitDefineField(ClassWriter cw, String fieldName, Type fieldType, Class<?>... annotations) {
+	public static void visitDefineField(ClassVisitor cw, String fieldName, Type fieldType, Class<?>... annotations) {
 		FieldVisitor fv = cw.visitField(ACC_PRIVATE, fieldName, fieldType.getDescriptor(), null, null);
 		visitAnnotation(fv, annotations);
 		fv.visitEnd();
 	}
 
-	public static void visitDefinePropertyGet(ClassWriter cw, Type objectType, String fieldName, Type fieldType) {
+	public static void visitDefinePropertyGet(ClassVisitor cw, Type objectType, String fieldName, Type fieldType) {
 		MethodVisitor mv;
 		mv = cw.visitMethod(ACC_PUBLIC, toPropertyGetName(fieldName), Type.getMethodDescriptor(fieldType), null, null);
 		mv.visitCode();
@@ -112,7 +112,7 @@ public class AsmBuilder implements Opcodes {
 		mv.visitEnd();
 	}
 
-	public static void visitDefinePropertySet(ClassWriter cw, Type objectType, String fieldName, Type fieldType) {
+	public static void visitDefinePropertySet(ClassVisitor cw, Type objectType, String fieldName, Type fieldType) {
 		MethodVisitor mv;
 		{
 			mv = cw.visitMethod(ACC_PUBLIC, toPropertySetName(fieldName), Type.getMethodDescriptor(Type.VOID_TYPE, fieldType), null, null);
