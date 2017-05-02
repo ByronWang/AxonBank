@@ -1,4 +1,4 @@
-package com.nebula.cqrs.axonweb.asm;
+package com.nebula.cqrs.axonweb.asm.config;
 
 import javax.persistence.EntityManager;
 

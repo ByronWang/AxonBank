@@ -19,10 +19,10 @@ import com.nebula.cqrs.axon.pojo.Command;
 import com.nebula.cqrs.axon.pojo.DomainDefinition;
 import com.nebula.cqrs.axon.pojo.Field;
 import com.nebula.cqrs.axon.pojo.PojoBuilder;
-import com.nebula.cqrs.axonweb.asm.CQRSAxonConfigBuilder;
-import com.nebula.cqrs.axonweb.asm.CQRSRepositoryBuilder;
-import com.nebula.cqrs.axonweb.asm.CQRSWebControllerBuilder;
-import com.nebula.cqrs.axonweb.asm.CQRSWebEntryBuilder;
+import com.nebula.cqrs.axonweb.asm.config.CQRSAxonConfigBuilder;
+import com.nebula.cqrs.axonweb.asm.query.CQRSRepositoryBuilder;
+import com.nebula.cqrs.axonweb.asm.query.CQRSWebEntryBuilder;
+import com.nebula.cqrs.axonweb.asm.web.CQRSWebControllerBuilder;
 
 public class CQRSWebSpringApplicationListener implements ApplicationListener<ApplicationPreparedEvent>, DomainListener {
 

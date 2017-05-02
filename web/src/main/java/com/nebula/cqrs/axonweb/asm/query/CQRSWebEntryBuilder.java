@@ -1,4 +1,4 @@
-package com.nebula.cqrs.axonweb.asm;
+package com.nebula.cqrs.axonweb.asm.query;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;

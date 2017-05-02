@@ -1,4 +1,4 @@
-package com.nebula.cqrs.axonweb.asm;
+package com.nebula.cqrs.axonweb.asm.query;
 
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;

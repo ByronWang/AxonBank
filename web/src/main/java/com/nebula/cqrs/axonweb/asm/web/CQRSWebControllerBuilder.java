@@ -1,4 +1,4 @@
-package com.nebula.cqrs.axonweb.asm;
+package com.nebula.cqrs.axonweb.asm.web;
 
 import org.axonframework.commandhandling.CommandBus;
 import org.axonframework.commandhandling.CommandMessage;
