@@ -1,12 +1,17 @@
 package com.nebula.cqrs.core.asm;
 
+import java.io.PrintWriter;
+
 import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.util.ASMifier;
+import org.objectweb.asm.util.TraceClassVisitor;
 
 public class AsmBuilder implements Opcodes {
 
@@ -377,4 +382,10 @@ public class AsmBuilder implements Opcodes {
 		return locals;
 	}
 
+
+	public static void print(byte[] code){
+		ClassReader cr = new ClassReader(code);
+		ClassVisitor visitor = new TraceClassVisitor(null, new ASMifier(), new PrintWriter(System.out));
+		cr.accept(visitor, ClassReader.EXPAND_FRAMES);
+	}
 }
