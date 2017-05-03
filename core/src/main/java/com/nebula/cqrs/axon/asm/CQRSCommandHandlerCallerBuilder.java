@@ -8,7 +8,7 @@ import org.objectweb.asm.Type;
 
 import com.nebula.cqrs.axon.pojo.AxonAsmBuilder;
 import com.nebula.cqrs.axon.pojo.Command;
-import com.nebula.cqrs.axon.pojo.Field;
+import com.nebula.cqrs.core.asm.Field;
 
 public class CQRSCommandHandlerCallerBuilder extends AxonAsmBuilder {
 

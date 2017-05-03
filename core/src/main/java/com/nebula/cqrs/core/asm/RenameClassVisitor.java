@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.nebula.cqrs.axon;
+package com.nebula.cqrs.core.asm;
 
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;

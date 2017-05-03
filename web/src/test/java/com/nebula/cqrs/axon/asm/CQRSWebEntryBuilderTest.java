@@ -8,8 +8,8 @@ import org.junit.Test;
 import org.objectweb.asm.Type;
 
 import com.nebula.cqrs.axon.CQRSBuilder;
-import com.nebula.cqrs.axon.pojo.Field;
 import com.nebula.cqrs.axonweb.asm.query.CQRSWebEntryBuilder;
+import com.nebula.cqrs.core.asm.Field;
 
 public class CQRSWebEntryBuilderTest {
 

@@ -6,6 +6,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
 import com.nebula.cqrs.core.asm.AsmBuilder;
+import com.nebula.cqrs.core.asm.Field;
 
 public class AxonAsmBuilder extends AsmBuilder {
 

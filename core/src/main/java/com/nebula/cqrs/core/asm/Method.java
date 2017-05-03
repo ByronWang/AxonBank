@@ -1,4 +1,4 @@
-package com.nebula.cqrs.axon.pojo;
+package com.nebula.cqrs.core.asm;
 
 import java.util.Arrays;
 

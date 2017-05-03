@@ -1,4 +1,4 @@
-package com.nebula.cqrs.axon.asm;
+package com.nebula.cqrs.core.asm;
 
 import static org.objectweb.asm.Opcodes.ACC_STATIC;
 
@@ -11,15 +11,12 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-import com.nebula.cqrs.axon.pojo.Field;
-import com.nebula.cqrs.axon.pojo.Method;
-
-public class CQRSDomainAnalyzer extends ClassVisitor {
-	public CQRSDomainAnalyzer(int api, ClassVisitor cv) {
+public class AnalyzeMethodParamsClassVisitor extends ClassVisitor {
+	public AnalyzeMethodParamsClassVisitor(int api, ClassVisitor cv) {
 		super(api, cv);
 	}
 
-	public CQRSDomainAnalyzer() {
+	public AnalyzeMethodParamsClassVisitor() {
 		super(Opcodes.ASM5);
 	}
 
@@ -40,7 +37,7 @@ public class CQRSDomainAnalyzer extends ClassVisitor {
 		public FillParamsMethodVisitor(int api, MethodVisitor mv, String name, String desc) {
 			super(api, mv);
 			this.method = new Method(name);
-			CQRSDomainAnalyzer.this.methods.put(name, method);
+			AnalyzeMethodParamsClassVisitor.this.methods.put(name, method);
 
 			Type[] types = Type.getArgumentTypes(desc);
 			this.method.params = new Field[types.length];

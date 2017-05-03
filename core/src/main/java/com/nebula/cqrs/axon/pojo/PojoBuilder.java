@@ -3,6 +3,8 @@ package com.nebula.cqrs.axon.pojo;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Type;
 
+import com.nebula.cqrs.core.asm.Field;
+
 public class PojoBuilder extends AxonAsmBuilder {
 
 	public static byte[] dump(Type objectType, Field[] fields) {

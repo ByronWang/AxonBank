@@ -4,8 +4,8 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Type;
 
 import com.nebula.cqrs.axon.pojo.Event;
-import com.nebula.cqrs.axon.pojo.Field;
 import com.nebula.cqrs.axon.pojo.PojoBuilder;
+import com.nebula.cqrs.core.asm.Field;
 
 public class CQRSEventRealBuilder extends PojoBuilder {
 

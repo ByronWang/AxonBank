@@ -2,6 +2,8 @@ package com.nebula.cqrs.axon.pojo;
 
 import org.objectweb.asm.Type;
 
+import com.nebula.cqrs.core.asm.Field;
+
 public class Event {
 	public Type realEvent;
 

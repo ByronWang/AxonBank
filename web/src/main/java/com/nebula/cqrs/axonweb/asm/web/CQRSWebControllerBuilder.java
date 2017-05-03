@@ -16,7 +16,7 @@ import com.nebula.cqrs.axon.asm.CQRSDomainBuilder;
 import com.nebula.cqrs.axon.pojo.AxonAsmBuilder;
 import com.nebula.cqrs.axon.pojo.Command;
 import com.nebula.cqrs.axon.pojo.DomainDefinition;
-import com.nebula.cqrs.axon.pojo.Field;
+import com.nebula.cqrs.core.asm.Field;
 
 public class CQRSWebControllerBuilder extends AxonAsmBuilder {
 

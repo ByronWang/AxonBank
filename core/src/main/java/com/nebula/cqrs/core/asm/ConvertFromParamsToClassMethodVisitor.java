@@ -1,4 +1,4 @@
-package com.nebula.cqrs.axon.pojo;
+package com.nebula.cqrs.core.asm;
 
 import static org.objectweb.asm.Opcodes.ALOAD;
 
@@ -8,8 +8,6 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-
-import com.nebula.cqrs.core.asm.AsmBuilder;
 
 public class ConvertFromParamsToClassMethodVisitor extends MethodVisitor {
 	private final Type eventType;

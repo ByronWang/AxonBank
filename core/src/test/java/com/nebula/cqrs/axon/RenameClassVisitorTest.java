@@ -10,6 +10,8 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.util.ASMifier;
 import org.objectweb.asm.util.TraceClassVisitor;
 
+import com.nebula.cqrs.core.asm.RenameClassVisitor;
+
 public class RenameClassVisitorTest {
 
 	@Test

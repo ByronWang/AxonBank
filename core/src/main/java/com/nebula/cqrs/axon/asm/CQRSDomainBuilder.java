@@ -27,13 +27,13 @@ import org.objectweb.asm.Type;
 
 import com.nebula.cqrs.axon.pojo.AxonAsmBuilder;
 import com.nebula.cqrs.axon.pojo.Command;
-import com.nebula.cqrs.axon.pojo.ConvertFromParamsToClassMethodVisitor;
 import com.nebula.cqrs.axon.pojo.DomainDefinition;
 import com.nebula.cqrs.axon.pojo.Event;
-import com.nebula.cqrs.axon.pojo.Field;
-import com.nebula.cqrs.axon.pojo.Method;
 import com.nebula.cqrs.core.CqrsEntity;
 import com.nebula.cqrs.core.asm.AsmBuilder;
+import com.nebula.cqrs.core.asm.ConvertFromParamsToClassMethodVisitor;
+import com.nebula.cqrs.core.asm.Field;
+import com.nebula.cqrs.core.asm.Method;
 
 public class CQRSDomainBuilder extends ClassVisitor {
 	private final Type implDomainType;

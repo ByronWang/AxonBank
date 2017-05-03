@@ -1,4 +1,4 @@
-package com.nebula.cqrs.axon.pojo;
+package com.nebula.cqrs.core.asm;
 
 import org.objectweb.asm.Type;
 
@@ -16,5 +16,6 @@ public class Field {
 
 	public String name;
 	public Type type;
+	@Deprecated
 	public boolean idField;
 }

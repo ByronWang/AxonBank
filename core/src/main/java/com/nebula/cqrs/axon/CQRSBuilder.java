@@ -15,14 +15,14 @@ import com.nebula.cqrs.axon.asm.CQRSCommandBuilder;
 import com.nebula.cqrs.axon.asm.CQRSCommandHandlerBuilder;
 import com.nebula.cqrs.axon.asm.CQRSCommandHandlerCallerBuilder;
 import com.nebula.cqrs.axon.asm.CQRSCommandHandlerCtorCallerBuilder;
-import com.nebula.cqrs.axon.asm.CQRSDomainAnalyzer;
 import com.nebula.cqrs.axon.asm.CQRSDomainBuilder;
 import com.nebula.cqrs.axon.asm.CQRSEventAliasBuilder;
 import com.nebula.cqrs.axon.asm.CQRSEventRealBuilder;
-import com.nebula.cqrs.axon.asm.ClassUtils;
 import com.nebula.cqrs.axon.pojo.Command;
 import com.nebula.cqrs.axon.pojo.DomainDefinition;
 import com.nebula.cqrs.axon.pojo.Event;
+import com.nebula.cqrs.core.asm.AnalyzeMethodParamsClassVisitor;
+import com.nebula.cqrs.core.asm.RenameClassVisitor;
 
 public class CQRSBuilder implements CQRSContext {
 	private final static Logger LOGGER = LoggerFactory.getLogger(CQRSBuilder.class);
@@ -106,7 +106,7 @@ public class CQRSBuilder implements CQRSContext {
 			{
 				ClassReader cr = new ClassReader(binaryRepresentationAfterRenameToImpl);
 				{
-					CQRSDomainAnalyzer analyzer = new CQRSDomainAnalyzer();
+					AnalyzeMethodParamsClassVisitor analyzer = new AnalyzeMethodParamsClassVisitor();
 					cr.accept(analyzer, 0);
 					domainDefinition.menthods = analyzer.getMethods();
 				}
