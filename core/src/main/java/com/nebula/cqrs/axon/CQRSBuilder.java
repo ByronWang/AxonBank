@@ -54,12 +54,14 @@ public class CQRSBuilder implements CQRSContext {
 				for (Command command : domainDefinition.commands) {
 					if (command.ctorMethod) {
 						Type typeInvoke = Type.getObjectType(typeHandler.getInternalName() + "$Inner" + command.commandName);
-						byte[] codeCommandHandlerInvoke = CQRSCommandHandlerCtorCallerBuilder.dump(typeInvoke,domainDefinition.implDomainType, typeHandler, command);
+						byte[] codeCommandHandlerInvoke = CQRSCommandHandlerCtorCallerBuilder.dump(typeInvoke, domainDefinition.implDomainType, typeHandler,
+								command);
 						LOGGER.debug("Create command inner class [{}]", typeInvoke.getClassName());
 						ctx.defineClass(typeInvoke.getClassName(), codeCommandHandlerInvoke);
 					} else {
 						Type typeInvoke = Type.getObjectType(typeHandler.getInternalName() + "$Inner" + command.commandName);
-						byte[] codeCommandHandlerInvoke = CQRSCommandHandlerCallerBuilder.dump(typeInvoke,domainDefinition.implDomainType, typeHandler, command);
+						byte[] codeCommandHandlerInvoke = CQRSCommandHandlerCallerBuilder.dump(typeInvoke, domainDefinition.implDomainType, typeHandler,
+								command);
 						LOGGER.debug("Create command inner class [{}]", typeInvoke.getClassName());
 						ctx.defineClass(typeInvoke.getClassName(), codeCommandHandlerInvoke);
 					}
@@ -101,17 +103,19 @@ public class CQRSBuilder implements CQRSContext {
 
 				LOGGER.debug("Rename domain class from {} to impl class [{}]", srcDomainType.getClassName(), implDomainType.getClassName());
 			}
-			CQRSDomainBuilder cqrs;
 			{
 				ClassReader cr = new ClassReader(binaryRepresentationAfterRenameToImpl);
-				CQRSDomainAnalyzer analyzer = new CQRSDomainAnalyzer(Opcodes.ASM5, domainDefinition);
-				cr.accept(analyzer, 0);
-				analyzer.finished();
+				{
+					CQRSDomainAnalyzer analyzer = new CQRSDomainAnalyzer();
+					cr.accept(analyzer, 0);
+					domainDefinition.menthods = analyzer.getMethods();
+				}
 
 				ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
-				cqrs = new CQRSDomainBuilder(Opcodes.ASM5, cw, domainDefinition);
-				cr.accept(cqrs, 0);
-				cqrs.finished();
+				{
+					CQRSDomainBuilder cqrs = new CQRSDomainBuilder(Opcodes.ASM5, cw, domainDefinition);
+					cr.accept(cqrs, 0);
+				}
 
 				byte[] domainRepresentationAfterMakeCqrs = cw.toByteArray();
 				LOGGER.debug("Made cqrs domain class [{}]", implDomainType.getClassName());

@@ -10,7 +10,6 @@ import static org.objectweb.asm.Opcodes.GETFIELD;
 import static org.objectweb.asm.Opcodes.ILOAD;
 import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
 import static org.objectweb.asm.Opcodes.INVOKESTATIC;
-import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 import static org.objectweb.asm.Opcodes.NEW;
 import static org.objectweb.asm.Opcodes.POP;
 import static org.objectweb.asm.Opcodes.RETURN;
@@ -24,11 +23,11 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 import com.nebula.cqrs.axon.pojo.AxonAsmBuilder;
 import com.nebula.cqrs.axon.pojo.Command;
+import com.nebula.cqrs.axon.pojo.ConvertFromParamsToClassMethodVisitor;
 import com.nebula.cqrs.axon.pojo.DomainDefinition;
 import com.nebula.cqrs.axon.pojo.Event;
 import com.nebula.cqrs.axon.pojo.Field;
@@ -63,14 +62,6 @@ public class CQRSDomainBuilder extends ClassVisitor {
 		super(api, cv);
 		this.domainDefinition = domainDefinition;
 		this.implDomainType = domainDefinition.implDomainType;
-	}
-
-	public CQRSDomainBuilder(int api, DomainDefinition domainDefinition) {
-		this(api, null, domainDefinition);
-	}
-
-	public DomainDefinition finished() {
-		return domainDefinition;
 	}
 
 	@Override
@@ -154,19 +145,22 @@ public class CQRSDomainBuilder extends ClassVisitor {
 			return commandMethodVisitor;
 		} else if (name.startsWith("on")) {// Event
 			String originMethodName = name;
+			Method method = domainDefinition.menthods.get(originMethodName);
+
 			String newMethodName = "on";
 			boolean innerEvent = true;
 			String eventName = toCamelUpper(name.substring(2));
-			Type type = domainDefinition.typeOf(eventName + "Event");
 
-			Event event = new Event(eventName, originMethodName, newMethodName, innerEvent, type);
+			Type eventType = domainDefinition.typeOf(eventName + "Event");
+			Event event = new Event(eventName, originMethodName, newMethodName, innerEvent, eventType);
 
-			String newDescriptor = Type.getMethodDescriptor(Type.VOID_TYPE, new Type[] { type });
+			Field[] params = method.params;
+			event.methodParams = method.params;
 
-			MethodVisitor methodVisitor = super.visitMethod(access, newMethodName, newDescriptor, signature, exceptions);
-			EventMethodVisitor eventMethodVisitor = new EventMethodVisitor(api, methodVisitor, access, event, desc, signature, exceptions);
+			ConvertFromParamsToClassMethodVisitor eventMethodVisitor = new ConvertFromParamsToClassMethodVisitor(cv, access, newMethodName, desc, signature,
+					exceptions, eventType, params);
 
-			this.events.add(eventMethodVisitor.event);
+			this.events.add(event);
 			return eventMethodVisitor;
 		} else {
 			MethodVisitor methodVisitor = super.visitMethod(access, name, desc, signature, exceptions);
@@ -333,76 +327,6 @@ public class CQRSDomainBuilder extends ClassVisitor {
 
 				super.visitMethodInsn(opcode, owner, name, desc, itf);
 			}
-		}
-	}
-
-	class EventMethodVisitor extends MethodVisitor {
-		final Event event;
-		List<Integer> stack = new ArrayList<>();
-
-		int parameters = 0;
-
-		public EventMethodVisitor(int api, MethodVisitor mv, int access, Event event, String desc, String signature, String[] exceptions) {
-			super(api, mv);
-			this.event = event;
-
-			Method method = domainDefinition.menthods.get(event.originMethodName);
-			event.methodParams = method.params;
-			{
-				AnnotationVisitor av0;
-				av0 = visitAnnotation("Lorg/axonframework/eventhandling/EventHandler;", true);
-				av0.visitEnd();
-			}
-		}
-
-		@Override
-		public void visitVarInsn(int opcode, int var) {
-			if (0 < var && var <= event.methodParams.length) {
-				super.visitVarInsn(ALOAD, 1);
-				Field field = event.methodParams[var - 1];
-				String descriptor = Type.getMethodDescriptor(field.type, new Type[] {});
-				super.visitMethodInsn(INVOKEVIRTUAL, event.type.getInternalName(), "get" + toCamelUpper(field.name), descriptor, false);
-			} else {
-				super.visitVarInsn(opcode, var);
-			}
-		}
-
-		boolean doneVisitLocalVariable = false;
-
-		@Override
-		public void visitLocalVariable(String name, String desc, String signature, Label start, Label end, int index) {
-			if (index == 0) {
-				super.visitLocalVariable(name, desc, signature, start, end, index);
-			} else if (index <= event.methodParams.length) {
-				event.methodParams[index - 1].name = name;
-				if (!doneVisitLocalVariable) {
-					String parameterName = CQRSDomainBuilder.toCamelLower(event.eventName);
-					super.visitLocalVariable(parameterName, event.type.getDescriptor(), signature, start, end, 1);
-					doneVisitLocalVariable = true;
-				}
-			} else {
-				super.visitLocalVariable(name, desc, signature, start, end, index - event.methodParams.length + 1);
-			}
-		}
-
-		boolean doneVisitParameter = false;
-
-		@Override
-		public void visitParameter(String name, int access) {
-			event.methodParams[parameters++].name = name;
-			if (!doneVisitParameter) {
-				String parameterName = CQRSDomainBuilder.toCamelLower(event.eventName);
-				super.visitParameter(parameterName, 0);
-				doneVisitParameter = true;
-			}
-		}
-
-		@Override
-		public void visitInsn(int opcode) {
-			if (opcode == Opcodes.RETURN) {
-				AsmBuilder.visitPrintObject(mv, 0);
-			}
-			super.visitInsn(opcode);
 		}
 	}
 

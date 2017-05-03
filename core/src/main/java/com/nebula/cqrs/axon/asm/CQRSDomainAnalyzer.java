@@ -8,31 +8,26 @@ import java.util.Map;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-import com.nebula.cqrs.axon.pojo.DomainDefinition;
 import com.nebula.cqrs.axon.pojo.Field;
 import com.nebula.cqrs.axon.pojo.Method;
 
 public class CQRSDomainAnalyzer extends ClassVisitor {
-	final DomainDefinition domainDefinition;
-
-	public CQRSDomainAnalyzer(int api, ClassVisitor cv, DomainDefinition domainDefinition) {
+	public CQRSDomainAnalyzer(int api, ClassVisitor cv) {
 		super(api, cv);
-		this.domainDefinition = domainDefinition;
 	}
 
-	public CQRSDomainAnalyzer(int api, DomainDefinition domainDefinition) {
-		super(api);
-		this.domainDefinition = domainDefinition;
-	}
-
-	public DomainDefinition finished() {
-		domainDefinition.menthods = this.methods;
-		return domainDefinition;
+	public CQRSDomainAnalyzer() {
+		super(Opcodes.ASM5);
 	}
 
 	Map<String, Method> methods = new HashMap<>();
+
+	public Map<String, Method> getMethods() {
+		return methods;
+	}
 
 	@Override
 	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
