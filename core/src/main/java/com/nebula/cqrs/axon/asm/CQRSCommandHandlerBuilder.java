@@ -1,6 +1,6 @@
 package com.nebula.cqrs.axon.asm;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
@@ -20,7 +20,7 @@ import com.nebula.cqrs.core.asm.Field;
 
 public class CQRSCommandHandlerBuilder extends AxonAsmBuilder {
 
-	public byte[] dump(List<Command> commands, Type implDomainType, Type typeHandler) {
+	public byte[] dump(Collection<Command> commands, Type implDomainType, Type typeHandler) {
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
 		FieldVisitor fv;
 

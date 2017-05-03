@@ -11,12 +11,12 @@ public class CQRSEventAliasBuilder extends PojoBuilder {
 	public static byte[] dump(Event event) {
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
 		Type type = event.type;
-		Type typeSuper = event.realEvent;
+		Type typeSuper = event.getRealEvent().type;
 
 		cw.visit(52, ACC_PUBLIC + ACC_SUPER, type.getInternalName(), null, typeSuper.getInternalName(), null);
 
 		visitDefine_init_withAllFieldsToSuper(cw, type, typeSuper, event.fields);
-		
+
 		return cw.toByteArray();
 	}
 }

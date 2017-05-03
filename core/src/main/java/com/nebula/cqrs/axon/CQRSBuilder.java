@@ -10,6 +10,7 @@ import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.nebula.cqrs.axon.asm.AnalyzeEventsClassVisitor;
 import com.nebula.cqrs.axon.asm.AnalyzeFieldClassVisitor;
 import com.nebula.cqrs.axon.asm.CQRSCommandBuilder;
 import com.nebula.cqrs.axon.asm.CQRSCommandHandlerBuilder;
@@ -53,7 +54,7 @@ public class CQRSBuilder implements CQRSContext {
 			try {
 				Type typeHandler = domainDefinition.typeOf("CommandHandler");
 
-				for (Command command : domainDefinition.commands) {
+				for (Command command : domainDefinition.commands.values()) {
 					if (command.ctorMethod) {
 						Type typeInvoke = Type.getObjectType(typeHandler.getInternalName() + "$Inner" + command.commandName);
 						byte[] codeCommandHandlerInvoke = CQRSCommandHandlerCtorCallerBuilder.dump(typeInvoke, domainDefinition.implDomainType, typeHandler,
@@ -69,7 +70,7 @@ public class CQRSBuilder implements CQRSContext {
 					}
 				}
 
-				byte[] codeHandler = new CQRSCommandHandlerBuilder().dump(domainDefinition.commands, domainDefinition.implDomainType, typeHandler);
+				byte[] codeHandler = new CQRSCommandHandlerBuilder().dump(domainDefinition.commands.values(), domainDefinition.implDomainType, typeHandler);
 				LOGGER.debug("Create command handler [{}]", typeHandler.getClassName());
 				ctx.defineClass(typeHandler.getClassName(), codeHandler);
 
@@ -109,7 +110,7 @@ public class CQRSBuilder implements CQRSContext {
 		ClassReader cr = new ClassReader(srcDomainType.getClassName());
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
 
-		CQRSDomainBuilder cvMakeDomainImpl = new CQRSDomainBuilder(cw, domainDefinition); 
+		CQRSDomainBuilder cvMakeDomainImpl = new CQRSDomainBuilder(cw, domainDefinition);
 		RenameClassVisitor cvRename = new RenameClassVisitor(cvMakeDomainImpl, srcDomainType.getInternalName(), implDomainType.getInternalName());
 
 		RemoveCqrsAnnotationClassVisitor removeCqrsAnnotation = new RemoveCqrsAnnotationClassVisitor(cvRename);
@@ -122,21 +123,17 @@ public class CQRSBuilder implements CQRSContext {
 
 		classLoader.define(implDomainType.getClassName(), code);
 
-		for (Event event : domainDefinition.events) {
-			if (event.realEvent == null) {
-				byte[] eventCode = CQRSEventRealBuilder.dump(event);
-				LOGGER.debug("Create event [{}]", event.type.getClassName());
-				classLoader.define(event.type.getClassName(), eventCode);
-			}
+		for (Event event : domainDefinition.realEvents.values()) {
+			byte[] eventCode = CQRSEventRealBuilder.dump(event);
+			LOGGER.debug("Create event [{}]", event.type.getClassName());
+			classLoader.define(event.type.getClassName(), eventCode);
 		}
-		for (Event event : domainDefinition.events) {
-			if (event.realEvent != null) {
-				byte[] eventCode = CQRSEventAliasBuilder.dump(event);
-				LOGGER.debug("Create command handler [{}]", event.type.getClassName());
-				classLoader.define(event.type.getClassName(), eventCode);
-			}
+		for (Event event : domainDefinition.virtualEvents.values()) {
+			byte[] eventCode = CQRSEventAliasBuilder.dump(event);
+			LOGGER.debug("Create command handler [{}]", event.type.getClassName());
+			classLoader.define(event.type.getClassName(), eventCode);
 		}
-		for (Command command : domainDefinition.commands) {
+		for (Command command : domainDefinition.commands.values()) {
 			if (command.ctorMethod) {
 				byte[] codeCommand = CQRSCommandBuilder.dump(command);
 				LOGGER.debug("Create command handler [{}]", command.type.getClassName());
@@ -153,16 +150,26 @@ public class CQRSBuilder implements CQRSContext {
 		final DomainDefinition domainDefinition;
 		domainDefinition = new DomainDefinition(srcDomainName, srcDomainType, implDomainType);
 		ClassReader cr = new ClassReader(srcDomainType.getClassName());
-		AnalyzeMethodParamsClassVisitor analyzeMethodParamsClassVisitor = new AnalyzeMethodParamsClassVisitor();
-		AnalyzeFieldClassVisitor analyzeFieldClassVisitor = new AnalyzeFieldClassVisitor(analyzeMethodParamsClassVisitor);
-		cr.accept(analyzeFieldClassVisitor, 0);
-		domainDefinition.menthods = analyzeMethodParamsClassVisitor.getMethods();
-		domainDefinition.fields = analyzeFieldClassVisitor.finished().toArray(new Field[0]);
-		for (Field field : domainDefinition.fields) {
-			if (field.identifier) {
-				domainDefinition.identifierField = field;
+
+		{
+			AnalyzeMethodParamsClassVisitor analyzeMethodParamsClassVisitor = new AnalyzeMethodParamsClassVisitor();
+			AnalyzeFieldClassVisitor analyzeFieldClassVisitor = new AnalyzeFieldClassVisitor(analyzeMethodParamsClassVisitor);
+			cr.accept(analyzeFieldClassVisitor, 0);
+			domainDefinition.menthods = analyzeMethodParamsClassVisitor.getMethods();
+			domainDefinition.fields = analyzeFieldClassVisitor.finished().toArray(new Field[0]);
+			for (Field field : domainDefinition.fields) {
+				if (field.identifier) {
+					domainDefinition.identifierField = field;
+				}
 			}
 		}
+
+		{
+			AnalyzeEventsClassVisitor analyzeEventsClassVisitor = new AnalyzeEventsClassVisitor(domainDefinition);
+			cr.accept(analyzeEventsClassVisitor, 0);
+			domainDefinition.realEvents = analyzeEventsClassVisitor.finished();
+		}
+
 		return domainDefinition;
 	}
 

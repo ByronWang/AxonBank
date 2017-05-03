@@ -55,57 +55,57 @@ public class MyBankAccount {
 		}
 	}
 
-	public static boolean bankTransfer(MyBankAccount source, MyBankAccount destination, long amount) {// BankTransferCreatedEvent
-		boolean sourceDebitSucceed = source.debit(amount);// BankTransferSourceDebitCommand
-		if (sourceDebitSucceed) {// BankTransferSourceDebitedEvent
-			boolean destinationCreditSucceed = destination.credit(amount);// BankTransferDestinationCreditCommand
-			if (destinationCreditSucceed) {// BankTransferDestinationCreditedEvent
-				return true;// BankTransferMarkCompletedCommand
-			} else {// BankTransferDestinationCreditedRejectedEvent
-				source.returnMoney(amount);// BankTransferSourceReturnMoneyCommand
-				return false;// BankTransferMarkFailedCommand
-			}
-		} else {// BankTransferSourceDebitRejectedEvent
-			return false;
-		}
-	}
-
-	// BankTransferSourceDebitCommand
-	private boolean debit(long amount) {
-		if (amount <= balanceInCents + overdraftLimit) {
-			onMoneySubtracted(amount);// BankTransferSourceDebitedEvent
-			return true;
-		} else {
-			return false;// BankTransferSourceDebitRejectedEvent
-		}
-	}
-
-	// BankTransferDestinationCreditCommand
-	private boolean credit(long amount) {
-		onMoneyAdded(amount);// BankTransferDestinationCreditedEvent
-		return true;
-	}
-
-	// BankTransferSourceReturnMoneyCommand
-	private boolean returnMoney(long amount) {
-		onMoneyAdded(amount);// BankTransferSourceReturnedMoneyOfFailedEvent
-		return true;
-	}
+//	public static boolean bankTransfer(MyBankAccount source, MyBankAccount destination, long amount) {// BankTransferCreatedEvent
+//		boolean sourceDebitSucceed = source.debit(amount);// BankTransferSourceDebitCommand
+//		if (sourceDebitSucceed) {// BankTransferSourceDebitedEvent
+//			boolean destinationCreditSucceed = destination.credit(amount);// BankTransferDestinationCreditCommand
+//			if (destinationCreditSucceed) {// BankTransferDestinationCreditedEvent
+//				return true;// BankTransferMarkCompletedCommand
+//			} else {// BankTransferDestinationCreditedRejectedEvent
+//				source.returnMoney(amount);// BankTransferSourceReturnMoneyCommand
+//				return false;// BankTransferMarkFailedCommand
+//			}
+//		} else {// BankTransferSourceDebitRejectedEvent
+//			return false;
+//		}
+//	}
+//
+//	// BankTransferSourceDebitCommand
+//	private boolean debit(long amount) {
+//		if (amount <= balanceInCents + overdraftLimit) {
+//			onMoneySubtracted(amount);// BankTransferSourceDebitedEvent
+//			return true;
+//		} else {
+//			return false;// BankTransferSourceDebitRejectedEvent
+//		}
+//	}
+//
+//	// BankTransferDestinationCreditCommand
+//	private boolean credit(long amount) {
+//		onMoneyAdded(amount);// BankTransferDestinationCreditedEvent
+//		return true;
+//	}
+//
+//	// BankTransferSourceReturnMoneyCommand
+//	private boolean returnMoney(long amount) {
+//		onMoneyAdded(amount);// BankTransferSourceReturnedMoneyOfFailedEvent
+//		return true;
+//	}
 
 	// BankAccountCreatedEvent
-	void onCreated(String axonBankAccountId, long overdraftLimit) {
+	private void onCreated(String axonBankAccountId, long overdraftLimit) {
 		this.axonBankAccountId = axonBankAccountId;
 		this.overdraftLimit = overdraftLimit;
 		this.balanceInCents = 0;
 	}
 
 	// BankAccountMoneyAddedEvent
-	void onMoneyAdded(long amount) {
+	private void onMoneyAdded(long amount) {
 		balanceInCents += amount;
 	}
 
 	// BankAccountMoneySubtractedEvent
-	void onMoneySubtracted(long amount) {
+	private void onMoneySubtracted(long amount) {
 		balanceInCents -= amount;
 	}
 }

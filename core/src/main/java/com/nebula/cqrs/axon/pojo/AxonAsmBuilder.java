@@ -1,5 +1,7 @@
 package com.nebula.cqrs.axon.pojo;
 
+import java.util.List;
+
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
@@ -62,6 +64,14 @@ public class AxonAsmBuilder extends AsmBuilder {
 			types[i] = fields[i].type;
 		}
 		return types;
+	}
+
+	protected static Type[] convert(List<Field> fields) {
+		Type[] params = new Type[fields.size()];
+		for (int i = 0; i < fields.size(); i++) {
+			params[i] = fields.get(i).type;
+		}
+		return params;
 	}
 
 	public static void visitDefine_init_withAllFieldsToSuper(ClassVisitor cw, Type objectType, Type superType, Field[] fields) {
@@ -181,6 +191,26 @@ public class AxonAsmBuilder extends AsmBuilder {
 			mv.visitMaxs(3, 1);
 			mv.visitEnd();
 		}
+	}
+
+	public static void visitInvokeSpecial(MethodVisitor mv, Type objectType, Type returnType, String methodName, List<Field> params) {
+		visitInvokeSpecial(mv, objectType, returnType, methodName, convert(params));
+	}
+
+	public static void visitInvokeSpecial(MethodVisitor mv, Type objectType, String methodName, Field... params) {
+		visitInvokeSpecial(mv, objectType, Type.VOID_TYPE, methodName, convert(params));
+	}
+	
+	public static void visitInvokeSpecial(MethodVisitor mv, Type objectType, String methodName, List<Field> params) {
+		visitInvokeSpecial(mv, objectType, Type.VOID_TYPE, methodName, convert(params));
+	}
+
+	public static void visitInvokeSpecial(MethodVisitor mv, Class<?> objectClass, Class<?> returnClass, String methodName, List<Field> params) {
+		visitInvokeSpecial(mv, Type.getType(objectClass), Type.getType(returnClass), methodName, convert(params));
+	}
+
+	public static void visitInvokeStatic(MethodVisitor mv, Class<?> objectClass, Class<?> returnClass, String methodName, List<Field> params) {
+		visitInvokeStatic(mv, Type.getType(objectClass), Type.getType(returnClass), methodName, convert(params));
 	}
 
 	public static void visitDefineField(ClassVisitor cw, Field field, Class<?>... annotations) {

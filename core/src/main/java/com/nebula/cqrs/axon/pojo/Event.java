@@ -5,7 +5,17 @@ import org.objectweb.asm.Type;
 import com.nebula.cqrs.core.asm.Field;
 
 public class Event {
-	public Type realEvent;
+	private Event realEvent;
+
+	public Event getRealEvent() {
+		return realEvent;
+	}
+	public void setRealEvent(Event realEvent) {
+		this.realEvent = realEvent;
+		this.withoutID = realEvent.withoutID;
+		this.methodParams = realEvent.methodParams;
+		this.fields = realEvent.fields;
+	}
 
 	@Override
 	public String toString() {
@@ -14,12 +24,15 @@ public class Event {
 
 	public String originMethodName;
 	public String newMethodName;
+	
 	public String eventName;
-	public Field[] methodParams;
+	public Type type;
 
 	public boolean innerEvent = false;
 
-	// public String simpleClassName;
+
+	public boolean withoutID = false;
+	public Field[] methodParams;
 	public Field[] fields;
 
 	public Event(String eventName, String originMethodName, String newMethodName, boolean innerEvent, Type type) {
@@ -31,7 +44,4 @@ public class Event {
 		this.type = type;
 	}
 
-	public Type type;
-
-	public boolean withoutID = false;
 }

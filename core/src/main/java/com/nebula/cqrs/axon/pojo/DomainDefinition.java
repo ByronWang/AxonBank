@@ -1,6 +1,5 @@
 package com.nebula.cqrs.axon.pojo;
 
-import java.util.List;
 import java.util.Map;
 
 import org.objectweb.asm.Type;
@@ -13,7 +12,6 @@ public class DomainDefinition {
 	public final Type implDomainType;
 	private final Type defineType;
 	private String packageName;
-	
 
 	public DomainDefinition(String simpleName, Type defineType, Type implDomainType) {
 		super();
@@ -54,7 +52,8 @@ public class DomainDefinition {
 
 	public Field[] fields;
 	public Field identifierField;
-	public List<Command> commands;
-	public List<Event> events;
+	public Map<String, Command> commands;
+	public Map<String, Event> realEvents;
+	public Map<String, Event> virtualEvents;
 	public Map<String, Method> menthods;
 }
