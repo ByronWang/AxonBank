@@ -41,17 +41,6 @@ public class CQRSDomainBuilder extends ClassVisitor {
 
 	private final List<Command> commands = new ArrayList<>();
 	private final List<Event> events = new ArrayList<>();
-	private final List<Field> fields = new ArrayList<>();
-	private Field newfieldID;
-
-	public void setKeyField(Field field) {
-		if (newfieldID != null && newfieldID != field) {
-			newfieldID.idField = false;
-		}
-
-		field.idField = true;
-		this.newfieldID = field;
-	}
 
 	@Override
 	public String toString() {
@@ -77,36 +66,6 @@ public class CQRSDomainBuilder extends ClassVisitor {
 		} else {
 			return null;
 		}
-	}
-
-	@Override
-	public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
-		Field field = new Field(name, Type.getType(desc));
-		if (fields.size() == 0) {
-			this.setKeyField(field);
-		}
-		fields.add(field);
-		FieldVisitor fieldVisitor = super.visitField(access, name, desc, signature, value);
-		return new CustomFieldVisitor(api, fieldVisitor, field, access, name, desc, signature, value);
-	}
-
-	class CustomFieldVisitor extends FieldVisitor {
-		Field field;
-
-		public CustomFieldVisitor(int api, FieldVisitor fv, Field field, int access, String name, String desc, String signature, Object value) {
-			super(api, fv);
-			this.field = field;
-		}
-
-		@Override
-		public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-			Type type = Type.getType(desc);
-			if (type.getInternalName() == Type.getType(AggregateIdentifier.class).getInternalName()) {
-				CQRSDomainBuilder.this.setKeyField(field);
-			}
-			return super.visitAnnotation(desc, visible);
-		}
-
 	}
 
 	@Override
@@ -173,9 +132,9 @@ public class CQRSDomainBuilder extends ClassVisitor {
 	public void visitEnd() {
 		for (Event event : events) {
 			List<Field> fields = new ArrayList<>();
-			if (event.methodParams.length == 0 || !(event.methodParams[0].name == newfieldID.name
-					&& event.methodParams[0].type.getInternalName().equals(newfieldID.type.getInternalName()))) {
-				fields.add(newfieldID);
+			if (event.methodParams.length == 0 || !(event.methodParams[0].name == domainDefinition.identifierField.name
+					&& event.methodParams[0].type.getInternalName().equals(domainDefinition.identifierField.type.getInternalName()))) {
+				fields.add(domainDefinition.identifierField);
 				event.withoutID = true;
 			}
 			for (int i = 0; i < event.methodParams.length; i++) {
@@ -200,23 +159,23 @@ public class CQRSDomainBuilder extends ClassVisitor {
 		}
 		for (Command command : commands) {
 			List<Field> fields = new ArrayList<>();
-			if (command.methodParams.length == 0 || !(command.methodParams[0].name == newfieldID.name
-					&& command.methodParams[0].type.getInternalName().equals(newfieldID.type.getInternalName()))) {
-				fields.add(newfieldID);
+			if (command.methodParams.length == 0 || !(command.methodParams[0].name == domainDefinition.identifierField.name
+					&& command.methodParams[0].type.getInternalName().equals(domainDefinition.identifierField.type.getInternalName()))) {
+				fields.add(domainDefinition.identifierField);
 				command.withoutID = true;
 			}
 			for (int i = 0; i < command.methodParams.length; i++) {
 				fields.add(command.methodParams[i]);
 			}
-			if (fields.get(0).name == newfieldID.name && fields.get(0).type.getInternalName().equals(newfieldID.type.getInternalName())) {
-				fields.get(0).idField = true;
+			if (fields.get(0).name == domainDefinition.identifierField.name
+					&& fields.get(0).type.getInternalName().equals(domainDefinition.identifierField.type.getInternalName())) {
+				fields.get(0).identifier = true;
 			}
 			command.fields = fields.toArray(new Field[0]);
 		}
 
 		domainDefinition.commands = this.commands.toArray(new Command[0]);
 		domainDefinition.events = this.events.toArray(new Event[0]);
-		domainDefinition.fields = this.fields.toArray(new Field[0]);
 
 		AxonAsmBuilder.visitDefine_toString_withAllFields(cv, implDomainType, domainDefinition.fields);
 		super.visitEnd();
@@ -245,8 +204,7 @@ public class CQRSDomainBuilder extends ClassVisitor {
 			mv.visitInsn(DUP);
 
 			if (event.withoutID) {
-				mv.visitVarInsn(ALOAD, 0);
-				mv.visitFieldInsn(GETFIELD, implDomainType.getInternalName(), newfieldID.name, newfieldID.type.getDescriptor());
+				AxonAsmBuilder.visitGetField(mv, 0, implDomainType, domainDefinition.identifierField);
 			}
 
 			for (int i = 0; i < event.methodParams.length; i++) {

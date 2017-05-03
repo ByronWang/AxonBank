@@ -139,7 +139,7 @@ public class AxonAsmBuilder extends AsmBuilder {
 			mv.visitEnd();
 		}
 	}
-	
+
 	public static void visitDefine_toString_withAllProperties(ClassVisitor cw, Type objectType, Field[] fields) {
 		MethodVisitor mv;
 		{
@@ -205,6 +205,10 @@ public class AxonAsmBuilder extends AsmBuilder {
 
 	public static void visitPutField(MethodVisitor mv, int objectIndex, Type objectType, int dataIndex, Field field) {
 		visitPutField(mv, objectIndex, objectType, dataIndex, field.name, field.type);
+	}
+
+	public static void visitGetField(MethodVisitor mv, int objectIndex, Type objectType, Field field) {
+		visitGetField(mv, objectIndex, objectType, field.name, field.type);
 	}
 
 	protected static void visitDefinePropertySet(ClassVisitor cw, Type objectType, Field field) {

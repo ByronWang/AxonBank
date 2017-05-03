@@ -20,6 +20,10 @@ public class AnalyzeMethodParamsClassVisitor extends ClassVisitor {
 		super(Opcodes.ASM5);
 	}
 
+	public AnalyzeMethodParamsClassVisitor(ClassVisitor cv) {
+		super(Opcodes.ASM5, cv);
+	}
+
 	Map<String, Method> methods = new HashMap<>();
 
 	public Map<String, Method> getMethods() {

@@ -12,6 +12,7 @@ public class DomainDefinition {
 	public final Type implDomainType;
 	private final Type defineType;
 	private String packageName;
+	
 
 	public DomainDefinition(String simpleName, Type defineType, Type implDomainType) {
 		super();
@@ -51,6 +52,7 @@ public class DomainDefinition {
 	}
 
 	public Field[] fields;
+	public Field identifierField;
 	public Command[] commands;
 	public Event[] events;
 	public Map<String, Method> menthods;

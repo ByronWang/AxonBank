@@ -132,7 +132,7 @@ public class CQRSWebControllerBuilder extends AxonAsmBuilder {
 				mv.visitVarInsn(ALOAD, 2); // load key
 
 				for (Field field : command.fields) {
-					if (!field.idField) visitGetProperty(mv, 1, typeDto, field);
+					if (!field.identifier) visitGetProperty(mv, 1, typeDto, field);
 				}
 
 				visitInitTypeWithAllFields(mv, command.type, command.fields);

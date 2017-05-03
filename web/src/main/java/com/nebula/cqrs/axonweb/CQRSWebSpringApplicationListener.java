@@ -51,7 +51,7 @@ public class CQRSWebSpringApplicationListener implements ApplicationListener<App
 				if (command.ctorMethod) {
 					List<Field> ctorFields = new ArrayList<>();
 					for (int i = 0; i < command.fields.length; i++) {
-						if (!command.fields[i].idField) {
+						if (!command.fields[i].identifier) {
 							ctorFields.add(command.fields[i]);
 						}
 					}

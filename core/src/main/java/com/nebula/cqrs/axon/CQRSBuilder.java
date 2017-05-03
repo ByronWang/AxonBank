@@ -11,6 +11,7 @@ import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.nebula.cqrs.axon.asm.AnalyzeFieldClassVisitor;
 import com.nebula.cqrs.axon.asm.CQRSCommandBuilder;
 import com.nebula.cqrs.axon.asm.CQRSCommandHandlerBuilder;
 import com.nebula.cqrs.axon.asm.CQRSCommandHandlerCallerBuilder;
@@ -22,6 +23,7 @@ import com.nebula.cqrs.axon.pojo.Command;
 import com.nebula.cqrs.axon.pojo.DomainDefinition;
 import com.nebula.cqrs.axon.pojo.Event;
 import com.nebula.cqrs.core.asm.AnalyzeMethodParamsClassVisitor;
+import com.nebula.cqrs.core.asm.Field;
 import com.nebula.cqrs.core.asm.RenameClassVisitor;
 
 public class CQRSBuilder implements CQRSContext {
@@ -83,32 +85,41 @@ public class CQRSBuilder implements CQRSContext {
 
 		try {
 			final DomainDefinition domainDefinition;
-			byte[] binaryRepresentationAfterRenameToImpl;
+			byte[] binaryRepresentation;
+			Type srcDomainType;
 			Type implDomainType;
+
+			String srcDomainName = srcDomainClassName.substring(srcDomainClassName.lastIndexOf('.') + 1);
+
+			String domainImplClassName = srcDomainClassName + "Impl";
+			srcDomainType = Type.getObjectType(srcDomainClassName.replace('.', '/'));
+			implDomainType = Type.getObjectType(domainImplClassName.replace('.', '/'));
+
+			domainDefinition = new DomainDefinition(srcDomainName, srcDomainType, implDomainType);
+
 			{
-				String srcDomainName = srcDomainClassName.substring(srcDomainClassName.lastIndexOf('.') + 1);
-
-				String domainImplClassName = srcDomainClassName + "Impl";
-				Type srcDomainType = Type.getObjectType(srcDomainClassName.replace('.', '/'));
-				implDomainType = Type.getObjectType(domainImplClassName.replace('.', '/'));
-
-				domainDefinition = new DomainDefinition(srcDomainName, srcDomainType, implDomainType);
-
 				ClassReader classReaderSource = new ClassReader(srcDomainType.getClassName());
 				ClassWriter classWriterImplDomainType = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
 				RenameClassVisitor renameClassVisitor = new RenameClassVisitor(classWriterImplDomainType, srcDomainType.getInternalName(),
 						implDomainType.getInternalName());
 				classReaderSource.accept(renameClassVisitor, 0);
-				binaryRepresentationAfterRenameToImpl = classWriterImplDomainType.toByteArray();
+				binaryRepresentation = classWriterImplDomainType.toByteArray();
 
 				LOGGER.debug("Rename domain class from {} to impl class [{}]", srcDomainType.getClassName(), implDomainType.getClassName());
 			}
 			{
-				ClassReader cr = new ClassReader(binaryRepresentationAfterRenameToImpl);
+				ClassReader cr = new ClassReader(binaryRepresentation);
 				{
-					AnalyzeMethodParamsClassVisitor analyzer = new AnalyzeMethodParamsClassVisitor();
-					cr.accept(analyzer, 0);
-					domainDefinition.menthods = analyzer.getMethods();
+					AnalyzeMethodParamsClassVisitor analyzeMethodParamsClassVisitor = new AnalyzeMethodParamsClassVisitor();
+					AnalyzeFieldClassVisitor analyzeFieldClassVisitor = new AnalyzeFieldClassVisitor(analyzeMethodParamsClassVisitor);
+					cr.accept(analyzeFieldClassVisitor, 0);
+					domainDefinition.menthods = analyzeMethodParamsClassVisitor.getMethods();
+					domainDefinition.fields = analyzeFieldClassVisitor.finished().toArray(new Field[0]);
+					for (Field field : domainDefinition.fields) {
+						if(field.identifier){
+							domainDefinition.identifierField = field;
+						}
+					}
 				}
 
 				ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
@@ -118,10 +129,11 @@ public class CQRSBuilder implements CQRSContext {
 				}
 
 				byte[] domainRepresentationAfterMakeCqrs = cw.toByteArray();
+				
 				LOGGER.debug("Made cqrs domain class [{}]", implDomainType.getClassName());
+				
 				classLoader.define(implDomainType.getClassName(), domainRepresentationAfterMakeCqrs);
-			}
-			{
+
 				for (Event event : domainDefinition.events) {
 					if (event.realEvent == null) {
 						byte[] eventCode = CQRSEventRealBuilder.dump(event);

@@ -16,6 +16,5 @@ public class Field {
 
 	public String name;
 	public Type type;
-	@Deprecated
-	public boolean idField;
+	public boolean identifier;
 }
