@@ -30,7 +30,7 @@ public class Event {
 
 	public boolean innerEvent = false;
 
-
+	public boolean ctorMethod = false;
 	public boolean withoutID = false;
 	public Field[] methodParams;
 	public Field[] fields;

@@ -133,7 +133,7 @@ public class CQRSDomainBuilder extends ClassVisitor {
 		MethodVisitor mv;
 		{
 			// Call event
-			Type eventType = event.type;
+			Type virtualEventType = event.type;
 
 			// List<Field> parameters = event.params;
 
@@ -150,7 +150,7 @@ public class CQRSDomainBuilder extends ClassVisitor {
 			mv.visitLineNumber(51, l0);
 			{
 
-				AxonAsmBuilder.visitNewObject(mv, eventType);
+				AxonAsmBuilder.visitNewObject(mv, virtualEventType);
 				mv.visitInsn(DUP);
 
 				if (event.withoutID) {
@@ -162,7 +162,7 @@ public class CQRSDomainBuilder extends ClassVisitor {
 					mv.visitVarInsn(parameter.type.getOpcode(ILOAD), i + 1);
 				}
 
-				AxonAsmBuilder.visitInvokeSpecial(mv, eventType, "<init>", event.fields);
+				AxonAsmBuilder.visitInvokeSpecial(mv, virtualEventType, "<init>", event.fields);
 				AsmBuilder.visitInvokeStatic(mv, AggregateLifecycle.class, ApplyMore.class, "apply", Object.class);
 
 				mv.visitInsn(POP);
@@ -221,6 +221,7 @@ public class CQRSDomainBuilder extends ClassVisitor {
 				String realEventName = toCamelUpper(name.substring(2));
 				// set super name
 				Event relEvent = domainDefinition.realEvents.get(realEventName);
+				relEvent.ctorMethod = command.ctorMethod;// TODO
 				succeedEvent.setRealEvent(relEvent);
 
 				super.visitMethodInsn(opcode, owner, "apply" + succeedEvent.eventName, desc, itf);
