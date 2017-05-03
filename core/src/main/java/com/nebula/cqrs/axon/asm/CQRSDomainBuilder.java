@@ -15,7 +15,6 @@ import static org.objectweb.asm.Opcodes.RETURN;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
@@ -26,7 +25,6 @@ import com.nebula.cqrs.axon.pojo.AxonAsmBuilder;
 import com.nebula.cqrs.axon.pojo.Command;
 import com.nebula.cqrs.axon.pojo.DomainDefinition;
 import com.nebula.cqrs.axon.pojo.Event;
-import com.nebula.cqrs.core.CqrsEntity;
 import com.nebula.cqrs.core.asm.AsmBuilder;
 import com.nebula.cqrs.core.asm.ConvertFromParamsToClassMethodVisitor;
 import com.nebula.cqrs.core.asm.Field;
@@ -156,8 +154,8 @@ public class CQRSDomainBuilder extends ClassVisitor {
 			command.fields = fields.toArray(new Field[0]);
 		}
 
-		domainDefinition.commands = this.commands.toArray(new Command[0]);
-		domainDefinition.events = this.events.toArray(new Event[0]);
+		domainDefinition.commands = this.commands;
+		domainDefinition.events = this.events;
 
 		AxonAsmBuilder.visitDefine_toString_withAllFields(cv, implDomainType, domainDefinition.fields);
 		super.visitEnd();
