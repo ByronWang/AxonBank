@@ -4,9 +4,7 @@ import static org.objectweb.asm.Opcodes.ACC_FINAL;
 import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
 import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
 import static org.objectweb.asm.Opcodes.ACC_STATIC;
-import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.DUP;
-import static org.objectweb.asm.Opcodes.GETFIELD;
 import static org.objectweb.asm.Opcodes.ILOAD;
 import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
 import static org.objectweb.asm.Opcodes.INVOKESTATIC;
@@ -17,12 +15,11 @@ import static org.objectweb.asm.Opcodes.RETURN;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.axonframework.commandhandling.model.AggregateIdentifier;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 import com.nebula.cqrs.axon.pojo.AxonAsmBuilder;
@@ -47,8 +44,8 @@ public class CQRSDomainBuilder extends ClassVisitor {
 		return "TypeMaker [commands=" + commands + ", events=" + events + ", domain=" + domainDefinition + "]";
 	}
 
-	public CQRSDomainBuilder(int api, ClassVisitor cv, DomainDefinition domainDefinition) {
-		super(api, cv);
+	public CQRSDomainBuilder(ClassVisitor cv, DomainDefinition domainDefinition) {
+		super(Opcodes.ASM5, cv);
 		this.domainDefinition = domainDefinition;
 		this.implDomainType = domainDefinition.implDomainType;
 	}
