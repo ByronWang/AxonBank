@@ -1,5 +1,7 @@
 package com.nebula.cqrs.axonweb.asm.web;
 
+import java.util.Collection;
+
 import org.axonframework.commandhandling.CommandBus;
 import org.axonframework.commandhandling.CommandMessage;
 import org.axonframework.commandhandling.GenericCommandMessage;
@@ -20,7 +22,7 @@ import com.nebula.cqrs.core.asm.Field;
 
 public class CQRSWebControllerBuilder extends AxonAsmBuilder {
 
-	public static byte[] dump(Type typeController, DomainDefinition domainDefinition, Type typeEntry, Command[] commands) throws Exception {
+	public static byte[] dump(Type typeController, DomainDefinition domainDefinition, Type typeEntry, Collection<Command> commands) throws Exception {
 		ClassWriter cw = new ClassWriter(0);
 
 		cw.visit(52, ACC_PUBLIC + ACC_SUPER, typeController.getInternalName(), null, "java/lang/Object", null);

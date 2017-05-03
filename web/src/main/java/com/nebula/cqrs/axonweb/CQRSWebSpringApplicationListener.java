@@ -45,7 +45,7 @@ public class CQRSWebSpringApplicationListener implements ApplicationListener<App
 		try {
 			ctx.defineClass(typeEntry.getClassName(), CQRSWebEntryBuilder.dump(typeEntry, domainDefinition.fields));
 
-			for (Command command : domainDefinition.commands) {
+			for (Command command : domainDefinition.commands.values()) {
 				Type typeDto = domainDefinition.typeOf(DomainDefinition.toCamelUpper(command.actionName) + "Dto");
 				Field[] fields;
 				if (command.ctorMethod) {
@@ -63,7 +63,7 @@ public class CQRSWebSpringApplicationListener implements ApplicationListener<App
 			}
 
 			ctx.defineClass(typeController.getClassName(),
-					CQRSWebControllerBuilder.dump(typeController, domainDefinition, typeEntry, domainDefinition.commands));
+					CQRSWebControllerBuilder.dump(typeController, domainDefinition, typeEntry, domainDefinition.commands.values()));
 
 			ctx.defineClass(typeRepository.getClassName(), CQRSRepositoryBuilder.dump(typeRepository, typeEntry));
 
