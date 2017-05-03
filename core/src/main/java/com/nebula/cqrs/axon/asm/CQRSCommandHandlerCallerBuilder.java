@@ -8,6 +8,7 @@ import org.objectweb.asm.Type;
 
 import com.nebula.cqrs.axon.pojo.AxonAsmBuilder;
 import com.nebula.cqrs.axon.pojo.Command;
+import com.nebula.cqrs.core.asm.AsmBuilder;
 import com.nebula.cqrs.core.asm.Field;
 
 public class CQRSCommandHandlerCallerBuilder extends AxonAsmBuilder {
@@ -69,7 +70,7 @@ public class CQRSCommandHandlerCallerBuilder extends AxonAsmBuilder {
 			Label l2 = new Label();
 			mv.visitLabel(l2);
 			mv.visitLocalVariable("this", typeInner.getDescriptor(), null, l0, l2, 0);
-			mv.visitLocalVariable(CQRSDomainBuilder.toCamelLower(toSimpleName(typeDomain.getClassName())), typeDomain.getDescriptor(), null,
+			mv.visitLocalVariable(AsmBuilder.toCamelLower(toSimpleName(typeDomain.getClassName())), typeDomain.getDescriptor(), null,
 					l0, l2, 1);
 			mv.visitMaxs(3, 2);
 			mv.visitEnd();

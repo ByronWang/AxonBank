@@ -14,6 +14,7 @@ import org.objectweb.asm.Type;
 
 import com.nebula.cqrs.axon.pojo.DomainDefinition;
 import com.nebula.cqrs.axon.pojo.Event;
+import com.nebula.cqrs.core.asm.AsmBuilder;
 import com.nebula.cqrs.core.asm.Field;
 import com.nebula.cqrs.core.asm.Method;
 
@@ -38,7 +39,7 @@ public class AnalyzeEventsClassVisitor extends ClassVisitor {
 			String originMethodName = name;
 			String newMethodName = "on";
 			boolean innerEvent = true;
-			String eventName = toCamelUpper(name.substring(2));
+			String eventName = AsmBuilder.toCamelUpper(name.substring(2));
 
 			Type eventType = domainDefinition.typeOf(eventName + "Event");
 			Event event = new Event(eventName, originMethodName, newMethodName, innerEvent, eventType);
@@ -67,14 +68,6 @@ public class AnalyzeEventsClassVisitor extends ClassVisitor {
 
 	private boolean equal(Field field, Field identifierField) {
 		return field.name == identifierField.name && field.type.getInternalName().equals(identifierField.type.getInternalName());
-	}
-
-	public static String toCamelUpper(String name) {
-		return Character.toUpperCase(name.charAt(0)) + name.substring(1);
-	}
-
-	public static String toCamelLower(String name) {
-		return Character.toLowerCase(name.charAt(0)) + name.substring(1);
 	}
 
 	static boolean is(int access, int modified) {

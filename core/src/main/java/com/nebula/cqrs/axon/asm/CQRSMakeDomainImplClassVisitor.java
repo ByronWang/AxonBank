@@ -31,7 +31,7 @@ import com.nebula.cqrs.core.asm.ConvertFromParamsToClassMethodVisitor;
 import com.nebula.cqrs.core.asm.Field;
 import com.nebula.cqrs.core.asm.Method;
 
-public class CQRSDomainBuilder extends ClassVisitor {
+public class CQRSMakeDomainImplClassVisitor extends ClassVisitor {
 	private final Type implDomainType;
 	private final DomainDefinition domainDefinition;
 
@@ -43,7 +43,7 @@ public class CQRSDomainBuilder extends ClassVisitor {
 		return "TypeMaker [commands=" + commands + ", virtualEvents=" + virtualEvents + ", domain=" + domainDefinition + "]";
 	}
 
-	public CQRSDomainBuilder(ClassVisitor cv, DomainDefinition domainDefinition) {
+	public CQRSMakeDomainImplClassVisitor(ClassVisitor cv, DomainDefinition domainDefinition) {
 		super(Opcodes.ASM5, cv);
 		this.domainDefinition = domainDefinition;
 		this.implDomainType = domainDefinition.implDomainType;
@@ -68,7 +68,7 @@ public class CQRSDomainBuilder extends ClassVisitor {
 				actionName = methodName;
 			}
 
-			commandName = toCamelUpper(actionName);
+			commandName = AsmBuilder.toCamelUpper(actionName);
 
 			Type type = domainDefinition.typeOf(commandName + "Command");
 
@@ -85,7 +85,7 @@ public class CQRSDomainBuilder extends ClassVisitor {
 			return commandMethodVisitor;
 		} else if (name.startsWith("on")) {// Event
 			String newMethodName = "on";
-			String eventName = toCamelUpper(name.substring(2));
+			String eventName = AsmBuilder.toCamelUpper(name.substring(2));
 
 			Event event = domainDefinition.realEvents.get(eventName);
 			ConvertFromParamsToClassMethodVisitor eventMethodVisitor = new ConvertFromParamsToClassMethodVisitor(cv, access, newMethodName, desc, signature,
@@ -181,14 +181,6 @@ public class CQRSDomainBuilder extends ClassVisitor {
 		}
 	}
 
-	public static String toCamelUpper(String name) {
-		return Character.toUpperCase(name.charAt(0)) + name.substring(1);
-	}
-
-	public static String toCamelLower(String name) {
-		return Character.toLowerCase(name.charAt(0)) + name.substring(1);
-	}
-
 	class CommandMethodVisitor extends MethodVisitor {
 		final Command command;
 		final Event succeedEvent;
@@ -218,7 +210,7 @@ public class CQRSDomainBuilder extends ClassVisitor {
 			succeedEvent.methodParams = method.params;
 
 			if (owner.equals(implDomainType.getInternalName()) && name.startsWith("on")) {
-				String realEventName = toCamelUpper(name.substring(2));
+				String realEventName = AsmBuilder.toCamelUpper(name.substring(2));
 				// set super name
 				Event relEvent = domainDefinition.realEvents.get(realEventName);
 				relEvent.ctorMethod = command.ctorMethod;// TODO

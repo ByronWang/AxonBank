@@ -15,6 +15,14 @@ import org.objectweb.asm.util.TraceClassVisitor;
 
 public class AsmBuilder implements Opcodes {
 
+	public static String toCamelUpper(String name) {
+		return Character.toUpperCase(name.charAt(0)) + name.substring(1);
+	}
+
+	public static String toCamelLower(String name) {
+		return Character.toLowerCase(name.charAt(0)) + name.substring(1);
+	}
+	
 	protected static String toPropertyGetName(String fieldName) {
 		return "get" + toPropertyName(fieldName);
 	}

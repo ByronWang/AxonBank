@@ -14,10 +14,11 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.annotation.SubscribeMapping;
 import org.springframework.stereotype.Controller;
 
-import com.nebula.cqrs.axon.asm.CQRSDomainBuilder;
+import com.nebula.cqrs.axon.asm.CQRSMakeDomainImplClassVisitor;
 import com.nebula.cqrs.axon.pojo.AxonAsmBuilder;
 import com.nebula.cqrs.axon.pojo.Command;
 import com.nebula.cqrs.axon.pojo.DomainDefinition;
+import com.nebula.cqrs.core.asm.AsmBuilder;
 import com.nebula.cqrs.core.asm.Field;
 
 public class CQRSWebControllerBuilder extends AxonAsmBuilder {
@@ -35,7 +36,7 @@ public class CQRSWebControllerBuilder extends AxonAsmBuilder {
 		define_init(cw, typeController);
 
 		for (Command command : commands) {
-			Type typeDto = domainDefinition.typeOf(CQRSDomainBuilder.toCamelUpper(command.actionName) + "Dto");
+			Type typeDto = domainDefinition.typeOf(AsmBuilder.toCamelUpper(command.actionName) + "Dto");
 			if (command.ctorMethod) {
 				define_action_create(cw, typeController, typeDto, command);
 			} else {
