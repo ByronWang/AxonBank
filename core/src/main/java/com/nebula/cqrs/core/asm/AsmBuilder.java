@@ -151,6 +151,17 @@ public class AsmBuilder implements Opcodes {
 		mv.visitMethodInsn(INVOKEVIRTUAL, objectType.getInternalName(), toPropertyGetName(fieldName), Type.getMethodDescriptor(fieldType), false);
 	}
 
+	public static void visitSetProperty(MethodVisitor mv, int objectIndex, Type objectType, String fieldName, Type fieldType) {
+		mv.visitVarInsn(ALOAD, objectIndex);
+		mv.visitMethodInsn(INVOKEVIRTUAL, objectType.getInternalName(), toPropertySetName(fieldName), Type.getMethodDescriptor(Type.VOID_TYPE, fieldType),
+				false);
+	}
+
+	public static void visitSetProperty(MethodVisitor mv, Type objectType, String fieldName, Type fieldType) {
+		mv.visitMethodInsn(INVOKEVIRTUAL, objectType.getInternalName(), toPropertySetName(fieldName), Type.getMethodDescriptor(Type.VOID_TYPE, fieldType),
+				false);
+	}
+
 	public static void visitInitObject(MethodVisitor mv, int index) {
 		mv.visitVarInsn(ALOAD, index);
 		mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
@@ -196,6 +207,10 @@ public class AsmBuilder implements Opcodes {
 		visitInvokeInterface(mv, interfaceType, returnType, methodName, params);
 	}
 
+	public static void visitInvokeInterface(MethodVisitor mv, Type type, String methodName, Type... params) {
+		mv.visitMethodInsn(INVOKEINTERFACE, type.getInternalName(), methodName, Type.getMethodDescriptor(Type.VOID_TYPE, params), true);
+	}
+
 	public static void visitInvokeInterface(MethodVisitor mv, Type type, Type returnType, String methodName, Type... params) {
 		mv.visitMethodInsn(INVOKEINTERFACE, type.getInternalName(), methodName, Type.getMethodDescriptor(returnType, params), true);
 	}
@@ -214,6 +229,20 @@ public class AsmBuilder implements Opcodes {
 			params[i] = Type.getType(classes[i]);
 		}
 		visitInvokeSpecial(mv, objectType, returnType, methodName, params);
+	}
+
+
+	public static void visitInvokeSpecial(MethodVisitor mv, Type objectType, String methodName, Type... params) {
+		mv.visitMethodInsn(INVOKESPECIAL, objectType.getInternalName(), methodName, Type.getMethodDescriptor(Type.VOID_TYPE, params), false);
+	}
+
+	public static void visitInvokeSpecial(MethodVisitor mv, int objectIndex,Type objectType, String methodName) {
+		mv.visitVarInsn(ALOAD, objectIndex);
+		mv.visitMethodInsn(INVOKESPECIAL, objectType.getInternalName(), methodName, Type.getMethodDescriptor(Type.VOID_TYPE), false);		
+	}
+	public static void visitInvokeSpecial(MethodVisitor mv, int objectIndex,Type objectType, Type returnType,String methodName) {
+		mv.visitVarInsn(ALOAD, objectIndex);
+		mv.visitMethodInsn(INVOKESPECIAL, objectType.getInternalName(), methodName, Type.getMethodDescriptor(returnType), false);
 	}
 
 	public static void visitInvokeSpecial(MethodVisitor mv, Type objectType, Type returnType, String methodName, Type... params) {
@@ -335,7 +364,7 @@ public class AsmBuilder implements Opcodes {
 
 		return name.substring(index + 1);
 	}
-	
+
 	public static int[] computerLocals(Type objectType, Type... types) {
 		int[] locals = new int[types.length + 1];
 		int cntLocal = 0;
