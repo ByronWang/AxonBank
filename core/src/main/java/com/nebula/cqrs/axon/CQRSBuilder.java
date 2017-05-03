@@ -19,6 +19,7 @@ import com.nebula.cqrs.axon.asm.CQRSCommandHandlerCtorCallerBuilder;
 import com.nebula.cqrs.axon.asm.CQRSDomainBuilder;
 import com.nebula.cqrs.axon.asm.CQRSEventAliasBuilder;
 import com.nebula.cqrs.axon.asm.CQRSEventRealBuilder;
+import com.nebula.cqrs.axon.asm.RemoveCqrsAnnotationClassVisitor;
 import com.nebula.cqrs.axon.pojo.Command;
 import com.nebula.cqrs.axon.pojo.DomainDefinition;
 import com.nebula.cqrs.axon.pojo.Event;
@@ -109,10 +110,11 @@ public class CQRSBuilder implements CQRSContext {
 		ClassReader cr = new ClassReader(srcDomainType.getClassName());
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
 
-		CQRSDomainBuilder cvMakeDomainImpl = new CQRSDomainBuilder(cw, domainDefinition);
+		CQRSDomainBuilder cvMakeDomainImpl = new CQRSDomainBuilder(cw, domainDefinition); 
 		RenameClassVisitor cvRename = new RenameClassVisitor(cvMakeDomainImpl, srcDomainType.getInternalName(), implDomainType.getInternalName());
 
-		cr.accept(cvRename, 0);
+		RemoveCqrsAnnotationClassVisitor removeCqrsAnnotation = new RemoveCqrsAnnotationClassVisitor(cvRename);
+		cr.accept(removeCqrsAnnotation, 0);
 
 		LOGGER.debug("Rename domain class from {} to impl class [{}]", srcDomainType.getClassName(), implDomainType.getClassName());
 		LOGGER.debug("Made cqrs domain class [{}]", implDomainType.getClassName());

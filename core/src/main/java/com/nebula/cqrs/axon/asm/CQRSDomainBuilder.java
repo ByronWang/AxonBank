@@ -51,21 +51,6 @@ public class CQRSDomainBuilder extends ClassVisitor {
 	}
 
 	@Override
-	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-		super.visit(version, access, name, signature, superName, interfaces);
-	}
-
-	@Override
-	public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-		String cqrs = Type.getDescriptor(CqrsEntity.class);
-		if (!cqrs.equals(desc)) {
-			return super.visitAnnotation(desc, visible);
-		} else {
-			return null;
-		}
-	}
-
-	@Override
 	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
 
 		if (is(access, ACC_STATIC)) { // SAGA
