@@ -16,8 +16,6 @@
 
 package org.axonframework.samples.bank.config;
 
-import javax.persistence.EntityManagerFactory;
-
 import org.axonframework.commandhandling.CommandBus;
 import org.axonframework.commandhandling.SimpleCommandBus;
 import org.axonframework.eventhandling.saga.repository.SagaStore;
@@ -50,6 +48,7 @@ public class SingleNodeConfig {
         return new InMemoryEventStorageEngine();
     }
 
+    @SuppressWarnings("rawtypes")
     @Bean
     public SagaStore sagaStore() {
         return new InMemorySagaStore();

@@ -17,7 +17,6 @@ public class CQRSCommandHandlerCtorCallerBuilder extends AxonAsmBuilder {
 
 		ClassWriter cw = new ClassWriter(0);
 		FieldVisitor fv;
-		MethodVisitor mv;
 
 		cw.visit(52, ACC_SUPER, objectType.getInternalName(), "Ljava/lang/Object;Ljava/util/concurrent/Callable<" + domainType.getDescriptor() + ">;",
 				"java/lang/Object", new String[] { "java/util/concurrent/Callable" });

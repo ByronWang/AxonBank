@@ -87,17 +87,14 @@ public class CQRSBuilder implements CQRSContext {
 		try {
 			final DomainDefinition domainDefinition;
 			Type srcDomainType;
-			Type implDomainType;
 			String domainName = srcDomainClassName.substring(srcDomainClassName.lastIndexOf('.') + 1);
 			{
-				String domainImplClassName = srcDomainClassName + "Impl";
 				srcDomainType = Type.getObjectType(srcDomainClassName.replace('.', '/'));
-				implDomainType = Type.getObjectType(domainImplClassName.replace('.', '/'));
 			}
 
-			domainDefinition = analyzeDomain(domainName, srcDomainType, implDomainType);
+			domainDefinition = analyzeDomain(domainName, srcDomainType);
 
-			makeDomainImpl(domainDefinition, srcDomainType, implDomainType);
+			makeDomainImpl(domainDefinition, srcDomainType, domainDefinition.implDomainType);
 
 			listeners.forEach(l -> l.define(CQRSBuilder.this, domainDefinition));
 		} catch (IOException e) {
@@ -146,9 +143,9 @@ public class CQRSBuilder implements CQRSContext {
 		}
 	}
 
-	private DomainDefinition analyzeDomain(String srcDomainName, Type srcDomainType, Type implDomainType) throws IOException {
+	private DomainDefinition analyzeDomain(String srcDomainName, Type srcDomainType) throws IOException {
 		final DomainDefinition domainDefinition;
-		domainDefinition = new DomainDefinition(srcDomainName, srcDomainType, implDomainType);
+		domainDefinition = new DomainDefinition(srcDomainName, srcDomainType);
 		ClassReader cr = new ClassReader(srcDomainType.getClassName());
 
 		{

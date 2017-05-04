@@ -49,7 +49,6 @@ public class AxonBankApplication {
         application.run(args);
     }
 
-    @SuppressWarnings("unused")
     private static void prepare() {
 
         try {

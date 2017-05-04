@@ -32,7 +32,6 @@ public class BankTransferEntry {
     private long amount;
     private Status status;
 
-    @SuppressWarnings("unused")
     public BankTransferEntry() {
     }
 

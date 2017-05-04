@@ -30,8 +30,7 @@ public class BankAccountEntry {
 	private long overdraftLimit;
 	private long balance;
 
-	@SuppressWarnings("unused")
-	public BankAccountEntry() {
+	BankAccountEntry() {
 	}
 
 	public BankAccountEntry(String axonBankAccountId, long balance, long overdraftLimit) {
