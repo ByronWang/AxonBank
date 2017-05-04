@@ -30,9 +30,9 @@ angular.module('axonBank')
                     });
                 });
             },
-            loadBankTransfers: function (bankAccountId) {
+            loadBankTransfers: function (axonBankAccountId) {
                 return $q(function (resolve, reject) {
-                    $stomp.subscribe('/app/bank-accounts/' + bankAccountId + '/bank-transfers', function (data) {
+                    $stomp.subscribe('/app/bank-accounts/' + axonBankAccountId + '/bank-transfers', function (data) {
                         resolve(data);
                     });
                 });

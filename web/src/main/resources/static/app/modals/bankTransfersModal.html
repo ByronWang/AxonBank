@@ -17,8 +17,8 @@
             </thead>
             <tbody>
             <tr ng-repeat="bankTransfer in bankTransfers">
-                <td>{{bankTransfer.sourceBankAccountId != bankAccountId ? bankTransfer.sourceBankAccountId : ''}}</td>
-                <td>{{bankTransfer.destinationBankAccountId != bankAccountId ? bankTransfer.destinationBankAccountId: ''}}</td>
+                <td>{{bankTransfer.sourceBankAccountId != axonBankAccountId ? bankTransfer.sourceBankAccountId : ''}}</td>
+                <td>{{bankTransfer.destinationBankAccountId != axonBankAccountId ? bankTransfer.destinationBankAccountId: ''}}</td>
                 <td>{{bankTransfer.amount}}</td>
                 <td>{{bankTransfer.status}}</td>
             </tr>

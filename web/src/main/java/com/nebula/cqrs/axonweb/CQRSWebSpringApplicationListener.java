@@ -1,8 +1,12 @@
 package com.nebula.cqrs.axonweb;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -21,8 +25,11 @@ import com.nebula.cqrs.axon.pojo.PojoBuilder;
 import com.nebula.cqrs.axonweb.asm.config.CQRSAxonConfigBuilder;
 import com.nebula.cqrs.axonweb.asm.query.CQRSRepositoryBuilder;
 import com.nebula.cqrs.axonweb.asm.query.CQRSWebEntryBuilder;
+import com.nebula.cqrs.axonweb.asm.query.CQRSWebEventListenerBuilder;
+import com.nebula.cqrs.axonweb.asm.query.CQRSWebEventListnerBizLogicClassVisitor;
 import com.nebula.cqrs.axonweb.asm.web.CQRSWebControllerBuilder;
 import com.nebula.cqrs.core.asm.Field;
+import com.nebula.cqrs.core.asm.RenameClassVisitor;
 
 public class CQRSWebSpringApplicationListener implements ApplicationListener<ApplicationPreparedEvent>, DomainListener {
 
@@ -36,14 +43,18 @@ public class CQRSWebSpringApplicationListener implements ApplicationListener<App
 
 	@Override
 	public void define(CQRSContext ctx, DomainDefinition domainDefinition) {
+		Type implDomainType = domainDefinition.implDomainType;
 		Type typeController = domainDefinition.typeOf("Controller");
 		Type typeRepository = domainDefinition.typeOf("Repository");
-		Type typeEntry = domainDefinition.typeOf("Entry");
+		Type entryType = domainDefinition.typeOf("Entry");
 		Type typeConfig = domainDefinition.typeOf("AxonConfig");
 		Type typeCommandHandler = domainDefinition.typeOf("CommandHandler");
 
+		Type eventListenerType = domainDefinition.typeOf("EventListener");
+		Type bizLogicType = domainDefinition.typeOf("EventListenerBizLogic");
+
 		try {
-			ctx.defineClass(typeEntry.getClassName(), CQRSWebEntryBuilder.dump(typeEntry, domainDefinition.fields));
+			ctx.defineClass(entryType.getClassName(), CQRSWebEntryBuilder.dump(entryType, domainDefinition.fields));
 
 			for (Command command : domainDefinition.commands.values()) {
 				Type typeDto = domainDefinition.typeOf(DomainDefinition.toCamelUpper(command.actionName) + "Dto");
@@ -63,19 +74,39 @@ public class CQRSWebSpringApplicationListener implements ApplicationListener<App
 			}
 
 			ctx.defineClass(typeController.getClassName(),
-					CQRSWebControllerBuilder.dump(typeController, domainDefinition, typeEntry, domainDefinition.commands.values()));
+					CQRSWebControllerBuilder.dump(typeController, domainDefinition, entryType, domainDefinition.commands.values()));
 
-			ctx.defineClass(typeRepository.getClassName(), CQRSRepositoryBuilder.dump(typeRepository, typeEntry));
+			ctx.defineClass(typeRepository.getClassName(), CQRSRepositoryBuilder.dump(typeRepository, entryType, domainDefinition));
 
-			ctx.defineClass(typeConfig.getClassName(), CQRSAxonConfigBuilder.dump(typeConfig, domainDefinition.implDomainType, typeRepository, typeCommandHandler));
+			ctx.defineClass(typeConfig.getClassName(),
+					CQRSAxonConfigBuilder.dump(typeConfig, domainDefinition.implDomainType, typeRepository, typeCommandHandler));
 
-//			beanTypes.add(typeEntry);
-//			beanTypes.add(typeConfig);
-//			beanTypes.add(typeController);
+			makeBizLogic(bizLogicType, ctx, implDomainType, entryType);
+
+			ctx.defineClass(eventListenerType.getClassName(),
+					CQRSWebEventListenerBuilder.dump(eventListenerType, typeRepository, bizLogicType, entryType, domainDefinition));
+
+			// beanTypes.add(typeEntry);
+			// beanTypes.add(typeConfig);
+			// beanTypes.add(typeController);
 			// beanTypes.add(typeRepository);
 
 		} catch (Exception e) {
 			throw new RuntimeException(e);
+		}
+	}
+
+	private void makeBizLogic(Type bizLogicType, CQRSContext ctx, Type implDomainType, Type entryType) throws IOException {
+		{
+			ClassReader cr = new ClassReader(implDomainType.getClassName());
+			ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
+			CQRSWebEventListnerBizLogicClassVisitor entityEventListener = new CQRSWebEventListnerBizLogicClassVisitor(Opcodes.ASM5, cw, bizLogicType,
+					entryType);
+			RenameClassVisitor renameClassVisitor = new RenameClassVisitor(entityEventListener, implDomainType.getInternalName(),
+					bizLogicType.getInternalName());
+			cr.accept(renameClassVisitor, ClassReader.EXPAND_FRAMES);
+			byte[] code = cw.toByteArray();
+			ctx.defineClass(bizLogicType.getClassName(), code);
 		}
 	}
 

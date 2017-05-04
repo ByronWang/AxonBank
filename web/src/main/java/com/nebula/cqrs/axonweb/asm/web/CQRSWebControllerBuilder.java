@@ -14,7 +14,6 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.annotation.SubscribeMapping;
 import org.springframework.stereotype.Controller;
 
-import com.nebula.cqrs.axon.asm.CQRSMakeDomainImplClassVisitor;
 import com.nebula.cqrs.axon.pojo.AxonAsmBuilder;
 import com.nebula.cqrs.axon.pojo.Command;
 import com.nebula.cqrs.axon.pojo.DomainDefinition;
@@ -86,6 +85,7 @@ public class CQRSWebControllerBuilder extends AxonAsmBuilder {
 			mv.visitLineNumber(70, l0);
 
 			{
+				visitPrintObject(mv, 1);
 				visitNewObject(mv, command.type);
 				mv.visitInsn(DUP);
 				for (Field field : command.fields) {
@@ -124,6 +124,7 @@ public class CQRSWebControllerBuilder extends AxonAsmBuilder {
 			mv.visitLineNumber(63, l0);
 
 			{
+				visitPrintObject(mv, 1);
 				mv.visitMethodInsn(INVOKESTATIC, "java/util/UUID", "randomUUID", "()Ljava/util/UUID;", false);
 				mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/UUID", "toString", "()Ljava/lang/String;", false);
 				mv.visitVarInsn(ASTORE, 2);

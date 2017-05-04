@@ -7,10 +7,13 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
 import com.nebula.cqrs.axon.pojo.AxonAsmBuilder;
+import com.nebula.cqrs.axon.pojo.DomainDefinition;
+import com.nebula.cqrs.core.asm.AsmBuilder;
+import com.nebula.cqrs.core.asm.Field;
 
 public class CQRSRepositoryBuilder extends AxonAsmBuilder {
 
-	public static byte[] dump(Type typeRepository, Type typeEntry) throws Exception {
+	public static byte[] dump(Type typeRepository, Type typeEntry, DomainDefinition domainDefinition) throws Exception {
 
 		ClassWriter cw = new ClassWriter(0);
 		MethodVisitor mv;
@@ -26,10 +29,13 @@ public class CQRSRepositoryBuilder extends AxonAsmBuilder {
 					"()Ljava/lang/Iterable<" + typeEntry.getDescriptor() + ">;", null);
 			mv.visitEnd();
 		}
-//		{
-//			mv = cw.visitMethod(ACC_PUBLIC + ACC_ABSTRACT, "findOneByAxonId", Type.getMethodDescriptor(typeEntry, Type.getType(String.class)), null, null);
-//			mv.visitEnd();
-//		}
+		{
+			Field identifierField = domainDefinition.identifierField;
+			String name = "findOneBy" + AsmBuilder.toCamelUpper(identifierField.name);
+
+			mv = cw.visitMethod(ACC_PUBLIC + ACC_ABSTRACT, name, Type.getMethodDescriptor(typeEntry, identifierField.type), null, null);
+			mv.visitEnd();
+		}
 		cw.visitEnd();
 
 		return cw.toByteArray();

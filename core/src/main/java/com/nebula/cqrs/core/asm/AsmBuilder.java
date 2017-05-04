@@ -1,17 +1,12 @@
 package com.nebula.cqrs.core.asm;
 
-import java.io.PrintWriter;
-
 import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.util.ASMifier;
-import org.objectweb.asm.util.TraceClassVisitor;
 
 public class AsmBuilder implements Opcodes {
 
@@ -22,7 +17,7 @@ public class AsmBuilder implements Opcodes {
 	public static String toCamelLower(String name) {
 		return Character.toLowerCase(name.charAt(0)) + name.substring(1);
 	}
-	
+
 	protected static String toPropertyGetName(String fieldName) {
 		return "get" + toPropertyName(fieldName);
 	}
@@ -244,16 +239,16 @@ public class AsmBuilder implements Opcodes {
 		visitInvokeSpecial(mv, objectType, returnType, methodName, params);
 	}
 
-
 	public static void visitInvokeSpecial(MethodVisitor mv, Type objectType, String methodName, Type... params) {
 		mv.visitMethodInsn(INVOKESPECIAL, objectType.getInternalName(), methodName, Type.getMethodDescriptor(Type.VOID_TYPE, params), false);
 	}
 
-	public static void visitInvokeSpecial(MethodVisitor mv, int objectIndex,Type objectType, String methodName) {
+	public static void visitInvokeSpecial(MethodVisitor mv, int objectIndex, Type objectType, String methodName) {
 		mv.visitVarInsn(ALOAD, objectIndex);
-		mv.visitMethodInsn(INVOKESPECIAL, objectType.getInternalName(), methodName, Type.getMethodDescriptor(Type.VOID_TYPE), false);		
+		mv.visitMethodInsn(INVOKESPECIAL, objectType.getInternalName(), methodName, Type.getMethodDescriptor(Type.VOID_TYPE), false);
 	}
-	public static void visitInvokeSpecial(MethodVisitor mv, int objectIndex,Type objectType, Type returnType,String methodName) {
+
+	public static void visitInvokeSpecial(MethodVisitor mv, int objectIndex, Type objectType, Type returnType, String methodName) {
 		mv.visitVarInsn(ALOAD, objectIndex);
 		mv.visitMethodInsn(INVOKESPECIAL, objectType.getInternalName(), methodName, Type.getMethodDescriptor(returnType), false);
 	}
@@ -353,6 +348,16 @@ public class AsmBuilder implements Opcodes {
 		mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V", false);
 	}
 
+	public static void visitPrintObject(MethodVisitor mv, String message, int objectIndex) {
+		mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
+		mv.visitLdcInsn(message);
+		mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "print", "(Ljava/lang/String;)V", false);
+
+		mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
+		mv.visitVarInsn(ALOAD, objectIndex);
+		mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/Object;)V", false);
+	}
+
 	public static void visitPutField(MethodVisitor mv, int objectIndex, Type objectType, int dataIndex, String fieldName, Class<?> fieldClass) {
 		visitPutField(mv, objectIndex, objectType, dataIndex, fieldName, Type.getType(fieldClass));
 	}
@@ -390,10 +395,10 @@ public class AsmBuilder implements Opcodes {
 		return locals;
 	}
 
-
-	public static void print(byte[] code){
-		ClassReader cr = new ClassReader(code);
-		ClassVisitor visitor = new TraceClassVisitor(null, new ASMifier(), new PrintWriter(System.out));
-		cr.accept(visitor, ClassReader.EXPAND_FRAMES);
-	}
+	// public static void print(byte[] code){
+	// ClassReader cr = new ClassReader(code);
+	// ClassVisitor visitor = new TraceClassVisitor(null, new ASMifier(), new
+	// PrintWriter(System.out));
+	// cr.accept(visitor, ClassReader.EXPAND_FRAMES);
+	// }
 }

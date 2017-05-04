@@ -104,6 +104,8 @@ public class CQRSCommandHandlerBuilder extends AxonAsmBuilder {
 			mv.visitLabel(l0);
 			mv.visitLineNumber(50, l0);
 
+			visitPrintObject(mv, typeHandler.getClassName() + " handle ", 1);
+
 			visitGetField(mv, 0, typeHandler, "repository", Repository.class);
 			visitNewObject(mv, typeInner);
 			mv.visitInsn(DUP);
@@ -139,23 +141,27 @@ public class CQRSCommandHandlerBuilder extends AxonAsmBuilder {
 			mv.visitLabel(l0);
 			mv.visitLineNumber(61, l0);
 
-			visitGetField(mv, 0, typeHandler, "repository", Repository.class);
-			visitGetProperty(mv, 1, command.type, idField);
-			visitInvokeInterface(mv, Repository.class, Aggregate.class, "load", idField.type);
-			mv.visitVarInsn(ASTORE, 2);
+			{
+				visitPrintObject(mv, typeHandler.getClassName() + " handle ", 1);
 
-			mv.visitVarInsn(ALOAD, 2);
+				visitGetField(mv, 0, typeHandler, "repository", Repository.class);
+				visitGetProperty(mv, 1, command.type, idField);
+				visitInvokeInterface(mv, Repository.class, Aggregate.class, "load", idField.type);
+				mv.visitVarInsn(ASTORE, 2);
 
-			visitNewObject(mv, inner);
-			mv.visitInsn(DUP);
+				mv.visitVarInsn(ALOAD, 2);
 
-			mv.visitVarInsn(ALOAD, 0);
-			mv.visitVarInsn(ALOAD, 1);
-			visitInitTypeWithAllFields(mv, inner, typeHandler, command.type);
+				visitNewObject(mv, inner);
+				mv.visitInsn(DUP);
 
-			visitInvokeInterface(mv, Aggregate.class, "execute", Consumer.class);
+				mv.visitVarInsn(ALOAD, 0);
+				mv.visitVarInsn(ALOAD, 1);
+				visitInitTypeWithAllFields(mv, inner, typeHandler, command.type);
 
-			mv.visitInsn(RETURN);
+				visitInvokeInterface(mv, Aggregate.class, "execute", Consumer.class);
+
+				mv.visitInsn(RETURN);
+			}
 
 			Label l3 = new Label();
 			mv.visitLabel(l3);

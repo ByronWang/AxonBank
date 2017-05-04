@@ -22,7 +22,7 @@ angular.module('axonBank')
                 ariaLabelledBy: 'modal-title',
                 ariaDescribedBy: 'modal-body',
                 resolve: {
-                    bankAccountId: function () {
+                    axonBankAccountId: function () {
                         return id;
                     }
                 }
@@ -36,7 +36,7 @@ angular.module('axonBank')
                 ariaLabelledBy: 'modal-title',
                 ariaDescribedBy: 'modal-body',
                 resolve: {
-                    bankAccountId: function () {
+                    axonBankAccountId: function () {
                         return id;
                     }
                 }
@@ -50,7 +50,7 @@ angular.module('axonBank')
                 ariaLabelledBy: 'modal-title',
                 ariaDescribedBy: 'modal-body',
                 resolve: {
-                    bankAccountId: function () {
+                    axonBankAccountId: function () {
                         return id;
                     },
                     bankAccounts: function () {
@@ -67,7 +67,7 @@ angular.module('axonBank')
                 ariaLabelledBy: 'modal-title',
                 ariaDescribedBy: 'modal-body',
                 resolve: {
-                    bankAccountId: function () {
+                    axonBankAccountId: function () {
                         return id;
                     },
                     bankTransfers: function () {
@@ -101,9 +101,9 @@ angular.module('axonBank')
             $uibModalInstance.close();
         };
     })
-    .controller('DepositMoneyModalCtrl', function ($uibModalInstance, $scope, BankAccountService, bankAccountId) {
+    .controller('DepositMoneyModalCtrl', function ($uibModalInstance, $scope, BankAccountService, axonBankAccountId) {
         $scope.deposit = {
-            bankAccountId: bankAccountId
+            axonBankAccountId: axonBankAccountId
         };
 
         $scope.cancel = function () {
@@ -114,9 +114,9 @@ angular.module('axonBank')
             $uibModalInstance.close();
         };
     })
-    .controller('WithdrawMoneyModalCtrl', function ($uibModalInstance, $scope, BankAccountService, bankAccountId) {
+    .controller('WithdrawMoneyModalCtrl', function ($uibModalInstance, $scope, BankAccountService, axonBankAccountId) {
         $scope.withdrawal = {
-            bankAccountId: bankAccountId
+            axonBankAccountId: axonBankAccountId
         };
 
         $scope.cancel = function () {
@@ -128,10 +128,10 @@ angular.module('axonBank')
         };
     })
     .controller('TransferMoneyModalCtrl',
-        function ($uibModalInstance, $scope, BankAccountService, bankAccountId, bankAccounts) {
+        function ($uibModalInstance, $scope, BankAccountService, axonBankAccountId, bankAccounts) {
             $scope.bankAccounts = bankAccounts;
             $scope.bankTransfer = {
-                sourceBankAccountId: bankAccountId
+                sourceBankAccountId: axonBankAccountId
             };
 
             $scope.cancel = function () {
@@ -143,8 +143,8 @@ angular.module('axonBank')
             };
         })
     .controller('BankTransfersModalCtrl',
-        function ($uibModalInstance, $scope, BankAccountService, bankAccountId, bankTransfers) {
-            $scope.bankAccountId = bankAccountId;
+        function ($uibModalInstance, $scope, BankAccountService, axonBankAccountId, bankTransfers) {
+            $scope.axonBankAccountId = axonBankAccountId;
             $scope.bankTransfers = bankTransfers;
 
             $scope.close = function () {

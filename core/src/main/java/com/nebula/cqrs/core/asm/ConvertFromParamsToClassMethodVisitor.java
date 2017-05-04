@@ -53,4 +53,19 @@ public class ConvertFromParamsToClassMethodVisitor extends MethodVisitor {
 			super.visitParameter("event", 0);
 		}
 	}
+
+@Override
+	public void visitInsn(int opcode) {
+		if(opcode == Opcodes.RETURN){
+			AsmBuilder.visitPrintObject(mv,1);
+			AsmBuilder.visitPrintObject(mv,"after event: ", 0);
+		}
+		super.visitInsn(opcode);
+	}
+
+	//	mv.visitInsn(fieldType.getOpcode(IRETURN));
+	@Override
+	public void visitEnd() {
+		super.visitEnd();
+	}
 }

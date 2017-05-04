@@ -28,7 +28,7 @@ public class MyBankAccount {
 	@AggregateIdentifier
 	private String axonBankAccountId;
 	private long overdraftLimit;
-	private long balanceInCents;
+	private long balance;
 
 	@SuppressWarnings("unused")
 	private MyBankAccount() {
@@ -47,7 +47,7 @@ public class MyBankAccount {
 
 	// BankAccountWithdrawMoneyCommand
 	public boolean withdraw(long amount) {
-		if (amount <= balanceInCents + overdraftLimit) {
+		if (amount <= balance + overdraftLimit) {
 			onMoneySubtracted(amount);// BankAccountMoneyWithdrawnEvent
 			return true;
 		} else {
@@ -96,16 +96,16 @@ public class MyBankAccount {
 	private void onCreated(String axonBankAccountId, long overdraftLimit) {
 		this.axonBankAccountId = axonBankAccountId;
 		this.overdraftLimit = overdraftLimit;
-		this.balanceInCents = 0;
+		this.balance = 0;
 	}
 
 	// BankAccountMoneyAddedEvent
 	private void onMoneyAdded(long amount) {
-		balanceInCents += amount;
+		balance += amount;
 	}
 
 	// BankAccountMoneySubtractedEvent
 	private void onMoneySubtracted(long amount) {
-		balanceInCents -= amount;
+		balance -= amount;
 	}
 }

@@ -52,6 +52,8 @@ public class CQRSCommandHandlerCallerBuilder extends AxonAsmBuilder {
 			mv.visitLabel(l0);
 			mv.visitLineNumber(65, l0);
 			{
+				visitPrintObject(mv,"call for domain ", 1);
+				
 				mv.visitVarInsn(ALOAD, 1);
 
 				Type[] types = new Type[command.methodParams.length];
