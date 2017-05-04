@@ -1,4 +1,4 @@
-package org.axonframework.samples.bankcqrssrc;
+package org.axonframework.samples.bankcqrssrc.generatedsources;
 
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;

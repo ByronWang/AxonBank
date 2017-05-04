@@ -1,4 +1,4 @@
-package org.axonframework.samples.bankcqrssrc;
+package org.axonframework.samples.bankcqrssrc.generatedsources;
 
 public abstract class MyBankAccountCreatedEvent
 {

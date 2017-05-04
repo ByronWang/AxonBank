@@ -1,4 +1,4 @@
-package org.axonframework.samples.bankcqrssrc;
+package org.axonframework.samples.bankcqrssrc.generatedsources;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;

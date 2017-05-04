@@ -1,4 +1,4 @@
-package org.axonframework.samples.bankcqrssrc;
+package org.axonframework.samples.bankcqrssrc.generatedsources;
 
 import javax.persistence.EntityManager;
 import org.axonframework.eventhandling.EventBus;
