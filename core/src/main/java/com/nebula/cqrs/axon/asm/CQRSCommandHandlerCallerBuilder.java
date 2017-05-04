@@ -21,7 +21,7 @@ public class CQRSCommandHandlerCallerBuilder extends AxonAsmBuilder {
 		cw.visit(52, ACC_SUPER, objectType.getInternalName(), "Ljava/lang/Object;Ljava/util/function/Consumer<" + domainType.getDescriptor() + ">;",
 				"java/lang/Object", new String[] { "java/util/function/Consumer" });
 
-		cw.visitInnerClass(objectType.getInternalName(), handleType.getInternalName(), "InnerWithdraw", 0);
+		cw.visitInnerClass(objectType.getInternalName(), handleType.getInternalName(), "Inner" + command.commandName, 0);
 
 		{
 			fv = cw.visitField(0, "command", commandType.getDescriptor(), null, null);

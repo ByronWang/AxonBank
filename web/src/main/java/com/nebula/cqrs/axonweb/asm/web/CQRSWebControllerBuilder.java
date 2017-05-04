@@ -1,5 +1,6 @@
 package com.nebula.cqrs.axonweb.asm.web;
 
+import java.io.Serializable;
 import java.util.Collection;
 
 import org.axonframework.commandhandling.CommandBus;
@@ -67,7 +68,7 @@ public class CQRSWebControllerBuilder extends AxonAsmBuilder {
 				visitGetField(mv, 0, typeController, "bankAccountRepository", repoType);
 
 				mv.visitVarInsn(ALOAD, 1);
-				visitInvokeInterface(mv, repoType, Object.class, "findOne", String.class);
+				visitInvokeInterface(mv, repoType, Object.class, "findOne", Serializable.class);
 				mv.visitTypeInsn(CHECKCAST, typeEntry.getInternalName());
 				mv.visitInsn(ARETURN);
 			}
