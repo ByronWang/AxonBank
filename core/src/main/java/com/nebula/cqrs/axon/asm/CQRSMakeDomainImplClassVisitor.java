@@ -26,7 +26,7 @@ import com.nebula.cqrs.axon.pojo.AxonAsmBuilder;
 import com.nebula.cqrs.axon.pojo.Command;
 import com.nebula.cqrs.axon.pojo.DomainDefinition;
 import com.nebula.cqrs.axon.pojo.Event;
-import com.nebula.cqrs.core.asm.AsmBuilder;
+import com.nebula.cqrs.core.asm.AsmBuilderHelper;
 import com.nebula.cqrs.core.asm.ConvertFromParamsToClassMethodVisitor;
 import com.nebula.cqrs.core.asm.Field;
 import com.nebula.cqrs.core.asm.Method;
@@ -68,7 +68,7 @@ public class CQRSMakeDomainImplClassVisitor extends ClassVisitor {
 				actionName = methodName;
 			}
 
-			commandName = AsmBuilder.toCamelUpper(actionName);
+			commandName = AsmBuilderHelper.toCamelUpper(actionName);
 
 			Type type = domainDefinition.typeOf(commandName + "Command");
 
@@ -85,7 +85,7 @@ public class CQRSMakeDomainImplClassVisitor extends ClassVisitor {
 			return commandMethodVisitor;
 		} else if (name.startsWith("on")) {// Event
 			String newMethodName = "on";
-			String eventName = AsmBuilder.toCamelUpper(name.substring(2));
+			String eventName = AsmBuilderHelper.toCamelUpper(name.substring(2));
 
 			Event event = domainDefinition.realEvents.get(eventName);
 			ConvertFromParamsToClassMethodVisitor eventMethodVisitor = new ConvertFromParamsToClassMethodVisitor(cv, access, newMethodName, desc, signature,
@@ -163,7 +163,7 @@ public class CQRSMakeDomainImplClassVisitor extends ClassVisitor {
 				}
 
 				AxonAsmBuilder.visitInvokeSpecial(mv, virtualEventType, "<init>", event.fields);
-				AsmBuilder.visitInvokeStatic(mv, AggregateLifecycle.class, ApplyMore.class, "apply", Object.class);
+				AsmBuilderHelper.visitInvokeStatic(mv, AggregateLifecycle.class, ApplyMore.class, "apply", Object.class);
 
 				mv.visitInsn(POP);
 
@@ -210,7 +210,7 @@ public class CQRSMakeDomainImplClassVisitor extends ClassVisitor {
 			succeedEvent.methodParams = method.params;
 
 			if (owner.equals(implDomainType.getInternalName()) && name.startsWith("on")) {
-				String realEventName = AsmBuilder.toCamelUpper(name.substring(2));
+				String realEventName = AsmBuilderHelper.toCamelUpper(name.substring(2));
 				// set super name
 				Event relEvent = domainDefinition.realEvents.get(realEventName);
 				relEvent.ctorMethod = command.ctorMethod;// TODO
@@ -218,7 +218,7 @@ public class CQRSMakeDomainImplClassVisitor extends ClassVisitor {
 
 				super.visitMethodInsn(opcode, owner, "apply" + succeedEvent.eventName, desc, itf);
 
-				AsmBuilder.visitPrintObject(mv, 0);
+				AsmBuilderHelper.visitPrintObject(mv, 0);
 			} else {
 
 				super.visitMethodInsn(opcode, owner, name, desc, itf);

@@ -8,73 +8,42 @@ import org.objectweb.asm.Type;
 
 import com.nebula.cqrs.axon.pojo.AxonAsmBuilder;
 import com.nebula.cqrs.axon.pojo.Command;
+import com.nebula.cqrs.axon.pojo.DomainDefinition;
 
 public class CQRSCommandHandlerCtorCallerBuilder extends AxonAsmBuilder {
 
-	public static byte[] dump(Type typeInner,Type implDomainType, Type typeHandler, Command command) throws Exception {
+	public static byte[] dump(Type handleType, Type objectType, Type domainType, Type commandType, Command command, DomainDefinition domainDefinition)
+			throws Exception {
 
-		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
+		ClassWriter cw = new ClassWriter(0);
 		FieldVisitor fv;
+		MethodVisitor mv;
 
-		Type typeCommand = command.type;
-
-		cw.visit(52, ACC_SUPER, typeInner.getInternalName(), "Ljava/lang/Object;Ljava/util/concurrent/Callable<" + implDomainType.getDescriptor() + ">;",
+		cw.visit(52, ACC_SUPER, objectType.getInternalName(), "Ljava/lang/Object;Ljava/util/concurrent/Callable<" + domainType.getDescriptor() + ">;",
 				"java/lang/Object", new String[] { "java/util/concurrent/Callable" });
 
-		cw.visitOuterClass(typeHandler.getInternalName(), "handle", Type.getMethodDescriptor(Type.VOID_TYPE, typeCommand));
-
-		cw.visitInnerClass(typeInner.getInternalName(), null, null, 0);
+		cw.visitInnerClass(objectType.getInternalName(), handleType.getInternalName(), "InnerCreate", 0);
 
 		{
-			fv = cw.visitField(ACC_FINAL + ACC_SYNTHETIC, "this$0", typeHandler.getDescriptor(), null, null);
+			fv = cw.visitField(0, "command", commandType.getDescriptor(), null, null);
 			fv.visitEnd();
 		}
 		{
-			fv = cw.visitField(ACC_PRIVATE + ACC_FINAL + ACC_SYNTHETIC, "val$command", typeCommand.getDescriptor(), null, null);
+			fv = cw.visitField(ACC_FINAL + ACC_SYNTHETIC, "this$0", handleType.getDescriptor(), null, null);
 			fv.visitEnd();
 		}
+		visitDefine_init(cw, handleType, objectType, commandType);
 
-		visitDefine_init(cw, typeInner, typeHandler, typeCommand);
-		visitDefine_call(cw, typeInner, implDomainType, command, typeCommand);
-		visitDefine_call_bridge(cw, typeInner, implDomainType);
-
+		visitDefine_call(objectType, domainType, commandType, command, cw);
+		
+		visitDefine_call_bridge(cw, objectType, domainType);
+		
 		cw.visitEnd();
 
 		return cw.toByteArray();
 	}
 
-	private static void visitDefine_call(ClassWriter cw, Type typeInner, Type implDomainType, Command command, Type typeCommand) {
-		MethodVisitor mv;
-		{
-			mv = cw.visitMethod(ACC_PUBLIC, "call", Type.getMethodDescriptor(implDomainType), null, new String[] { "java/lang/Exception" });
-			mv.visitCode();
-			Label l0 = new Label();
-			mv.visitLabel(l0);
-			mv.visitLineNumber(65, l0);
-			{
-				visitNewObject(mv, implDomainType);
-				mv.visitInsn(DUP);
-
-				for (int i = 0; i < command.methodParams.length; i++) {
-					visitGetField(mv, 0, typeInner, "val$command", typeCommand);
-					visitGetProperty(mv, typeCommand, command.methodParams[i]);
-				}
-
-				visitInitTypeWithAllFields(mv, implDomainType, command.methodParams);
-
-				visitPrintStaticMessage(mv, typeCommand.getInternalName() + " create new object");
-
-				visitAReturn(mv);
-			}
-			Label l1 = new Label();
-			mv.visitLabel(l1);
-			mv.visitLocalVariable("this", typeInner.getDescriptor(), null, l0, l1, 0);
-			mv.visitMaxs(5, 1);
-			mv.visitEnd();
-		}
-	}
-
-	private static void visitDefine_call_bridge(ClassWriter cw, Type typeInner, Type implDomainType) {
+	private static void visitDefine_call_bridge(ClassWriter cw, Type objectType, Type domainType) {
 		MethodVisitor mv;
 		{
 			mv = cw.visitMethod(ACC_PUBLIC + ACC_BRIDGE + ACC_SYNTHETIC, "call", "()Ljava/lang/Object;", null, new String[] { "java/lang/Exception" });
@@ -83,31 +52,64 @@ public class CQRSCommandHandlerCtorCallerBuilder extends AxonAsmBuilder {
 			mv.visitLabel(l0);
 			mv.visitLineNumber(1, l0);
 			{
-				visitInvokeVirtual(mv, 0, typeInner, implDomainType, "call");
-				visitAReturn(mv);
+				mv.visitVarInsn(ALOAD, 0);
+				mv.visitMethodInsn(INVOKEVIRTUAL, objectType.getInternalName(), "call", Type.getMethodDescriptor(domainType), false);
+				mv.visitInsn(ARETURN);
 			}
 			mv.visitMaxs(1, 1);
 			mv.visitEnd();
 		}
 	}
 
-	private static void visitDefine_init(ClassWriter cw, Type typeInner, Type typeHandler, Type typeCommand) {
+	private static void visitDefine_call(Type objectType, Type domainType, Type commandType, Command command, ClassWriter cw) {
 		MethodVisitor mv;
 		{
-			mv = cw.visitMethod(0, "<init>", Type.getMethodDescriptor(Type.VOID_TYPE, typeHandler, typeCommand), null, null);
+			mv = cw.visitMethod(ACC_PUBLIC, "call", Type.getMethodDescriptor(domainType), null, new String[] { "java/lang/Exception" });
 			mv.visitCode();
 			Label l0 = new Label();
 			mv.visitLabel(l0);
-			mv.visitLineNumber(1, l0);
+			mv.visitLineNumber(71, l0);
 			{
-				visitPutField(mv, 0, typeInner, 1, "this$0", typeHandler);
-				visitPutField(mv, 0, typeInner, 2, "val$command", typeCommand);
-				visitInitObject(mv, 0);
-				visitReturn(mv);
+				visitNewObject(mv, domainType);
+				mv.visitInsn(DUP);
+
+				for (int i = 0; i < command.methodParams.length; i++) {
+					visitGetField(mv, 0, objectType, "command", commandType);
+					visitGetProperty(mv, commandType, command.methodParams[i]);
+				}
+				visitInitTypeWithAllFields(mv, domainType, command.methodParams);
+
+				visitAReturn(mv);
 			}
 			Label l2 = new Label();
 			mv.visitLabel(l2);
-			mv.visitLocalVariable("this", typeInner.getDescriptor(), null, l0, l2, 0);
+			mv.visitLocalVariable("this", objectType.getDescriptor(), null, l0, l2, 0);
+			mv.visitMaxs(5, 1);
+			mv.visitEnd();
+		}
+	}
+
+	private static void visitDefine_init(ClassWriter cw, Type handleType, Type objectType, Type commandType) {
+		MethodVisitor mv;
+		{
+			mv = cw.visitMethod(0, "<init>", Type.getMethodDescriptor(Type.VOID_TYPE, handleType, commandType), null, null);
+			mv.visitCode();
+			Label l0 = new Label();
+			mv.visitLabel(l0);
+			mv.visitLineNumber(66, l0);
+			{
+				visitPutField(mv, 0, objectType, 1, "this$0", handleType);
+
+				visitInitObject(mv, 0);
+
+				visitPutField(mv, 0, objectType, 2, "command", commandType);
+
+				visitReturn(mv);
+			}
+			Label l3 = new Label();
+			mv.visitLabel(l3);
+			mv.visitLocalVariable("this", objectType.getDescriptor(), null, l0, l3, 0);
+			mv.visitLocalVariable("command", commandType.getDescriptor(), null, l0, l3, 2);
 			mv.visitMaxs(2, 3);
 			mv.visitEnd();
 		}

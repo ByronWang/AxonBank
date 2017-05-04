@@ -19,7 +19,7 @@ public class ConvertFromParamsToClassMethodVisitor extends MethodVisitor {
 		this.eventType = eventType;
 		this.params = params;
 
-		AsmBuilder.visitAnnotation(mv, EventHandler.class);
+		AsmBuilderHelper.visitAnnotation(mv, EventHandler.class);
 	}
 
 	// Replace visit param to invoke event's property
@@ -28,7 +28,7 @@ public class ConvertFromParamsToClassMethodVisitor extends MethodVisitor {
 		if (0 < var && var <= params.length) {
 			super.visitVarInsn(ALOAD, 1);
 			Field field = params[var - 1];
-			AsmBuilder.visitGetProperty(mv, eventType, field.name, field.type);
+			AsmBuilderHelper.visitGetProperty(mv, eventType, field.name, field.type);
 		} else {
 			super.visitVarInsn(opcode, var);
 		}
@@ -57,8 +57,8 @@ public class ConvertFromParamsToClassMethodVisitor extends MethodVisitor {
 @Override
 	public void visitInsn(int opcode) {
 		if(opcode == Opcodes.RETURN){
-			AsmBuilder.visitPrintObject(mv,1);
-			AsmBuilder.visitPrintObject(mv,"after event: ", 0);
+			AsmBuilderHelper.visitPrintObject(mv,1);
+			AsmBuilderHelper.visitPrintObject(mv,"after event: ", 0);
 		}
 		super.visitInsn(opcode);
 	}

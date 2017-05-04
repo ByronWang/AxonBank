@@ -14,7 +14,7 @@ import org.objectweb.asm.Type;
 
 import com.nebula.cqrs.axon.pojo.DomainDefinition;
 import com.nebula.cqrs.axon.pojo.Event;
-import com.nebula.cqrs.core.asm.AsmBuilder;
+import com.nebula.cqrs.core.asm.AsmBuilderHelper;
 import com.nebula.cqrs.core.asm.Field;
 import com.nebula.cqrs.core.asm.Method;
 
@@ -39,7 +39,7 @@ public class AnalyzeEventsClassVisitor extends ClassVisitor {
 			String originMethodName = name;
 			String newMethodName = "on";
 			boolean innerEvent = true;
-			String eventName = AsmBuilder.toCamelUpper(name.substring(2));
+			String eventName = AsmBuilderHelper.toCamelUpper(name.substring(2));
 
 			Type eventType = domainDefinition.typeOf(eventName + "Event");
 			Event event = new Event(eventName, originMethodName, newMethodName, innerEvent, eventType);

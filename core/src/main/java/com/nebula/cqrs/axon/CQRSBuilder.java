@@ -16,9 +16,9 @@ import com.nebula.cqrs.axon.asm.CQRSCommandBuilder;
 import com.nebula.cqrs.axon.asm.CQRSCommandHandlerBuilder;
 import com.nebula.cqrs.axon.asm.CQRSCommandHandlerCallerBuilder;
 import com.nebula.cqrs.axon.asm.CQRSCommandHandlerCtorCallerBuilder;
-import com.nebula.cqrs.axon.asm.CQRSMakeDomainImplClassVisitor;
 import com.nebula.cqrs.axon.asm.CQRSEventAliasBuilder;
 import com.nebula.cqrs.axon.asm.CQRSEventRealBuilder;
+import com.nebula.cqrs.axon.asm.CQRSMakeDomainImplClassVisitor;
 import com.nebula.cqrs.axon.asm.RemoveCqrsAnnotationClassVisitor;
 import com.nebula.cqrs.axon.pojo.Command;
 import com.nebula.cqrs.axon.pojo.DomainDefinition;
@@ -56,21 +56,19 @@ public class CQRSBuilder implements CQRSContext {
 
 				for (Command command : domainDefinition.commands.values()) {
 					if (command.ctorMethod) {
-						Type typeInvoke = Type.getObjectType(typeHandler.getInternalName() + "$Inner" + command.commandName);
-						byte[] codeCommandHandlerInvoke = CQRSCommandHandlerCtorCallerBuilder.dump(typeInvoke, domainDefinition.implDomainType, typeHandler,
-								command);
-						LOGGER.debug("Create command inner class [{}]", typeInvoke.getClassName());
-						ctx.defineClass(typeInvoke.getClassName(), codeCommandHandlerInvoke);
+						Type callerType = Type.getObjectType(typeHandler.getInternalName() + "$Inner" + command.commandName);
+						byte[] callerCode = CQRSCommandHandlerCtorCallerBuilder.dump(typeHandler, callerType, domainDefinition.implDomainType, command.type, command, domainDefinition);
+						LOGGER.debug("Create command inner class [{}]", callerType.getClassName());
+						ctx.defineClass(callerType.getClassName(), callerCode);
 					} else {
-						Type typeInvoke = Type.getObjectType(typeHandler.getInternalName() + "$Inner" + command.commandName);
-						byte[] codeCommandHandlerInvoke = CQRSCommandHandlerCallerBuilder.dump(typeInvoke, domainDefinition.implDomainType, typeHandler,
-								command);
-						LOGGER.debug("Create command inner class [{}]", typeInvoke.getClassName());
-						ctx.defineClass(typeInvoke.getClassName(), codeCommandHandlerInvoke);
+						Type callerType = Type.getObjectType(typeHandler.getInternalName() + "$Inner" + command.commandName);
+						byte[] callerCode = CQRSCommandHandlerCallerBuilder.dump(typeHandler, callerType, domainDefinition.implDomainType, command.type, command, domainDefinition);
+						LOGGER.debug("Create command inner class [{}]", callerType.getClassName());
+						ctx.defineClass(callerType.getClassName(), callerCode);
 					}
 				}
 
-				byte[] codeHandler = new CQRSCommandHandlerBuilder().dump(domainDefinition.commands.values(), domainDefinition.implDomainType, typeHandler);
+				byte[] codeHandler = CQRSCommandHandlerBuilder.dump(typeHandler, domainDefinition.implDomainType, domainDefinition);
 				LOGGER.debug("Create command handler [{}]", typeHandler.getClassName());
 				ctx.defineClass(typeHandler.getClassName(), codeHandler);
 
