@@ -7,10 +7,10 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
-import com.nebula.cqrs.core.asm.AsmBuilder;
+import com.nebula.cqrs.core.asm.AsmBuilderHelper;
 import com.nebula.cqrs.core.asm.Field;
 
-public class AxonAsmBuilder extends AsmBuilder {
+public class AxonAsmBuilder extends AsmBuilderHelper {
 
 	public static void visitDefine_init_withAllFields(ClassVisitor cw, Type objectType, Field[] fields) {
 		MethodVisitor mv;
@@ -55,10 +55,10 @@ public class AxonAsmBuilder extends AsmBuilder {
 	}
 
 	public static int[] computerLocals(Type objectType, Field[] fields) {
-		return computerLocals(objectType, convert(fields));
+		return computerLocals(objectType, toTypes(fields));
 	}
 
-	protected static Type[] convert(Field[] fields) {
+	protected static Type[] toTypes(Field[] fields) {
 		Type[] types = new Type[fields.length];
 		for (int i = 0; i < fields.length; i++) {
 			types[i] = fields[i].type;
@@ -66,7 +66,7 @@ public class AxonAsmBuilder extends AsmBuilder {
 		return types;
 	}
 
-	protected static Type[] convert(List<Field> fields) {
+	protected static Type[] toTypes(List<Field> fields) {
 		Type[] params = new Type[fields.size()];
 		for (int i = 0; i < fields.size(); i++) {
 			params[i] = fields.get(i).type;
@@ -79,7 +79,7 @@ public class AxonAsmBuilder extends AsmBuilder {
 		{
 			int[] locals = computerLocals(objectType, fields);
 
-			String methodDescriptor = Type.getMethodDescriptor(Type.VOID_TYPE, convert(fields));
+			String methodDescriptor = Type.getMethodDescriptor(Type.VOID_TYPE, toTypes(fields));
 			mv = cw.visitMethod(ACC_PUBLIC, "<init>", methodDescriptor, null, null);
 			mv.visitCode();
 			Label l0 = new Label();
@@ -193,24 +193,32 @@ public class AxonAsmBuilder extends AsmBuilder {
 		}
 	}
 
+	public static void visitInvokeVirtual(MethodVisitor mv, Type objectType, Type returnType, String methodName, List<Field> params) {
+		visitInvokeVirtual(mv, objectType, returnType, methodName, toTypes(params));
+	}
+
+	public static void visitInvokeVirtual(MethodVisitor mv, Type objectType, Type returnType, String methodName, Field[] params) {
+		visitInvokeVirtual(mv, objectType, returnType, methodName, toTypes(params));
+	}
+
 	public static void visitInvokeSpecial(MethodVisitor mv, Type objectType, Type returnType, String methodName, List<Field> params) {
-		visitInvokeSpecial(mv, objectType, returnType, methodName, convert(params));
+		visitInvokeSpecial(mv, objectType, returnType, methodName, toTypes(params));
 	}
 
 	public static void visitInvokeSpecial(MethodVisitor mv, Type objectType, String methodName, Field... params) {
-		visitInvokeSpecial(mv, objectType, Type.VOID_TYPE, methodName, convert(params));
+		visitInvokeSpecial(mv, objectType, Type.VOID_TYPE, methodName, toTypes(params));
 	}
-	
+
 	public static void visitInvokeSpecial(MethodVisitor mv, Type objectType, String methodName, List<Field> params) {
-		visitInvokeSpecial(mv, objectType, Type.VOID_TYPE, methodName, convert(params));
+		visitInvokeSpecial(mv, objectType, Type.VOID_TYPE, methodName, toTypes(params));
 	}
 
 	public static void visitInvokeSpecial(MethodVisitor mv, Class<?> objectClass, Class<?> returnClass, String methodName, List<Field> params) {
-		visitInvokeSpecial(mv, Type.getType(objectClass), Type.getType(returnClass), methodName, convert(params));
+		visitInvokeSpecial(mv, Type.getType(objectClass), Type.getType(returnClass), methodName, toTypes(params));
 	}
 
 	public static void visitInvokeStatic(MethodVisitor mv, Class<?> objectClass, Class<?> returnClass, String methodName, List<Field> params) {
-		visitInvokeStatic(mv, Type.getType(objectClass), Type.getType(returnClass), methodName, convert(params));
+		visitInvokeStatic(mv, Type.getType(objectClass), Type.getType(returnClass), methodName, toTypes(params));
 	}
 
 	public static void visitDefineField(ClassVisitor cw, Field field, Class<?>... annotations) {
@@ -230,7 +238,7 @@ public class AxonAsmBuilder extends AsmBuilder {
 	}
 
 	public static void visitInitTypeWithAllFields(MethodVisitor mv, Type objectType, Field... fields) {
-		visitInitTypeWithAllFields(mv, objectType, convert(fields));
+		visitInitTypeWithAllFields(mv, objectType, toTypes(fields));
 	}
 
 	public static void visitPutField(MethodVisitor mv, int objectIndex, Type objectType, int dataIndex, Field field) {
