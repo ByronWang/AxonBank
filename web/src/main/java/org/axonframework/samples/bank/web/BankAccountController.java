@@ -16,8 +16,6 @@
 
 package org.axonframework.samples.bank.web;
 
-import java.util.UUID;
-
 import org.axonframework.commandhandling.CommandBus;
 import org.axonframework.commandhandling.GenericCommandMessage;
 import org.axonframework.samples.bank.api.bankaccount.BankAccountCreateCommand;
@@ -34,51 +32,53 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.annotation.SubscribeMapping;
 import org.springframework.stereotype.Controller;
 
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 @Controller
 @MessageMapping("/bank-accounts")
 public class BankAccountController {
-	private final static Logger LOGGER = LoggerFactory.getLogger(BankAccountController.class);
+    private final static Logger LOGGER = LoggerFactory.getLogger(BankAccountController.class);
 
-	private CommandBus commandBus;
-	private BankAccountRepository bankAccountRepository;
+    private CommandBus commandBus;
+    private BankAccountRepository bankAccountRepository;
 
-	@Autowired
-	public BankAccountController(CommandBus commandBus, BankAccountRepository bankAccountRepository) {
-		this.commandBus = commandBus;
-		this.bankAccountRepository = bankAccountRepository;
-	}
+    @Autowired
+    public BankAccountController(CommandBus commandBus, BankAccountRepository bankAccountRepository) {
+        this.commandBus = commandBus;
+        this.bankAccountRepository = bankAccountRepository;
+    }
 
-	@SubscribeMapping
-	public Iterable<BankAccountEntry> all() {
-		return bankAccountRepository.findAllByOrderByIdAsc();
-	}
+    @SubscribeMapping
+    public Iterable<BankAccountEntry> all() {
+        return bankAccountRepository.findAllByOrderByIdAsc();
+    }
 
     @SubscribeMapping("/{id}")
     public BankAccountEntry get(@DestinationVariable String id) {
         return bankAccountRepository.findOne(id);
     }
 
-	@MessageMapping("/create")
-	public void create(BankAccountDto bankAccountDto) {
-		LOGGER.debug("create with dto : {}", bankAccountDto);
-		String id = UUID.randomUUID().toString();
-		BankAccountCreateCommand command = new BankAccountCreateCommand(id, bankAccountDto.getOverdraftLimit());
-		commandBus.dispatch(GenericCommandMessage.asCommandMessage(command));
-	}
+    @MessageMapping("/create")
+    public void create(BankAccountDto bankAccountDto) {
+        LOGGER.debug("create with dto : {}", bankAccountDto);
+        String id = UUID.randomUUID().toString();
+        BankAccountCreateCommand command = new BankAccountCreateCommand(id, bankAccountDto.getOverdraftLimit());
+        commandBus.dispatch(GenericCommandMessage.asCommandMessage(command));
+    }
 
-	@MessageMapping("/withdraw")
-	public void withdraw(WithdrawalDto depositDto) {
-		LOGGER.debug("deposit with dto : {}", depositDto);
-		BankAccountWithdrawMoneyCommand command = new BankAccountWithdrawMoneyCommand(depositDto.getAxonBankAccountId(), depositDto.getAmount());
-		commandBus.dispatch(GenericCommandMessage.asCommandMessage(command));
-	}
+    @MessageMapping("/withdraw")
+    public void withdraw(WithdrawalDto depositDto) {
+        LOGGER.debug("deposit with dto : {}", depositDto);
+        BankAccountWithdrawMoneyCommand command = new BankAccountWithdrawMoneyCommand(depositDto.getAxonBankAccountId(), depositDto.getAmount());
+        commandBus.dispatch(GenericCommandMessage.asCommandMessage(command));
+    }
 
-	@MessageMapping("/deposit")
-	public void deposit(DepositDto depositDto) {
-		LOGGER.debug("withdraw with dto : {}", depositDto);
-		BankAccountMoneyDepositCommand command = new BankAccountMoneyDepositCommand(depositDto.getAxonBankAccountId(), depositDto.getAmount());
-		commandBus.dispatch(GenericCommandMessage.asCommandMessage(command));
-	}
+    @MessageMapping("/deposit")
+    public void deposit(DepositDto depositDto) {
+        LOGGER.debug("withdraw with dto : {}", depositDto);
+        BankAccountMoneyDepositCommand command = new BankAccountMoneyDepositCommand(depositDto.getAxonBankAccountId(), depositDto.getAmount());
+        commandBus.dispatch(GenericCommandMessage.asCommandMessage(command));
+    }
 }

@@ -37,48 +37,48 @@ import com.nebula.cqrs.core.CqrsEntity;
 @Configuration
 @EnableAutoConfiguration
 @ComponentScan // (excludeFilters = { @Filter(RestController.class),
-				// @Filter(Controller.class) })
+               // @Filter(Controller.class) })
 public class AxonBankApplication {
 
-	private static final String CLASS_RESOURCE_PATTERN = "/**/*.class";
+    private static final String CLASS_RESOURCE_PATTERN = "/**/*.class";
 
-	public static void main(String[] args) {
-		prepare();
-		SpringApplication application = new SpringApplication(AxonBankApplication.class);
-		// application.addListeners(applicationListener);
-		application.run(args);
-	}
+    public static void main(String[] args) {
+        prepare();
+        SpringApplication application = new SpringApplication(AxonBankApplication.class);
+        // application.addListeners(applicationListener);
+        application.run(args);
+    }
 
-	@SuppressWarnings("unused")
-	private static void prepare() {
+    @SuppressWarnings("unused")
+    private static void prepare() {
 
-		try {
-			CQRSBuilder cqrsBuilder = new CQRSBuilder();
-			CQRSWebSpringApplicationListener applicationListener = new CQRSWebSpringApplicationListener(cqrsBuilder);
-			cqrsBuilder.add(applicationListener);
+        try {
+            CQRSBuilder cqrsBuilder = new CQRSBuilder();
+            CQRSWebSpringApplicationListener applicationListener = new CQRSWebSpringApplicationListener(cqrsBuilder);
+            cqrsBuilder.add(applicationListener);
 
-			// String pattern = ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX
-			// +
-			// ClassUtils.convertClassNameToResourcePath(pkg) +
-			// CLASS_RESOURCE_PATTERN;
-			PathMatchingResourcePatternResolver pathMatchingResourcePatternResolver = new PathMatchingResourcePatternResolver();
-			Resource[] resources = pathMatchingResourcePatternResolver.getResources(
-					ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX + AxonBankApplication.class.getPackage().getName().replace('.', '/') + CLASS_RESOURCE_PATTERN);
-			SimpleMetadataReaderFactory metadataReaderFactory = new SimpleMetadataReaderFactory();
-			AnnotationTypeFilter annotationTypeFilter = new AnnotationTypeFilter(CqrsEntity.class);
-			for (Resource resource : resources) {
-				if (resource.isReadable()) {
-					MetadataReader reader = metadataReaderFactory.getMetadataReader(resource);
-					String className = reader.getClassMetadata().getClassName();
-					if (annotationTypeFilter.match(reader, metadataReaderFactory)) {
-						// System.out.println("domain " + className);
-						cqrsBuilder.makeDomainCQRSHelper(className);
-					}
-				}
-			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
+            // String pattern = ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX
+            // +
+            // ClassUtils.convertClassNameToResourcePath(pkg) +
+            // CLASS_RESOURCE_PATTERN;
+            PathMatchingResourcePatternResolver pathMatchingResourcePatternResolver = new PathMatchingResourcePatternResolver();
+            Resource[] resources = pathMatchingResourcePatternResolver.getResources(ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX
+                    + AxonBankApplication.class.getPackage().getName().replace('.', '/') + CLASS_RESOURCE_PATTERN);
+            SimpleMetadataReaderFactory metadataReaderFactory = new SimpleMetadataReaderFactory();
+            AnnotationTypeFilter annotationTypeFilter = new AnnotationTypeFilter(CqrsEntity.class);
+            for (Resource resource : resources) {
+                if (resource.isReadable()) {
+                    MetadataReader reader = metadataReaderFactory.getMetadataReader(resource);
+                    String className = reader.getClassMetadata().getClassName();
+                    if (annotationTypeFilter.match(reader, metadataReaderFactory)) {
+                        // System.out.println("domain " + className);
+                        cqrsBuilder.makeDomainCQRSHelper(className);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
 }
