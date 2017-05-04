@@ -21,6 +21,6 @@ import lombok.Value;
 @Value
 public class DepositDto {
 
-    private String bankAccountId;
+    private String axonBankAccountId;
     private long amount;
 }

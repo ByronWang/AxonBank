@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import com.nebula.cqrs.axon.pojo.AxonAsmBuilder;
 import com.nebula.cqrs.axon.pojo.DomainDefinition;
-import com.nebula.cqrs.core.asm.AsmBuilder;
+import com.nebula.cqrs.core.asm.AsmBuilderHelper;
 import com.nebula.cqrs.core.asm.Field;
 
 public class CQRSRepositoryBuilder extends AxonAsmBuilder {
@@ -31,7 +31,7 @@ public class CQRSRepositoryBuilder extends AxonAsmBuilder {
 		}
 		{
 			Field identifierField = domainDefinition.identifierField;
-			String name = "findOneBy" + AsmBuilder.toCamelUpper(identifierField.name);
+			String name = "findOneBy" + AsmBuilderHelper.toCamelUpper(identifierField.name);
 
 			mv = cw.visitMethod(ACC_PUBLIC + ACC_ABSTRACT, name, Type.getMethodDescriptor(typeEntry, identifierField.type), null, null);
 			mv.visitEnd();

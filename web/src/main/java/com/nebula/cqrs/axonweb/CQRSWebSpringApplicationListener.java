@@ -74,7 +74,7 @@ public class CQRSWebSpringApplicationListener implements ApplicationListener<App
 			}
 
 			ctx.defineClass(typeController.getClassName(),
-					CQRSWebControllerBuilder.dump(typeController, domainDefinition, entryType, domainDefinition.commands.values()));
+					CQRSWebControllerBuilder.dump(typeController, domainDefinition, entryType, typeRepository, domainDefinition.commands.values()));
 
 			ctx.defineClass(typeRepository.getClassName(), CQRSRepositoryBuilder.dump(typeRepository, entryType, domainDefinition));
 

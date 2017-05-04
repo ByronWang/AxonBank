@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.axonframework.samples.bank.cqrs;
+package org.axonframework.samples.bankcqrs;
 
 import org.axonframework.commandhandling.model.AggregateIdentifier;
 import org.axonframework.spring.stereotype.Aggregate;

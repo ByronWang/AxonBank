@@ -16,23 +16,26 @@
 
 package org.axonframework.samples.bank.command;
 
+import static org.axonframework.commandhandling.model.AggregateLifecycle.apply;
+
 import org.axonframework.commandhandling.model.AggregateIdentifier;
 import org.axonframework.eventhandling.EventHandler;
 import org.axonframework.samples.bank.api.bankaccount.BankAccountCreatedEvent;
-import org.axonframework.samples.bank.api.bankaccount.BankTransferDestinationCreditedEvent;
 import org.axonframework.samples.bank.api.bankaccount.BankAccountMoneyAddedEvent;
 import org.axonframework.samples.bank.api.bankaccount.BankAccountMoneyDepositedEvent;
-import org.axonframework.samples.bank.api.bankaccount.BankTransferSourceReturnedMoneyOfFailedEvent;
 import org.axonframework.samples.bank.api.bankaccount.BankAccountMoneySubtractedEvent;
 import org.axonframework.samples.bank.api.bankaccount.BankAccountMoneyWithdrawnEvent;
+import org.axonframework.samples.bank.api.bankaccount.BankTransferDestinationCreditedEvent;
 import org.axonframework.samples.bank.api.bankaccount.BankTransferSourceDebitRejectedEvent;
 import org.axonframework.samples.bank.api.bankaccount.BankTransferSourceDebitedEvent;
+import org.axonframework.samples.bank.api.bankaccount.BankTransferSourceReturnedMoneyOfFailedEvent;
 import org.axonframework.spring.stereotype.Aggregate;
-
-import static org.axonframework.commandhandling.model.AggregateLifecycle.apply;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Aggregate
 public class BankAccount {
+	private final static Logger LOGGER = LoggerFactory.getLogger(BankAccount.class);
 
     @AggregateIdentifier
     private String id;
@@ -45,15 +48,18 @@ public class BankAccount {
 
     public BankAccount(String bankAccountId, long overdraftLimit) {
         apply(new BankAccountCreatedEvent(bankAccountId, overdraftLimit));
+		LOGGER.debug("create BankAccount {}", this);
     }
 
     public void deposit(long amount) {
         apply(new BankAccountMoneyDepositedEvent(id, amount));
+		LOGGER.debug("deposit {}", this);
     }
 
     public void withdraw(long amount) {
         if (amount <= balanceInCents + overdraftLimit) {
             apply(new BankAccountMoneyWithdrawnEvent(id, amount));
+			LOGGER.debug("withdraw {}", this);
         }
     }
 
@@ -79,15 +85,18 @@ public class BankAccount {
         this.id = event.getId();
         this.overdraftLimit = event.getOverdraftLimit();
         this.balanceInCents = 0;
+		LOGGER.debug("on BankAccountCreatedEvent {}", this);
     }
 
     @EventHandler
     public void on(BankAccountMoneyAddedEvent event) {
         balanceInCents += event.getAmount();
+		LOGGER.debug("on BankAccountMoneyAddedEvent {}", this);
     }
 
     @EventHandler
     public void on(BankAccountMoneySubtractedEvent event) {
         balanceInCents -= event.getAmount();
+		LOGGER.debug("on BankAccountMoneySubtractedEvent {}", this);
     }
 }

@@ -1,7 +1,7 @@
 package com.nebula.cqrs.axonweb.asm.query;
 
-import static com.nebula.cqrs.core.asm.AsmBuilder.visitGetProperty;
-import static com.nebula.cqrs.core.asm.AsmBuilder.visitSetProperty;
+import static com.nebula.cqrs.core.asm.AsmBuilderHelper.visitGetProperty;
+import static com.nebula.cqrs.core.asm.AsmBuilderHelper.visitSetProperty;
 import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
 import static org.objectweb.asm.Opcodes.ACC_SUPER;
 import static org.objectweb.asm.Opcodes.ALOAD;
@@ -19,7 +19,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.TypePath;
 
 import com.nebula.cqrs.axon.pojo.Event;
-import com.nebula.cqrs.core.asm.AsmBuilder;
+import com.nebula.cqrs.core.asm.AsmBuilderHelper;
 
 public class CQRSWebEventListnerBizLogicClassVisitor extends ClassVisitor {
 	class EventMethodVisitor extends MethodVisitor {
@@ -108,7 +108,7 @@ public class CQRSWebEventListnerBizLogicClassVisitor extends ClassVisitor {
 	@Override
 	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
 		cv.visit(52, ACC_PUBLIC + ACC_SUPER, bizLogicType.getInternalName(), null, "java/lang/Object", null);
-		AsmBuilder.visitDefine_init_withNothing(cv, bizLogicType);
+		AsmBuilderHelper.visitDefine_init_withNothing(cv, bizLogicType);
 	}
 
 	@Override

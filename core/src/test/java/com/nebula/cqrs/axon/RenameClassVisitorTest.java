@@ -3,7 +3,7 @@ package com.nebula.cqrs.axon;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import org.axonframework.samples.bank.cqrs.MyBankAccount;
+import org.axonframework.samples.bankcqrs.MyBankAccount;
 import org.junit.Test;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;

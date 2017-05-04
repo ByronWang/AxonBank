@@ -17,6 +17,7 @@ import org.objectweb.asm.Type;
 import com.nebula.cqrs.axon.pojo.AxonAsmBuilder;
 import com.nebula.cqrs.axon.pojo.Command;
 import com.nebula.cqrs.axon.pojo.DomainDefinition;
+import com.nebula.cqrs.core.asm.ASMBuilder;
 import com.nebula.cqrs.core.asm.Field;
 
 public class CQRSCommandHandlerBuilder extends AxonAsmBuilder {
@@ -74,6 +75,8 @@ public class CQRSCommandHandlerBuilder extends AxonAsmBuilder {
 				visitPutField(mv, 0, handleType, 1, "repository", Repository.class);
 				visitPutField(mv, 0, handleType, 2, "eventBus", EventBus.class);
 
+//				visitLOGGER(mv, "init " + handleType.getClassName() + " {} ", 0);
+
 				mv.visitInsn(RETURN);
 			}
 			Label l4 = new Label();
@@ -95,6 +98,7 @@ public class CQRSCommandHandlerBuilder extends AxonAsmBuilder {
 		mv.visitLabel(l0);
 		mv.visitLineNumber(22, l0);
 		{
+//			visitLOGGER(mv, "handle command {}", 1);
 
 			visitGetField(mv, 0, handleType, "repository", Repository.class);// this.repository
 			{// new InnerCreate(command)
@@ -128,7 +132,7 @@ public class CQRSCommandHandlerBuilder extends AxonAsmBuilder {
 		mv.visitLabel(l0);
 		mv.visitLineNumber(27, l0);
 		{
-			visitPrintObject(mv, 1);
+//			visitLOGGER(mv, "handle command {}", 1);
 
 			visitGetField(mv, 0, handleType, "repository", Repository.class);// this.repository
 			visitGetProperty(mv, 1, commandType, identifierField);// command.getAxonBankAccountId()

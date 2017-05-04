@@ -47,28 +47,33 @@ public class AsmBuilderHelper extends ASMBuilder implements Opcodes {
 		visitInitTypeWithAllFields(mv, objectType, toTypes(params));
 	}
 
-	public static void visitInvokeInterface(MethodVisitor mv, Class<?> interfaceClass, Class<?> returnClass, String methodName, Class<?>... classes) {
-		visitInvokeInterface(mv, Type.getType(interfaceClass), Type.getType(returnClass), methodName, toTypes(classes));
+
+	public static void visitInvokeInterface(MethodVisitor mv, Class<?> objectClass, Class<?> returnClass, String methodName) {
+		visitInvokeInterface(mv, Type.getType(objectClass), Type.getType(returnClass), methodName);
+	}
+	
+	public static void visitInvokeInterface(MethodVisitor mv, Class<?> objectClass, Class<?> returnClass, String methodName, Class<?>... classes) {
+		visitInvokeInterface(mv, Type.getType(objectClass), Type.getType(returnClass), methodName, toTypes(classes));
 	}
 
 	public static void visitInvokeInterface(MethodVisitor mv, Class<?> objectClass, Class<?> returnClass, String methodName, Type... params) {
 		visitInvokeInterface(mv, Type.getType(objectClass), Type.getType(returnClass), methodName, params);
 	}
 
-	public static void visitInvokeInterface(MethodVisitor mv, Class<?> interfaceClass, String methodName, Class<?>... classes) {
-		visitInvokeInterface(mv, Type.getType(interfaceClass), Type.VOID_TYPE, methodName, toTypes(classes));
+	public static void visitInvokeInterface(MethodVisitor mv, Class<?> objectClass, String methodName, Class<?>... classes) {
+		visitInvokeInterface(mv, Type.getType(objectClass), Type.VOID_TYPE, methodName, toTypes(classes));
 	}
 
-	public static void visitInvokeInterface(MethodVisitor mv, Type interfaceType, Class<?> returnClass, String methodName, Class<?>... classes) {
-		visitInvokeInterface(mv, interfaceType, Type.getType(returnClass), methodName, toTypes(classes));
+	public static void visitInvokeInterface(MethodVisitor mv, Type objectType, Class<?> returnClass, String methodName, Class<?>... classes) {
+		visitInvokeInterface(mv, objectType, Type.getType(returnClass), methodName, toTypes(classes));
 	}
 
-	public static void visitInvokeInterface(MethodVisitor mv, Type type, String methodName, Type... params) {
-		visitInvokeInterface(mv, type, Type.VOID_TYPE, methodName, params);
+	public static void visitInvokeInterface(MethodVisitor mv, Type objectType, String methodName, Type... params) {
+		visitInvokeInterface(mv, objectType, Type.VOID_TYPE, methodName, params);
 	}
 
-	public static void visitInvokeInterface(MethodVisitor mv, Type interfaceType, Type returnType, String methodName, Class<?>... params) {
-		visitInvokeInterface(mv, interfaceType, returnType, methodName, toTypes(params));
+	public static void visitInvokeInterface(MethodVisitor mv, Type objectType, Type returnType, String methodName, Class<?>... params) {
+		visitInvokeInterface(mv, objectType, returnType, methodName, toTypes(params));
 	}
 
 	public static void visitInvokeSpecial(MethodVisitor mv, Class<?> objectClass, Class<?> returnClass, String methodName, Class<?>... classes) {
@@ -77,10 +82,6 @@ public class AsmBuilderHelper extends ASMBuilder implements Opcodes {
 
 	public static void visitInvokeSpecial(MethodVisitor mv, int objectIndex, Type objectType, String methodName) {
 		visitInvokeSpecial(mv, objectIndex, objectType, Type.VOID_TYPE, methodName);
-	}
-
-	public static void visitInvokeSpecial(MethodVisitor mv, int objectIndex, Type objectType, Type returnType, String methodName) {
-		visitInvokeSpecial(mv, objectIndex, objectType, returnType, methodName);
 	}
 
 	public static void visitInvokeSpecial(MethodVisitor mv, Type objectType, Class<?> returnClass, String methodName, Class<?>... classes) {

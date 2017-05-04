@@ -14,26 +14,30 @@
  * limitations under the License.
  */
 
-package org.axonframework.samples.bank.config;
+package org.axonframework.samples.bankcqrs.config;
 
-import org.axonframework.eventhandling.EventBus;
-import org.axonframework.samples.bank.command.BankAccount;
-import org.axonframework.samples.bank.command.BankAccountCommandHandler;
-import org.axonframework.spring.config.AxonConfiguration;
+import org.axonframework.commandhandling.CommandBus;
+import org.axonframework.commandhandling.SimpleCommandBus;
+import org.axonframework.common.transaction.TransactionManager;
+import org.axonframework.messaging.interceptors.BeanValidationInterceptor;
+import org.axonframework.monitoring.NoOpMessageMonitor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 @Configuration
-public class AxonConfig {
+@Profile("distributed-command-bus")
+public class DistributedCommandBusConfig {
 
     @Autowired
-    private AxonConfiguration axonConfiguration;
-    @Autowired
-    private EventBus eventBus;
-    
+    private TransactionManager transactionManager;
+
     @Bean
-    public BankAccountCommandHandler bankAccountCommandHandler() {
-        return new BankAccountCommandHandler(axonConfiguration.repository(BankAccount.class), eventBus);
+    public CommandBus localSegment() {
+        SimpleCommandBus localSegment = new SimpleCommandBus(transactionManager, NoOpMessageMonitor.INSTANCE);
+        localSegment.registerDispatchInterceptor(new BeanValidationInterceptor<>());
+
+        return localSegment;
     }
 }

@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package org.axonframework.samples.bankx.query.bankaccount;
+package org.axonframework.samples.bank.query.bankaccount;
 
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
-//@Repository
+@Repository
 public interface BankAccountRepository extends CrudRepository<BankAccountEntry, String> {
 
     Iterable<BankAccountEntry> findAllByOrderByIdAsc();

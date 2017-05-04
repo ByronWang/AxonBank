@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 import com.nebula.cqrs.axon.pojo.AxonAsmBuilder;
 import com.nebula.cqrs.axon.pojo.DomainDefinition;
 import com.nebula.cqrs.axon.pojo.Event;
-import com.nebula.cqrs.core.asm.AsmBuilder;
+import com.nebula.cqrs.core.asm.AsmBuilderHelper;
 import com.nebula.cqrs.core.asm.Field;
 
 public class CQRSWebEventListenerBuilder extends AxonAsmBuilder {
@@ -166,7 +166,7 @@ public class CQRSWebEventListenerBuilder extends AxonAsmBuilder {
 			{
 				visitGetField(mv, 0, objectType, "repository", repoType);
 				visitGetProperty(mv, 1, eventType, identifierField);
-				String name = "findOneBy" + AsmBuilder.toCamelUpper(identifierField.name);				
+				String name = "findOneBy" + AsmBuilderHelper.toCamelUpper(identifierField.name);				
 				visitInvokeInterface(mv, repoType, Object.class, name, Serializable.class);
 				mv.visitTypeInsn(CHECKCAST, entryType.getInternalName());
 				mv.visitVarInsn(ASTORE, 2);

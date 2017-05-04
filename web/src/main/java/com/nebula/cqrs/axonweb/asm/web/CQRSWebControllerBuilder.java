@@ -10,6 +10,7 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.annotation.SubscribeMapping;
 import org.springframework.stereotype.Controller;
@@ -17,12 +18,13 @@ import org.springframework.stereotype.Controller;
 import com.nebula.cqrs.axon.pojo.AxonAsmBuilder;
 import com.nebula.cqrs.axon.pojo.Command;
 import com.nebula.cqrs.axon.pojo.DomainDefinition;
-import com.nebula.cqrs.core.asm.AsmBuilder;
+import com.nebula.cqrs.core.asm.AsmBuilderHelper;
 import com.nebula.cqrs.core.asm.Field;
 
 public class CQRSWebControllerBuilder extends AxonAsmBuilder {
 
-	public static byte[] dump(Type typeController, DomainDefinition domainDefinition, Type typeEntry, Collection<Command> commands) throws Exception {
+	public static byte[] dump(Type typeController, DomainDefinition domainDefinition, Type typeEntry, Type repoType, Collection<Command> commands)
+			throws Exception {
 		ClassWriter cw = new ClassWriter(0);
 
 		cw.visit(52, ACC_PUBLIC + ACC_SUPER, typeController.getInternalName(), null, "java/lang/Object", null);
@@ -31,27 +33,80 @@ public class CQRSWebControllerBuilder extends AxonAsmBuilder {
 		visitAnnotation(cw, MessageMapping.class, "/bank-accounts");
 
 		visitDefineField(cw, "commandBus", CommandBus.class);
+		visitDefineField(cw, "bankAccountRepository", repoType);
 
-		define_init(cw, typeController);
+		define_init(cw, repoType, typeController);
 
 		for (Command command : commands) {
-			Type typeDto = domainDefinition.typeOf(AsmBuilder.toCamelUpper(command.actionName) + "Dto");
+			Type typeDto = domainDefinition.typeOf(AsmBuilderHelper.toCamelUpper(command.actionName) + "Dto");
 			if (command.ctorMethod) {
 				define_action_create(cw, typeController, typeDto, command);
 			} else {
 				define_action_other(cw, typeController, typeDto, command);
 			}
 		}
-
+		visitDefine_all(cw, typeController, typeEntry, repoType);
+		visitDefine_findOne(cw, typeController, typeEntry, repoType);
 		cw.visitEnd();
 
 		return cw.toByteArray();
 	}
 
-	private static MethodVisitor define_init(ClassWriter cw, Type typeController) {
+	private static void visitDefine_findOne(ClassWriter cw, Type typeController, Type typeEntry, Type repoType) {
+		{
+			MethodVisitor mv;
+			mv = cw.visitMethod(ACC_PUBLIC, "get", Type.getMethodDescriptor(typeEntry, Type.getType(String.class)), null, null);
+			visitAnnotation(mv, SubscribeMapping.class, "/{id}");
+			visitParameterAnnotation(mv, 0, DestinationVariable.class);
+
+			mv.visitCode();
+			Label l0 = new Label();
+			mv.visitLabel(l0);
+			mv.visitLineNumber(60, l0);
+			{
+				visitGetField(mv, 0, typeController, "bankAccountRepository", repoType);
+
+				mv.visitVarInsn(ALOAD, 1);
+				visitInvokeInterface(mv, repoType, Object.class, "findOne", String.class);
+				mv.visitTypeInsn(CHECKCAST, typeEntry.getInternalName());
+				mv.visitInsn(ARETURN);
+			}
+			Label l1 = new Label();
+			mv.visitLabel(l1);
+			mv.visitLocalVariable("this", typeController.getDescriptor(), null, l0, l1, 0);
+			mv.visitLocalVariable("id", "Ljava/lang/String;", null, l0, l1, 1);
+			mv.visitMaxs(2, 2);
+			mv.visitEnd();
+		}
+	}
+
+	private static void visitDefine_all(ClassWriter cw, Type typeController, Type typeEntry, Type repoType) {
+		{
+			MethodVisitor mv;
+			mv = cw.visitMethod(ACC_PUBLIC, "all", "()Ljava/lang/Iterable;", "()Ljava/lang/Iterable<" + typeEntry.getDescriptor() + ">;", null);
+			visitAnnotation(mv, SubscribeMapping.class);
+
+			mv.visitCode();
+			Label l0 = new Label();
+			mv.visitLabel(l0);
+			mv.visitLineNumber(55, l0);
+			{
+				visitGetField(mv, 0, typeController, "bankAccountRepository", repoType);
+				visitInvokeInterface(mv, repoType, Iterable.class, "findAllByOrderByIdAsc");
+				visitAReturn(mv);
+			}
+			Label l1 = new Label();
+			mv.visitLabel(l1);
+			mv.visitLocalVariable("this", typeController.getDescriptor(), null, l0, l1, 0);
+			mv.visitMaxs(1, 1);
+			mv.visitEnd();
+		}
+	}
+
+	private static MethodVisitor define_init(ClassWriter cw, Type repoType, Type typeController) {
 		MethodVisitor mv;
 		{
-			mv = cw.visitMethod(ACC_PUBLIC, "<init>", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(CommandBus.class)), null, null);
+			mv = cw.visitMethod(ACC_PUBLIC, "<init>", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(CommandBus.class), repoType), null, null);
 			visitAnnotation(mv, Autowired.class);
 			mv.visitCode();
 			Label l0 = new Label();
@@ -60,12 +115,14 @@ public class CQRSWebControllerBuilder extends AxonAsmBuilder {
 			{
 				visitInitObject(mv, 0);
 				visitPutField(mv, 0, typeController, 1, "commandBus", CommandBus.class);
+				visitPutField(mv, 0, typeController, 2, "bankAccountRepository", repoType);
 				visitReturn(mv);
 			}
 			Label l4 = new Label();
 			mv.visitLabel(l4);
 			mv.visitLocalVariable("this", typeController.getDescriptor(), null, l0, l4, 0);
 			mv.visitLocalVariable("commandBus", Type.getDescriptor(CommandBus.class), null, l0, l4, 1);
+			mv.visitLocalVariable("bankAccountRepository", repoType.getDescriptor(), null, l0, l4, 2);
 			mv.visitMaxs(2, 3);
 			mv.visitEnd();
 		}
@@ -85,7 +142,6 @@ public class CQRSWebControllerBuilder extends AxonAsmBuilder {
 			mv.visitLineNumber(70, l0);
 
 			{
-				visitPrintObject(mv, 1);
 				visitNewObject(mv, command.type);
 				mv.visitInsn(DUP);
 				for (Field field : command.fields) {
@@ -124,7 +180,6 @@ public class CQRSWebControllerBuilder extends AxonAsmBuilder {
 			mv.visitLineNumber(63, l0);
 
 			{
-				visitPrintObject(mv, 1);
 				mv.visitMethodInsn(INVOKESTATIC, "java/util/UUID", "randomUUID", "()Ljava/util/UUID;", false);
 				mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/UUID", "toString", "()Ljava/lang/String;", false);
 				mv.visitVarInsn(ASTORE, 2);

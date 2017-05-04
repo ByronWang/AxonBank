@@ -21,6 +21,6 @@ import lombok.Value;
 @Value
 public class WithdrawalDto {
 
-    private String bankAccountId;
+    private String axonBankAccountId;
     private long amount;
 }

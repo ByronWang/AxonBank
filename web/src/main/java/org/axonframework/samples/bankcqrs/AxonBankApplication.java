@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.axonframework.samples.bank;
+package org.axonframework.samples.bankcqrs;
 
 import java.io.IOException;
 
@@ -43,7 +43,7 @@ public class AxonBankApplication {
 	private static final String CLASS_RESOURCE_PATTERN = "/**/*.class";
 
 	public static void main(String[] args) {
-//		prepare();
+		prepare();
 		SpringApplication application = new SpringApplication(AxonBankApplication.class);
 		// application.addListeners(applicationListener);
 		application.run(args);

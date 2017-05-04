@@ -28,7 +28,7 @@ import com.nebula.cqrs.core.asm.Field;
 import com.nebula.cqrs.core.asm.RenameClassVisitor;
 
 public class CQRSBuilder implements CQRSContext {
-	private final static Logger LOGGER = LoggerFactory.getLogger(CQRSBuilder.class);
+	public final static Logger LOGGER = LoggerFactory.getLogger(CQRSBuilder.class);
 
 	final MyClassLoader classLoader = new MyClassLoader();
 
@@ -57,12 +57,14 @@ public class CQRSBuilder implements CQRSContext {
 				for (Command command : domainDefinition.commands.values()) {
 					if (command.ctorMethod) {
 						Type callerType = Type.getObjectType(typeHandler.getInternalName() + "$Inner" + command.commandName);
-						byte[] callerCode = CQRSCommandHandlerCtorCallerBuilder.dump(typeHandler, callerType, domainDefinition.implDomainType, command.type, command, domainDefinition);
+						byte[] callerCode = CQRSCommandHandlerCtorCallerBuilder.dump(typeHandler, callerType, domainDefinition.implDomainType, command.type,
+								command, domainDefinition);
 						LOGGER.debug("Create command inner class [{}]", callerType.getClassName());
 						ctx.defineClass(callerType.getClassName(), callerCode);
 					} else {
 						Type callerType = Type.getObjectType(typeHandler.getInternalName() + "$Inner" + command.commandName);
-						byte[] callerCode = CQRSCommandHandlerCallerBuilder.dump(typeHandler, callerType, domainDefinition.implDomainType, command.type, command, domainDefinition);
+						byte[] callerCode = CQRSCommandHandlerCallerBuilder.dump(typeHandler, callerType, domainDefinition.implDomainType, command.type,
+								command, domainDefinition);
 						LOGGER.debug("Create command inner class [{}]", callerType.getClassName());
 						ctx.defineClass(callerType.getClassName(), callerCode);
 					}

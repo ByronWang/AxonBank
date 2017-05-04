@@ -217,12 +217,12 @@ public class CQRSMakeDomainImplClassVisitor extends ClassVisitor {
 				succeedEvent.setRealEvent(relEvent);
 
 				super.visitMethodInsn(opcode, owner, "apply" + succeedEvent.eventName, desc, itf);
-
-				AsmBuilderHelper.visitPrintObject(mv, 0);
 			} else {
 
 				super.visitMethodInsn(opcode, owner, name, desc, itf);
 			}
+			
+//			AsmBuilderHelper.visitLOGGER(mv, "finished call " + name + " {} "  , 0);
 		}
 	}
 

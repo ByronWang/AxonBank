@@ -1,15 +1,30 @@
 package com.nebula.cqrs.core.asm;
 
+import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
+import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
+import static org.objectweb.asm.Opcodes.ALOAD;
+import static org.objectweb.asm.Opcodes.ARETURN;
+import static org.objectweb.asm.Opcodes.GETFIELD;
+import static org.objectweb.asm.Opcodes.GETSTATIC;
+import static org.objectweb.asm.Opcodes.ILOAD;
+import static org.objectweb.asm.Opcodes.INVOKEINTERFACE;
+import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
+import static org.objectweb.asm.Opcodes.INVOKESTATIC;
+import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
+import static org.objectweb.asm.Opcodes.IRETURN;
+import static org.objectweb.asm.Opcodes.NEW;
+import static org.objectweb.asm.Opcodes.PUTFIELD;
+import static org.objectweb.asm.Opcodes.RETURN;
+
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
-import static org.objectweb.asm.Opcodes.*;
+import org.slf4j.Logger;
 
 public class ASMBuilder {
-
 	public static String toCamelLower(String name) {
 		return Character.toLowerCase(name.charAt(0)) + name.substring(1);
 	}
@@ -78,6 +93,21 @@ public class ASMBuilder {
 		av0.visitEnd();
 	}
 
+	public static void visitParameterAnnotation(MethodVisitor mv, int parameter, Class<?> annotation) {
+		AnnotationVisitor av0 = mv.visitParameterAnnotation(0, Type.getDescriptor(annotation), true);
+		av0.visitEnd();
+	}
+
+	public static void visitParameterAnnotation(MethodVisitor mv, int parameter, Class<?> annotation, String value) {
+		AnnotationVisitor av0 = mv.visitParameterAnnotation(0, Type.getDescriptor(annotation), true);
+		{
+			AnnotationVisitor av1 = av0.visitArray("value");
+			av1.visit(null, value);
+			av1.visitEnd();
+		}
+		av0.visitEnd();
+	}
+	
 	public static void visitAReturn(MethodVisitor mv) {
 		mv.visitInsn(ARETURN);
 	}
@@ -206,34 +236,46 @@ public class ASMBuilder {
 	public static void visitNewObject(MethodVisitor mv, Type objectType) {
 		mv.visitTypeInsn(NEW, objectType.getInternalName());
 	}
-
-	public static void visitPrintObject(MethodVisitor mv, int objectIndex) {
-		mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
-		mv.visitVarInsn(ALOAD, objectIndex);
-		mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/Object;)V", false);
-	}
-
-	public static void visitPrintObject(MethodVisitor mv, String message, int objectIndex) {
-		mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
-		mv.visitLdcInsn(message);
-		mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "print", "(Ljava/lang/String;)V", false);
-
-		mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
-		mv.visitVarInsn(ALOAD, objectIndex);
-		mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/Object;)V", false);
-	}
-
-	public static void visitPrintStaticMessage(MethodVisitor mv, String staticMessage) {
-		mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
-		mv.visitLdcInsn(staticMessage);
-		mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V", false);
-	}
-
-	public static void visitPrintString(MethodVisitor mv, int stringIndex) {
-		mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
-		mv.visitLdcInsn(stringIndex);
-		mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V", false);
-	}
+	//
+	// public static void visitPrintObject(MethodVisitor mv, int objectIndex) {
+	// mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out",
+	// "Ljava/io/PrintStream;");
+	// mv.visitVarInsn(ALOAD, objectIndex);
+	// mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println",
+	// "(Ljava/lang/Object;)V", false);
+	// }
+	//
+	// public static void visitPrintObject(MethodVisitor mv, String message, int
+	// objectIndex) {
+	// mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out",
+	// "Ljava/io/PrintStream;");
+	// mv.visitLdcInsn(message);
+	// mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "print",
+	// "(Ljava/lang/String;)V", false);
+	//
+	// mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out",
+	// "Ljava/io/PrintStream;");
+	// mv.visitVarInsn(ALOAD, objectIndex);
+	// mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println",
+	// "(Ljava/lang/Object;)V", false);
+	// }
+	//
+	// public static void visitPrintStaticMessage(MethodVisitor mv, String
+	// staticMessage) {
+	// mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out",
+	// "Ljava/io/PrintStream;");
+	// mv.visitLdcInsn(staticMessage);
+	// mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println",
+	// "(Ljava/lang/String;)V", false);
+	// }
+	//
+	// public static void visitPrintString(MethodVisitor mv, int stringIndex) {
+	// mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out",
+	// "Ljava/io/PrintStream;");
+	// mv.visitLdcInsn(stringIndex);
+	// mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println",
+	// "(Ljava/lang/String;)V", false);
+	// }
 
 	public static void visitPutField(MethodVisitor mv, int objectIndex, Type objectType, int dataIndex, String fieldName, Type fieldType) {
 		mv.visitVarInsn(ALOAD, objectIndex);
@@ -259,4 +301,22 @@ public class ASMBuilder {
 		mv.visitMethodInsn(INVOKEVIRTUAL, objectType.getInternalName(), toPropertySetName(fieldName), Type.getMethodDescriptor(Type.VOID_TYPE, fieldType),
 				false);
 	}
+
+	// public static void visitLOGGER(MethodVisitor mv, String message) {
+	// mv.visitFieldInsn(GETSTATIC, Type.getInternalName(ASMBuilder.class),
+	// "LOGGER", Type.getDescriptor(Logger.class));
+	// mv.visitLdcInsn(message);
+	// mv.visitMethodInsn(INVOKEINTERFACE, Type.getInternalName(Logger.class),
+	// "debug", "(Ljava/lang/String;)V", true);
+	// }
+	//
+	// public static void visitLOGGER(MethodVisitor mv, String message, int
+	// objectIndex) {
+	// mv.visitFieldInsn(GETSTATIC, Type.getInternalName(ASMBuilder.class),
+	// "LOGGER", Type.getDescriptor(Logger.class));
+	// mv.visitLdcInsn(message);
+	// mv.visitVarInsn(ALOAD, objectIndex);
+	// mv.visitMethodInsn(INVOKEINTERFACE, Type.getInternalName(Logger.class),
+	// "debug", "(Ljava/lang/String;Ljava/lang/Object;)V", true);
+	// }
 }
