@@ -5,10 +5,12 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Type;
 
 import com.nebula.cqrs.axon.pojo.AxonAsmBuilder;
 import com.nebula.cqrs.core.asm.Field;
+
 
 public class CQRSWebEntryBuilder extends AxonAsmBuilder {
 
@@ -20,7 +22,8 @@ public class CQRSWebEntryBuilder extends AxonAsmBuilder {
 
 		visitAnnotation(cw, Entity.class);
 
-		visitDefineField(cw, "id", Type.getType(long.class),Id.class, GeneratedValue.class);
+		FieldVisitor fv = visitDefineField(cw, "id", long.class,Id.class);
+		visitAnnotation(fv, GeneratedValue.class);
 		visitDefinePropertyGet(cw, objectType, "id", Type.getType(long.class));
 		visitDefinePropertySet(cw, objectType, "id", Type.getType(long.class));
 

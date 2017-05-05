@@ -28,155 +28,157 @@ import com.nebula.cqrs.core.asm.Field;
 import com.nebula.cqrs.core.asm.RenameClassVisitor;
 
 public class CQRSBuilder implements CQRSContext {
-	public final static Logger LOGGER = LoggerFactory.getLogger(CQRSBuilder.class);
+    public final static Logger LOGGER = LoggerFactory.getLogger(CQRSBuilder.class);
 
-	final MyClassLoader classLoader = new MyClassLoader();
+    final MyClassLoader classLoader = new MyClassLoader();
 
-	public CQRSBuilder() {
-		super();
-		// Thread.currentThread().setContextClassLoader(classLoader);
-		listeners.add(new CommandHandlerListener());
-	}
+    public CQRSBuilder() {
+        super();
+        // Thread.currentThread().setContextClassLoader(classLoader);
+        listeners.add(new CommandHandlerListener());
+    }
 
-	public ClassLoader getClassLoader() {
-		return classLoader;
-	}
+    public ClassLoader getClassLoader() {
+        return classLoader;
+    }
 
-	final List<DomainListener> listeners = new ArrayList<>();
+    final List<DomainListener> listeners = new ArrayList<>();
 
-	public void add(DomainListener domainListener) {
-		this.listeners.add(domainListener);
-	}
+    public void add(DomainListener domainListener) {
+        this.listeners.add(domainListener);
+    }
 
-	static class CommandHandlerListener implements DomainListener {
-		@Override
-		public void define(CQRSContext ctx, DomainDefinition domainDefinition) {
-			try {
-				Type typeHandler = domainDefinition.typeOf("CommandHandler");
+    static class CommandHandlerListener implements DomainListener {
+        @Override
+        public void define(CQRSContext ctx, DomainDefinition domainDefinition) {
+            try {
+                Type typeHandler = domainDefinition.typeOf("CommandHandler");
 
-				for (Command command : domainDefinition.commands.values()) {
-					if (command.ctorMethod) {
-						Type callerType = Type.getObjectType(typeHandler.getInternalName() + "$Inner" + command.commandName);
-						byte[] callerCode = CQRSCommandHandlerCtorCallerBuilder.dump(typeHandler, callerType, domainDefinition.implDomainType, command.type,
-								command, domainDefinition);
-						LOGGER.debug("Create command inner class [{}]", callerType.getClassName());
-						ctx.defineClass(callerType.getClassName(), callerCode);
-					} else {
-						Type callerType = Type.getObjectType(typeHandler.getInternalName() + "$Inner" + command.commandName);
-						byte[] callerCode = CQRSCommandHandlerCallerBuilder.dump(typeHandler, callerType, domainDefinition.implDomainType, command.type,
-								command, domainDefinition);
-						LOGGER.debug("Create command inner class [{}]", callerType.getClassName());
-						ctx.defineClass(callerType.getClassName(), callerCode);
-					}
-				}
+                for (Command command : domainDefinition.commands.values()) {
+                    if (command.ctorMethod) {
+                        Type callerType = Type.getObjectType(typeHandler.getInternalName() + "$Inner" + command.commandName);
+                        byte[] callerCode = CQRSCommandHandlerCtorCallerBuilder.dump(typeHandler, callerType, domainDefinition.implDomainType, command.type,
+                                command, domainDefinition);
+                        LOGGER.debug("Create command inner class [{}]", callerType.getClassName());
+                        ctx.defineClass(callerType.getClassName(), callerCode);
+                    } else {
+                        Type callerType = Type.getObjectType(typeHandler.getInternalName() + "$Inner" + command.commandName);
+                        byte[] callerCode = CQRSCommandHandlerCallerBuilder.dump(typeHandler, callerType, domainDefinition.implDomainType, command.type,
+                                command, domainDefinition);
+                        LOGGER.debug("Create command inner class [{}]", callerType.getClassName());
+                        ctx.defineClass(callerType.getClassName(), callerCode);
+                    }
+                }
 
-				byte[] codeHandler = CQRSCommandHandlerBuilder.dump(typeHandler, domainDefinition.implDomainType, domainDefinition);
-				LOGGER.debug("Create command handler [{}]", typeHandler.getClassName());
-				ctx.defineClass(typeHandler.getClassName(), codeHandler);
+                byte[] codeHandler = CQRSCommandHandlerBuilder.dump(typeHandler, domainDefinition.implDomainType, domainDefinition);
+                LOGGER.debug("Create command handler [{}]", typeHandler.getClassName());
+                ctx.defineClass(typeHandler.getClassName(), codeHandler);
 
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			}
-			return;
-		}
-	}
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            return;
+        }
+    }
 
-	public void makeDomainCQRSHelper(String srcDomainClassName) {
-		LOGGER.debug("Start make domain [{}]", srcDomainClassName);
+    public DomainDefinition makeDomainCQRSHelper(String srcDomainClassName) {
+        LOGGER.debug("Start make domain [{}]", srcDomainClassName);
 
-		try {
-			final DomainDefinition domainDefinition;
-			Type srcDomainType;
-			String domainName = srcDomainClassName.substring(srcDomainClassName.lastIndexOf('.') + 1);
-			{
-				srcDomainType = Type.getObjectType(srcDomainClassName.replace('.', '/'));
-			}
+        try {
+            final DomainDefinition domainDefinition;
+            Type srcDomainType;
+            String domainName = srcDomainClassName.substring(srcDomainClassName.lastIndexOf('.') + 1);
+            {
+                srcDomainType = Type.getObjectType(srcDomainClassName.replace('.', '/'));
+            }
 
-			domainDefinition = analyzeDomain(domainName, srcDomainType);
+            domainDefinition = analyzeDomain(domainName, srcDomainType);
 
-			makeDomainImpl(domainDefinition, srcDomainType, domainDefinition.implDomainType);
+            makeDomainImpl(domainDefinition, srcDomainType, domainDefinition.implDomainType);
 
-			listeners.forEach(l -> l.define(CQRSBuilder.this, domainDefinition));
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
+            listeners.forEach(l -> l.define(CQRSBuilder.this, domainDefinition));
+            
+            return domainDefinition;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-	private void makeDomainImpl(final DomainDefinition domainDefinition, Type srcDomainType, Type implDomainType) throws IOException {
+    private void makeDomainImpl(final DomainDefinition domainDefinition, Type srcDomainType, Type implDomainType) throws IOException {
 
-		ClassReader cr = new ClassReader(srcDomainType.getClassName());
-		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
+        ClassReader cr = new ClassReader(srcDomainType.getClassName());
+        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
 
-		CQRSMakeDomainImplClassVisitor cvMakeDomainImpl = new CQRSMakeDomainImplClassVisitor(cw, domainDefinition);
-		RenameClassVisitor cvRename = new RenameClassVisitor(cvMakeDomainImpl, srcDomainType.getInternalName(), implDomainType.getInternalName());
+        CQRSMakeDomainImplClassVisitor cvMakeDomainImpl = new CQRSMakeDomainImplClassVisitor(cw, domainDefinition);
+        RenameClassVisitor cvRename = new RenameClassVisitor(cvMakeDomainImpl, srcDomainType.getInternalName(), implDomainType.getInternalName());
 
-		RemoveCqrsAnnotationClassVisitor removeCqrsAnnotation = new RemoveCqrsAnnotationClassVisitor(cvRename);
-		cr.accept(removeCqrsAnnotation, 0);
+        RemoveCqrsAnnotationClassVisitor removeCqrsAnnotation = new RemoveCqrsAnnotationClassVisitor(cvRename);
+        cr.accept(removeCqrsAnnotation, 0);
 
-		LOGGER.debug("Rename domain class from {} to impl class [{}]", srcDomainType.getClassName(), implDomainType.getClassName());
-		LOGGER.debug("Made cqrs domain class [{}]", implDomainType.getClassName());
+        LOGGER.debug("Rename domain class from {} to impl class [{}]", srcDomainType.getClassName(), implDomainType.getClassName());
+        LOGGER.debug("Made cqrs domain class [{}]", implDomainType.getClassName());
 
-		byte[] code = cw.toByteArray();
+        byte[] code = cw.toByteArray();
 
-		classLoader.define(implDomainType.getClassName(), code);
+        classLoader.define(implDomainType.getClassName(), code);
 
-		for (Event event : domainDefinition.realEvents.values()) {
-			byte[] eventCode = CQRSEventRealBuilder.dump(event);
-			LOGGER.debug("Create event [{}]", event.type.getClassName());
-			classLoader.define(event.type.getClassName(), eventCode);
-		}
-		for (Event event : domainDefinition.virtualEvents.values()) {
-			byte[] eventCode = CQRSEventAliasBuilder.dump(event);
-			LOGGER.debug("Create command handler [{}]", event.type.getClassName());
-			classLoader.define(event.type.getClassName(), eventCode);
-		}
-		for (Command command : domainDefinition.commands.values()) {
-			if (command.ctorMethod) {
-				byte[] codeCommand = CQRSCommandBuilder.dump(command);
-				LOGGER.debug("Create command handler [{}]", command.type.getClassName());
-				classLoader.define(command.type.getClassName(), codeCommand);
-			} else {
-				byte[] codeCommand = CQRSCommandBuilder.dump(command);
-				LOGGER.debug("Create command handler [{}]", command.type.getClassName());
-				classLoader.define(command.type.getClassName(), codeCommand);
-			}
-		}
-	}
+        for (Event event : domainDefinition.realEvents.values()) {
+            byte[] eventCode = CQRSEventRealBuilder.dump(event);
+            LOGGER.debug("Create event [{}]", event.type.getClassName());
+            classLoader.define(event.type.getClassName(), eventCode);
+        }
+        for (Event event : domainDefinition.virtualEvents.values()) {
+            byte[] eventCode = CQRSEventAliasBuilder.dump(event);
+            LOGGER.debug("Create command handler [{}]", event.type.getClassName());
+            classLoader.define(event.type.getClassName(), eventCode);
+        }
+        for (Command command : domainDefinition.commands.values()) {
+            if (command.ctorMethod) {
+                byte[] codeCommand = CQRSCommandBuilder.dump(command);
+                LOGGER.debug("Create command handler [{}]", command.type.getClassName());
+                classLoader.define(command.type.getClassName(), codeCommand);
+            } else {
+                byte[] codeCommand = CQRSCommandBuilder.dump(command);
+                LOGGER.debug("Create command handler [{}]", command.type.getClassName());
+                classLoader.define(command.type.getClassName(), codeCommand);
+            }
+        }
+    }
 
-	private DomainDefinition analyzeDomain(String srcDomainName, Type srcDomainType) throws IOException {
-		final DomainDefinition domainDefinition;
-		domainDefinition = new DomainDefinition(srcDomainName, srcDomainType);
-		ClassReader cr = new ClassReader(srcDomainType.getClassName());
+    private DomainDefinition analyzeDomain(String srcDomainName, Type srcDomainType) throws IOException {
+        final DomainDefinition domainDefinition;
+        domainDefinition = new DomainDefinition(srcDomainName, srcDomainType);
+        ClassReader cr = new ClassReader(srcDomainType.getClassName());
 
-		{
-			AnalyzeMethodParamsClassVisitor analyzeMethodParamsClassVisitor = new AnalyzeMethodParamsClassVisitor();
-			AnalyzeFieldClassVisitor analyzeFieldClassVisitor = new AnalyzeFieldClassVisitor(analyzeMethodParamsClassVisitor);
-			cr.accept(analyzeFieldClassVisitor, 0);
-			domainDefinition.menthods = analyzeMethodParamsClassVisitor.getMethods();
-			domainDefinition.fields = analyzeFieldClassVisitor.finished().toArray(new Field[0]);
-			for (Field field : domainDefinition.fields) {
-				if (field.identifier) {
-					domainDefinition.identifierField = field;
-				}
-			}
-		}
+        {
+            AnalyzeMethodParamsClassVisitor analyzeMethodParamsClassVisitor = new AnalyzeMethodParamsClassVisitor();
+            AnalyzeFieldClassVisitor analyzeFieldClassVisitor = new AnalyzeFieldClassVisitor(analyzeMethodParamsClassVisitor);
+            cr.accept(analyzeFieldClassVisitor, 0);
+            domainDefinition.menthods = analyzeMethodParamsClassVisitor.getMethods();
+            domainDefinition.fields = analyzeFieldClassVisitor.finished().toArray(new Field[0]);
+            for (Field field : domainDefinition.fields) {
+                if (field.identifier) {
+                    domainDefinition.identifierField = field;
+                }
+            }
+        }
 
-		{
-			AnalyzeEventsClassVisitor analyzeEventsClassVisitor = new AnalyzeEventsClassVisitor(domainDefinition);
-			cr.accept(analyzeEventsClassVisitor, 0);
-			domainDefinition.realEvents = analyzeEventsClassVisitor.finished();
-		}
+        {
+            AnalyzeEventsClassVisitor analyzeEventsClassVisitor = new AnalyzeEventsClassVisitor(domainDefinition);
+            cr.accept(analyzeEventsClassVisitor, 0);
+            domainDefinition.realEvents = analyzeEventsClassVisitor.finished();
+        }
 
-		return domainDefinition;
-	}
+        return domainDefinition;
+    }
 
-	public Class<?> loadClass(String name) throws ClassNotFoundException {
-		return this.classLoader.loadClass(name);
-	}
+    public Class<?> loadClass(String name) throws ClassNotFoundException {
+        return this.classLoader.loadClass(name);
+    }
 
-	@SuppressWarnings("unchecked")
-	public <T> Class<T> defineClass(String name, byte[] b) {
-		return (Class<T>) this.classLoader.define(name, b);
-	}
+    @SuppressWarnings("unchecked")
+    public <T> Class<T> defineClass(String name, byte[] b) {
+        return (Class<T>) this.classLoader.define(name, b);
+    }
 
 }

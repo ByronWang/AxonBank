@@ -78,7 +78,7 @@ public class CQRSCommandHandlerCtorCallerBuilder extends AxonAsmBuilder {
 				}
 				visitInitTypeWithAllFields(mv, domainType, command.methodParams);
 
-				visitAReturn(mv);
+				visitReturnObject(mv);
 			}
 			Label l2 = new Label();
 			mv.visitLabel(l2);

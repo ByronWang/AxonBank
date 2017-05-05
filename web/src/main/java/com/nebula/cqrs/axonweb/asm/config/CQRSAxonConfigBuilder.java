@@ -59,7 +59,7 @@ public class CQRSAxonConfigBuilder extends AxonAsmBuilder {
 				visitGetField(mv, 0, typeConfig, "eventBus", EventBus.class);
 
 				visitInitTypeWithAllFields(mv, typeCommandHandler, Repository.class, EventBus.class);
-				visitAReturn(mv);
+				visitReturnObject(mv);
 
 			}
 			Label l1 = new Label();

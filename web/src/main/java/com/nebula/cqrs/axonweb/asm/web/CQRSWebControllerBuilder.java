@@ -94,7 +94,7 @@ public class CQRSWebControllerBuilder extends AxonAsmBuilder {
 			{
 				visitGetField(mv, 0, typeController, "bankAccountRepository", repoType);
 				visitInvokeInterface(mv, repoType, Iterable.class, "findAllByOrderByIdAsc");
-				visitAReturn(mv);
+				visitReturnObject(mv);
 			}
 			Label l1 = new Label();
 			mv.visitLabel(l1);

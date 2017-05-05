@@ -27,107 +27,110 @@ import org.axonframework.test.aggregate.FixtureConfiguration;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.nebula.cqrs.axon.pojo.DomainDefinition;
+
 public class MyBankAccountCommandHandlerTest {
 
-	private Class<?> clzDomain;
-	Class<?> clzHandle;
-	String packageName;
-	CQRSBuilder cqrs;
+    private Class<?> clzDomain;
+    Class<?> clzHandle;
+    String packageName;
+    CQRSBuilder cqrs;
 
-	private FixtureConfiguration<?> testFixture;
+    DomainDefinition domainDefinition;
+    private FixtureConfiguration<?> testFixture;
 
-	// static boolean classLoaded = false;
+    // static boolean classLoaded = false;
 
-	@Before
-	public void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
 
-		String domainClassName = "org.axonframework.samples.bank.cqrs.MyBankAccount";
-		{
-			packageName = domainClassName.substring(0, domainClassName.lastIndexOf('.'));
-			cqrs = new CQRSBuilder();
-			cqrs.makeDomainCQRSHelper(domainClassName);
-		}
+        {
+            String domainClassName = "org.axonframework.samples.bankcqrs.MyBankAccount";
+            packageName = domainClassName.substring(0, domainClassName.lastIndexOf('.'));
+            cqrs = new CQRSBuilder();
+            domainDefinition = cqrs.makeDomainCQRSHelper(domainClassName);
+        }
 
-		clzDomain = cqrs.loadClass(domainClassName + "Impl");
-		clzHandle = cqrs.loadClass(domainClassName + "CommandHandler");
+        clzDomain = cqrs.loadClass(domainDefinition.typeOf("Impl").getClassName());
+        clzHandle = cqrs.loadClass(domainDefinition.typeOf("CommandHandler").getClassName());
 
-		testFixture = new AggregateTestFixture<>(clzDomain);
+        testFixture = new AggregateTestFixture<>(clzDomain);
 
-		Object commandHandler = createCommandHandler(clzHandle, testFixture.getRepository(), testFixture.getEventBus());
+        Object commandHandler = createCommandHandler(clzHandle, testFixture.getRepository(), testFixture.getEventBus());
 
-		testFixture.registerAnnotatedCommandHandler(commandHandler);
-		testFixture.registerCommandDispatchInterceptor(new BeanValidationInterceptor<>());
-	}
-	//
-	// @Test(expected = JSR303ViolationException.class)
-	// public void testCreateMyBankAccount_RejectNegativeOverdraft() throws
-	// Exception {
-	// testFixture.givenNoPriorActivity().when(make("MyBankAccountCreateCommand",
-	// UUID.randomUUID().toString(), -1000L));
-	// }
+        testFixture.registerAnnotatedCommandHandler(commandHandler);
+        testFixture.registerCommandDispatchInterceptor(new BeanValidationInterceptor<>());
+    }
+    //
+    // @Test(expected = JSR303ViolationException.class)
+    // public void testCreateMyBankAccount_RejectNegativeOverdraft() throws
+    // Exception {
+    // testFixture.givenNoPriorActivity().when(make("MyBankAccountCreateCommand",
+    // UUID.randomUUID().toString(), -1000L));
+    // }
 
-	@Test
-	public void testCreateMyBankAccount() throws Exception {
-		String id = "MyBankAccountId";
+    @Test
+    public void testCreateMyBankAccount() throws Exception {
+        String id = "MyBankAccountId";
 
-		testFixture.givenNoPriorActivity().when(make("MyBankAccountCreateCommand", id, 0L)).expectEvents(make("MyBankAccountCreateFinishedEvent", id, 0L));
-	}
+        testFixture.givenNoPriorActivity().when(make("CreateCommand", id, 0L)).expectEvents(make("CreateFinishedEvent", id, 0L));
+    }
 
-	@Test
-	public void testDepositMoney() throws Exception {
-		String id = "MyBankAccountId";
+    @Test
+    public void testDepositMoney() throws Exception {
+        String id = "MyBankAccountId";
 
-		testFixture.given(make("MyBankAccountCreateFinishedEvent", id, 0L)).when(make("MyBankAccountDepositCommand", id, 1000L))
-				.expectEvents(make("MyBankAccountDepositFinishedEvent", id, 1000L));
+        testFixture.given(make("CreateFinishedEvent", id, 0L)).when(make("DepositCommand", id, 1000L))
+                .expectEvents(make("DepositFinishedEvent", id, 1000L));
 
-		// testFixture.given(new MyBankAccountCreatedEvent(id, 0))
-		// .when(new MyBankAccountMoneyDepositCommand(id, 1000))
-		// .expectEvents(new MyBankAccountMoneyDepositedEvent(id, 1000));
-	}
+        // testFixture.given(new MyBankAccountCreatedEvent(id, 0))
+        // .when(new MyBankAccountMoneyDepositCommand(id, 1000))
+        // .expectEvents(new MyBankAccountMoneyDepositedEvent(id, 1000));
+    }
 
-	@Test
-	public void testWithdrawMoney() throws Exception {
-		String id = "MyBankAccountId";
+    @Test
+    public void testWithdrawMoney() throws Exception {
+        String id = "MyBankAccountId";
 
-		testFixture.given(make("MyBankAccountCreateFinishedEvent", id, 0L), make("MyBankAccountDepositFinishedEvent", id, 50L))
-				.when(make("MyBankAccountWithdrawCommand", id, 50L)).expectEvents(make("MyBankAccountWithdrawFinishedEvent", id, 50L));
+        testFixture.given(make("CreateFinishedEvent", id, 0L), make("DepositFinishedEvent", id, 50L))
+                .when(make("WithdrawCommand", id, 50L)).expectEvents(make("WithdrawFinishedEvent", id, 50L));
 
-		//
-		// testFixture.given(new MyBankAccountCreatedEvent(id, 0), new
-		// MyBankAccountMoneyDepositedEvent(id, 50)).when(new
-		// MyBankAccountWithdrawMoneyCommand(id, 50))
-		// .expectEvents(new MyBankAccountMoneyWithdrawnEvent(id, 50));
-	}
+        //
+        // testFixture.given(new MyBankAccountCreatedEvent(id, 0), new
+        // MyBankAccountMoneyDepositedEvent(id, 50)).when(new
+        // MyBankAccountWithdrawMoneyCommand(id, 50))
+        // .expectEvents(new MyBankAccountMoneyWithdrawnEvent(id, 50));
+    }
 
-	@Test
-	public void testWithdrawMoney_RejectWithdrawal() throws Exception {
-		String id = "MyBankAccountId";
+    @Test
+    public void testWithdrawMoney_RejectWithdrawal() throws Exception {
+        String id = "MyBankAccountId";
 
-		testFixture.given(make("MyBankAccountCreateFinishedEvent", id, 0L), make("MyBankAccountDepositFinishedEvent", id, 50L))
-				.when(make("MyBankAccountWithdrawCommand", id, 51L)).expectEvents();
-	}
+        testFixture.given(make("CreateFinishedEvent", id, 0L), make("DepositFinishedEvent", id, 50L))
+                .when(make("WithdrawCommand", id, 51L)).expectEvents();
+    }
 
-	private Object createCommandHandler(Class<?> clz, Repository<?> repository, EventBus eventBus) throws Exception {
-		Constructor<?> c = clz.getConstructor(Repository.class, EventBus.class);
-		return c.newInstance(repository, eventBus);
-	}
+    private Object createCommandHandler(Class<?> clz, Repository<?> repository, EventBus eventBus) throws Exception {
+        Constructor<?> c = clz.getConstructor(Repository.class, EventBus.class);
+        return c.newInstance(repository, eventBus);
+    }
 
-	private Object make(String name, Object... parameters) throws Exception {
-		Class<?>[] parameterTypes = new Class<?>[parameters.length];
-		for (int i = 0; i < parameters.length; i++) {
-			Class<?> clz = parameters[i].getClass();
-			Field[] fields = clz.getDeclaredFields();
-			for (int j = 0; j < fields.length; j++) {
-				Field field = fields[j];
-				if ("TYPE".equals(field.getName())) {
-					clz = (Class<?>) field.get(clz);
-					break;
-				}
-			}
-			parameterTypes[i] = clz;
-		}
+    private Object make(String name, Object... parameters) throws Exception {
+        Class<?>[] parameterTypes = new Class<?>[parameters.length];
+        for (int i = 0; i < parameters.length; i++) {
+            Class<?> clz = parameters[i].getClass();
+            Field[] fields = clz.getDeclaredFields();
+            for (int j = 0; j < fields.length; j++) {
+                Field field = fields[j];
+                if ("TYPE".equals(field.getName())) {
+                    clz = (Class<?>) field.get(clz);
+                    break;
+                }
+            }
+            parameterTypes[i] = clz;
+        }
 
-		Class<?> clzCommand = cqrs.loadClass(packageName + "." + name);
-		return clzCommand.getConstructor(parameterTypes).newInstance(parameters);
-	}
+        Class<?> clzCommand = cqrs.loadClass(domainDefinition.typeOf(name).getClassName());
+        return clzCommand.getConstructor(parameterTypes).newInstance(parameters);
+    }
 }
