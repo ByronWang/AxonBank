@@ -31,6 +31,17 @@ public class SimpleClassVisitor extends ClassVisitor implements Opcodes, ClassBo
 	}
 
 	@Override
+	public ClassBody annotation(Type annotationType, Object value) {
+		ASMBuilder.visitAnnotation(cv, annotationType, value);
+		return this;
+	}
+
+	@Override
+	public void end() {
+		cv.visitEnd();
+	}
+
+	@Override
 	public ClassBody field(Field field) {
 		fields.put(field.name, field);
 		ASMBuilder.visitDefineField(cv, field.name, field.type);
@@ -45,18 +56,14 @@ public class SimpleClassVisitor extends ClassVisitor implements Opcodes, ClassBo
 	}
 
 	@Override
-	public ClassBody annotation(Type annotationType, Object value) {
-		ASMBuilder.visitAnnotation(cv, annotationType, value);
+	public ClassBody field(Field field, String signature, Type annotationType, Object value) {
+		fields.put(field.name, field);
+		ASMBuilder.visitDefineField(cv, field.name, field.type, signature, annotationType, value);
 		return this;
 	}
 
 	@Override
-	public void end() {
-		cv.visitEnd();
-	}
-
-	@Override
-	public ClassMethodHeader method(int access, Type returnType, String methodName) {
-		return new ClassMethodVisitor(this, thisType, access, returnType, methodName);
+	public ClassMethodHeader method(int access, Type returnType, String methodName, Class<?>... exceptionClasses) {
+		return new ClassMethodVisitor(this, thisType, access, returnType, methodName, exceptionClasses);
 	}
 }

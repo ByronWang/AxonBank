@@ -16,30 +16,40 @@ import org.objectweb.asm.util.TraceClassVisitor;
 
 public class AsmBuilderHelperTest {
 
-    @Before
-    public void setUp() throws Exception {
-    }
+	@Before
+	public void setUp() throws Exception {
+	}
 
-    @After
-    public void tearDown() throws Exception {
-    }
+	@After
+	public void tearDown() throws Exception {
+	}
 
-    @Test
-    public void testVisitDefineMethodClassVisitorTypeStringTypeArray() throws Exception {
-        byte[] code = MyBankAccountBuilder.dump();
-        byte[] codeExpected = MyBankAccountDump.dump();
+	@Test
+	public void testVisitDefineMethodClassVisitorTypeStringTypeArray() throws Exception {
+		byte[] code = MyBankAccountBuilder.dump();
+		byte[] codeExpected = MyBankAccountDump.dump();
 
-        String strCode = toString(code);
-        String strCodeExpected = toString(codeExpected);
-        assertEquals("Code", strCodeExpected, strCode);
-    }
+		String strCode = toString(code);
+		String strCodeExpected = toString(codeExpected);
+		assertEquals("Code", strCodeExpected, strCode);
+	}
 
-    public static String toString(byte[] code) throws IOException {
-        ClassReader cr = new ClassReader(code);
-        StringWriter sw = new StringWriter();
-        PrintWriter pw = new PrintWriter(sw);
-        ClassVisitor visitor = new TraceClassVisitor(null, new ASMifier(), pw);
-        cr.accept(visitor, ClassReader.EXPAND_FRAMES);
-        return sw.toString();
-    }
+	@Test
+	public void testVisitDefineMethodClassVisitorTypeStringTypeArray_2() throws Exception {
+		byte[] code = MyBankAccountCommandHandlerBuilder.dump();
+		byte[] codeExpected = MyBankAccountCommandHandlerDump.dump();
+
+		String strCode = toString(code);
+		String strCodeExpected = toString(codeExpected);
+		assertEquals("Code", strCodeExpected, strCode);
+	}
+
+	public static String toString(byte[] code) throws IOException {
+		ClassReader cr = new ClassReader(code);
+		StringWriter sw = new StringWriter();
+		PrintWriter pw = new PrintWriter(sw);
+		ClassVisitor visitor = new TraceClassVisitor(null, new ASMifier(), pw);
+		cr.accept(visitor, ClassReader.EXPAND_FRAMES);
+		return sw.toString();
+	}
 }

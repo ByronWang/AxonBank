@@ -7,6 +7,8 @@ public interface Instance<C> extends Types, Opcodes {
 
 	C get(Field field);
 
+	C newInstace();
+
 	default C get(String fieldName, Class<?> fieldClass) {
 		return get(new Field(fieldName, typeOf(fieldClass)));
 	}
@@ -21,21 +23,20 @@ public interface Instance<C> extends Types, Opcodes {
 		return getProperty(new Field(fieldName, fieldType));
 	}
 
-	C initObject();
-
 	default void invoke(Class<?> returnClass, String methodName, Class<?>... paramClasses) {
 		invoke(INVOKEVIRTUAL, typeOf(returnClass), methodName, typesOf(paramClasses));
 	}
 
 	void invoke(int invoketype, Type returnType, String methodName, Type... params);
 
-//	default void invoke(String methodName, Type... params) {
-//		invoke(INVOKEVIRTUAL, Type.VOID_TYPE, methodName, params);
-//	}
-//
-//	default void invoke(Type returnType, String methodName, Class<?>... paramClasses) {
-//		invoke(INVOKEVIRTUAL, returnType, methodName, typesOf(paramClasses));
-//	}
+	// default void invoke(String methodName, Type... params) {
+	// invoke(INVOKEVIRTUAL, Type.VOID_TYPE, methodName, params);
+	// }
+	//
+	// default void invoke(Type returnType, String methodName, Class<?>...
+	// paramClasses) {
+	// invoke(INVOKEVIRTUAL, returnType, methodName, typesOf(paramClasses));
+	// }
 
 	default void invoke(Type returnType, String methodName, Type... params) {
 		invoke(INVOKEVIRTUAL, returnType, methodName, params);

@@ -108,7 +108,11 @@ public class ASMBuilder {
 	}
 
 	public static FieldVisitor visitDefineField(ClassVisitor cw, String fieldName, Type fieldType, Type annotationType, Object value) {
-		FieldVisitor fv = cw.visitField(ACC_PRIVATE, fieldName, fieldType.getDescriptor(), null, null);
+		return visitDefineField(cw, fieldName, fieldType, null, annotationType, value);
+	}
+
+	public static FieldVisitor visitDefineField(ClassVisitor cw, String fieldName, Type fieldType, String signature, Type annotationType, Object value) {
+		FieldVisitor fv = cw.visitField(ACC_PRIVATE, fieldName, fieldType.getDescriptor(), signature, null);
 		if (annotationType != null) visitAnnotation(fv, annotationType, value);
 		fv.visitEnd();
 		return fv;
@@ -119,8 +123,9 @@ public class ASMBuilder {
 		return mv;
 	}
 
-	public static MethodVisitor visitDefineMethod(int access, ClassVisitor cw, Type returnType, String methodName, Type... paramTypes) {
-		MethodVisitor mv = cw.visitMethod(access, methodName, Type.getMethodDescriptor(returnType, paramTypes), null, null);
+	public static MethodVisitor visitDefineMethod(ClassVisitor cw, int access, Type returnType, String methodName, Type[] paramTypes, String signature,
+	        String[] exceptions) {
+		MethodVisitor mv = cw.visitMethod(access, methodName, Type.getMethodDescriptor(returnType, paramTypes), signature, exceptions);
 		return mv;
 	}
 

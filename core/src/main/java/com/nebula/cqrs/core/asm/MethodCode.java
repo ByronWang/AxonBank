@@ -13,7 +13,15 @@ interface MethodCode<C, I> extends Types {
 
 	C block(Consumer<C> invocation);
 
+	Label defineLabel();
+
 	C insn(int d);
+	
+	I object(Type objectType);
+
+	default I object(Class<?> returnClass) {
+		return object(typeOf(returnClass));
+	}
 
 	C jumpInsn(int ifgt, Label label);
 
@@ -24,12 +32,11 @@ interface MethodCode<C, I> extends Types {
 	default C localVariable(String name, Class<?> clz) {
 		return localVariable(name, typeOf(clz));
 	}
+	
 
 	C localVariable(String name, Type type);
 
 	I me();
-
-	Label defineLabel();
 
 	C returnObject();
 

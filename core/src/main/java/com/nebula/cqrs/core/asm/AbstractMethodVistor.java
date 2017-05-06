@@ -12,6 +12,20 @@ import org.objectweb.asm.Type;
 
 public abstract class AbstractMethodVistor<H, C> extends MethodVisitor implements MethodCode<C, Instance<C>>, Instance<C>, MethodHeader<H, C> {
 
+	@Override
+	public C newInstace() {
+		ASMBuilder.visitNewObject(mv, targetType);
+		return _code();
+	}
+
+	Type targetType;
+
+	@Override
+	public Instance<C> object(Type targetType) {
+		this.targetType = targetType;
+		return (Instance<C>) this;
+	}
+
 	class Annotation {
 		int parameter;
 
@@ -52,29 +66,28 @@ public abstract class AbstractMethodVistor<H, C> extends MethodVisitor implement
 	private Label beginLabel;
 
 	private final ClassVisitor cv;
+
 	private Stack<Field> localFields = new Stack<Field>();
+
 	int[] locals;
 	private String methodName;
-	private List<Field> params = new ArrayList<>();
+	private List<Field> definedParams = new ArrayList<>();
 	private final Type returnType;
 	List<Annotation> thisMethodAnnotations = new ArrayList<>();
-
 	List<Annotation> thisParameteAnnotations = new ArrayList<>(10);
-
 	final Type thisType;
 
-	public AbstractMethodVistor(ClassVisitor cv, Type thisType, int access, String methodName) {
-		this(cv, thisType, access, Type.VOID_TYPE, methodName);
-	}
-
-	public AbstractMethodVistor(ClassVisitor cv, Type thisType, int access, Type returnType, String methodName) {
+	public AbstractMethodVistor(ClassVisitor cv, Type thisType, int access, Type returnType, String methodName, Class<?>... exceptionClasses) {
 		super(ASM5);
 		this.cv = cv;
 		this.thisType = thisType;
 		this.methodName = methodName;
 		this.access = access;
 		this.returnType = returnType;
+		this.exceptionClasses = exceptionClasses;
 	}
+
+	Class<?>[] exceptionClasses;
 
 	abstract C _code();
 
@@ -100,33 +113,59 @@ public abstract class AbstractMethodVistor<H, C> extends MethodVisitor implement
 
 	@Override
 	public H annotation(Type type, String value) {
-		ASMBuilder.visitAnnotation(mv, type, value);
+		this.thisMethodAnnotations.add(new Annotation(value, type));
 		return _header();
 	}
 
-	// TODO
-	public C begin() {
-		return this.begin(10);
-	}
-
-	public C begin(int line) {
-
+	private C begin() {
+		String signature = null;
+		boolean definedSignature = false;
 		localFields.push(new Field(THIS_NAME, thisType));
-		for (Field field : params) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("(");
+		for (Field field : definedParams) {
 			localFields.push(field);
+			if (field.signature != null) {
+				sb.append(field.signature);
+				definedSignature = true;
+			} else {
+				sb.append(field.type.getDescriptor());
+			}
+		}
+		sb.append(")");
+		sb.append(returnType.getDescriptor());
+		String signatureFromParameter = sb.toString();
+
+		if (definedSignature) {
+			signature = signatureFromParameter;
 		}
 
 		locals = computerLocals(localFields);
 
-		this.mv = ASMBuilder.visitDefineMethod(access, cv, returnType, methodName, AsmBuilderHelper.typesOf(params));
+		List<Field> params = new ArrayList<>();
+		params.addAll(this.definedParams);
+
+		String[] excptions;
+		if (exceptionClasses != null && exceptionClasses.length > 0) {
+			excptions = new String[exceptionClasses.length];
+			for (int i = 0; i < exceptionClasses.length; i++) {
+				excptions[i] = Type.getInternalName(exceptionClasses[i]);
+			}
+		} else {
+			excptions = new String[0];
+		}
+
+		this.mv = ASMBuilder.visitDefineMethod(cv, access, returnType, methodName, AsmBuilderHelper.typesOf(params), signature, excptions);
 		for (Annotation annotation : thisMethodAnnotations) {
 			ASMBuilder.visitAnnotation(mv, annotation.type, annotation.value);
 		}
 		for (Annotation annotation : thisParameteAnnotations) {
-			ASMBuilder.visitParameterAnnotation(mv, annotation.parameter, annotation.type, annotation.value);
+			if (annotation != null) {
+				ASMBuilder.visitParameterAnnotation(mv, annotation.parameter, annotation.type, annotation.value);
+			}
 		}
 		mv.visitCode();
-		beginLabel = this.label(line);
+		beginLabel = labelWithoutLineNumber();
 		return _code();
 	}
 
@@ -145,20 +184,18 @@ public abstract class AbstractMethodVistor<H, C> extends MethodVisitor implement
 	}
 
 	@Override
-	public C code(int line, Consumer<C> invocation) {
-		begin(line);
-		invocation.accept(_code());
-		end();
-		return _code();
+	public Label defineLabel() {
+		Label label = new Label();
+		return label;
 	}
 
 	public void end() {
-		Label endLabel = this.label();
+		Label endLabel = this.labelWithoutLineNumber();
 		int i = 0;
 		for (Field field : localFields) {
-			mv.visitLocalVariable(field.name, field.type.getDescriptor(), null, beginLabel, endLabel, locals[i++]);
+			mv.visitLocalVariable(field.name, field.type.getDescriptor(), field.signature, beginLabel, endLabel, locals[i++]);
 		}
-		mv.visitMaxs(10, 10);
+		mv.visitMaxs(0, 0);
 		mv.visitEnd();
 	}
 
@@ -175,12 +212,6 @@ public abstract class AbstractMethodVistor<H, C> extends MethodVisitor implement
 	}
 
 	@Override
-	public C initObject() {
-		ASMBuilder.visitInitObject(mv, THIS);
-		return _code();
-	}
-
-	@Override
 	public C insn(int opcode) {
 		mv.visitInsn(opcode);
 		return _code();
@@ -188,7 +219,7 @@ public abstract class AbstractMethodVistor<H, C> extends MethodVisitor implement
 
 	@Override
 	public void invoke(int invoketype, Type returnType, String methodName, Type... params) {
-		ASMBuilder.visitInvoke(invoketype, mv, thisType, returnType, methodName, params);
+		ASMBuilder.visitInvoke(invoketype, mv, targetType, returnType, methodName, params);
 	}
 
 	@Override
@@ -197,21 +228,21 @@ public abstract class AbstractMethodVistor<H, C> extends MethodVisitor implement
 		return _code();
 	}
 
-	private Label label() {
+	private Label labelWithoutLineNumber() {
 		Label label = new Label();
 		mv.visitLabel(label);
 		return label;
 	}
 
-	private Label label(int line) {
-		Label label = new Label();
-		mv.visitLabel(label);
-		mv.visitLineNumber(line, label);
-		return label;
-	}
+	boolean beFirstlabel = false;
 
 	public C line(int line) {
-		Label label = new Label();
+		Label label;
+		if (!beFirstlabel) {
+			label = new Label();
+		} else {
+			label = beginLabel;
+		}
 		mv.visitLabel(label);
 		mv.visitLineNumber(line, label);
 		return _code();
@@ -233,31 +264,20 @@ public abstract class AbstractMethodVistor<H, C> extends MethodVisitor implement
 
 	@Override
 	public Instance<C> me() {
+		targetType = thisType;
 		return (Instance<C>) this;
 	}
 
 	@Override
-	public Label defineLabel() {
-		Label label = new Label();
-		return label;
-	}
-
-	@Override
-	public H parameter(Field field) {
-		params.add(field);
+	public H parameter(String fieldName, Type fieldType, String signature) {
+		definedParams.add(new Field(fieldName, fieldType, signature));
+		thisParameteAnnotations.add(null);
 		return _header();
 	}
 
-	public C parameter(Field... fields) {
-		for (Field field : fields) {
-			params.add(field);
-		}
-		return _code();
-	}
-
 	@Override
-	public H parameterAnnotation(int parameter, Type type, Object value) {
-		thisParameteAnnotations.set(parameter, new Annotation(value, type));
+	public H parameterAnnotation(Type type, Object value) {
+		thisParameteAnnotations.set(definedParams.size() - 1, new Annotation(value, type));
 		return _header();
 	}
 

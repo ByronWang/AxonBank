@@ -37,32 +37,30 @@ public class MyBankAccountBuilder extends AsmBuilderHelper {
 	}
 
 	private static void visitDefine_init_withfields(ClassBody cw) {
-		cw.publicMethod("<init>").parameter("axonBankAccountId", String.class).parameter("overdraftLimit", long.class).code(38, mc -> {
-
-			mc.initObject();
-			mc.line(39).load(0, 1, 2);
-			mc.invokeSpecial("onCreated", String.class, long.class);
+		cw.publicMethod("<init>").parameter("axonBankAccountId", String.class).parameter("overdraftLimit", long.class).code(mc -> {
+			mc.line(38).initObject();
+			mc.line(39).load(0, 1, 2).me().invokeSpecial("onCreated", String.class, long.class);
 			mc.line(40).returnVoid();
 		});
 	}
 
 	private static void visitDefine_deposit(ClassBody cw) {
-		cw.publicMethod(boolean.class, "deposit").parameter("amount", long.class).code(44, mv -> {
-			mv.load(0, 1).invokeSpecial("onMoneyAdded", long.class);
+		cw.publicMethod(boolean.class, "deposit").parameter("amount", long.class).code(mv -> {
+			mv.line(44).load(0, 1).me().invokeSpecial("onMoneyAdded", long.class);
 			mv.line(45).insn(ICONST_1).returnType(boolean.class);
 		});
 	}
 
 	private static void visitDefine_withdraw(ClassBody cw) {
 		{
-			cw.publicMethod(boolean.class, "withdraw").parameter("amount", long.class).code(50, mc -> {
-				mc.load(1);
+			cw.publicMethod(boolean.class, "withdraw").parameter("amount", long.class).code(mc -> {
+				mc.line(50).load(1);
 				mc.block(v -> v.get("balance").get("overdraftLimit").insn(LADD));
 				mc.insn(LCMP);
 				Label ifEnd = mc.defineLabel();
 				mc.jumpInsn(IFGT, ifEnd);
 
-				mc.line(51).load(0, 1).invokeSpecial("onMoneySubtracted", long.class);
+				mc.line(51).load(0, 1).me().invokeSpecial("onMoneySubtracted", long.class);
 				mc.line(52).insn(ICONST_1).returnType(boolean.class);
 
 				mc.accessLabel(ifEnd, 54).insn(ICONST_0).returnType(boolean.class);
@@ -71,8 +69,8 @@ public class MyBankAccountBuilder extends AsmBuilderHelper {
 	}
 
 	private static void visitDefine_onCreated(ClassBody cw) {
-		cw.privateMethod("onCreated").parameter("axonBankAccountId", String.class).parameter("overdraftLimit", long.class).code(97, mc -> {
-			mc.put(1, "axonBankAccountId");
+		cw.privateMethod("onCreated").parameter("axonBankAccountId", String.class).parameter("overdraftLimit", long.class).code(mc -> {
+			mc.line(97).put(1, "axonBankAccountId");
 			mc.line(98).put(2, "overdraftLimit");
 			mc.line(99).load(0).insn(LCONST_0).put("balance");
 			mc.line(100).returnVoid();
@@ -80,8 +78,8 @@ public class MyBankAccountBuilder extends AsmBuilderHelper {
 	}
 
 	private static void visitDefine_onMoneyAdded(ClassBody cw) {
-		cw.privateMethod("onMoneyAdded").parameter("amount", long.class).code(104, mc -> {
-			mc.load(0);
+		cw.privateMethod("onMoneyAdded").parameter("amount", long.class).code(mc -> {
+			mc.line(104).load(0);
 			mc.get("balance").load(1).insn(LADD);
 			mc.put("balance");
 			mc.line(105).returnVoid();
@@ -89,8 +87,8 @@ public class MyBankAccountBuilder extends AsmBuilderHelper {
 	}
 
 	private static void visitDefine_onMoneySubtracted(ClassBody cw) {
-		cw.privateMethod("onMoneySubtracted").parameter("amount", long.class).code(109, mc -> {
-			mc.load(0);
+		cw.privateMethod("onMoneySubtracted").parameter("amount", long.class).code(mc -> {
+			mc.line(109).load(0);
 			mc.get("balance").load(1).insn(LSUB);
 			mc.put("balance");
 			mc.line(110).returnVoid();
@@ -99,8 +97,8 @@ public class MyBankAccountBuilder extends AsmBuilderHelper {
 	}
 
 	private static void visitDefine_init(ClassBody cw) {
-		cw.privateMethod("<init>").code(34, mc -> {
-			mc.initObject();
+		cw.privateMethod("<init>").code(mc -> {
+			mc.line(34).initObject();
 			mc.line(35).returnVoid();
 		});
 	}
