@@ -40,7 +40,7 @@ public class MyBankAccountBuilder extends AsmBuilderHelper {
 		{
 			MethodCode mc = cw.publicMethod("<init>").parameter("axonBankAccountId", String.class).parameter("overdraftLimit", long.class).begin(38);
 			mc.thisInitObject();
-			mc.line(39).load(0).load(1).load(2).thisInvokeSpecial("onCreated", String.class, long.class);
+			mc.line(39).load(0, 1, 2).thisInvokeSpecial("onCreated", String.class, long.class);
 			mc.line(40).returnVoid().end();
 		}
 	}
@@ -58,8 +58,7 @@ public class MyBankAccountBuilder extends AsmBuilderHelper {
 			MethodCode mv = cw.publicMethod(boolean.class, "withdraw").parameter("amount", long.class).begin(50);
 
 			mv.load(1);
-			mv.thisGetField("balance", long.class);
-			mv.thisGetField("overdraftLimit", long.class);
+			mv.thisGetField("balance", long.class).thisGetField("overdraftLimit", long.class);
 			mv.insn(LADD);
 			mv.insn(LCMP);
 			Label ifEnd = new Label();
@@ -100,7 +99,7 @@ public class MyBankAccountBuilder extends AsmBuilderHelper {
 			MethodCode mc = cw.privateMethod("onMoneySubtracted").parameter("amount", long.class).begin(109);
 			mc.load(0);
 			mc.thisGetField("balance", long.class).load(1).insn(LSUB);
-			mc.thisPutField("balance", Type.getType("J"));
+			mc.thisPutField("balance", long.class);
 			mc.line(110).returnVoid().end();
 		}
 	}
