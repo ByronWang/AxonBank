@@ -31,48 +31,48 @@ public class AsmBuilderHelper extends ASMBuilder implements Opcodes {
     }
 
     // Begin 5 Private return class,with classes
-    public static MethodHeader definePrivateMethod(ClassVisitor cw, Type objectType, Class<?> returnClass, String methodName) {
+    public static SimpleMethodHeader definePrivateMethod(ClassVisitor cw, Type objectType, Class<?> returnClass, String methodName) {
         return definePrivate(cw, objectType, typeOf(returnClass), methodName);
     }
 
     // Begin 1 Private return void,with void params
-    public static MethodHeader definePrivate(ClassVisitor cw, Type objectType, String methodName) {
+    public static SimpleMethodHeader definePrivate(ClassVisitor cw, Type objectType, String methodName) {
         return definePrivate(cw, objectType, Type.VOID_TYPE, methodName);
     }
     // End Private
 
-    public static MethodHeader definePrivate(ClassVisitor cw, Type objectType, Type returnType, String methodName) {
-        return new WeMethodVisitor(cw, objectType, ACC_PRIVATE, returnType, methodName);
+    public static SimpleMethodHeader definePrivate(ClassVisitor cw, Type objectType, Type returnType, String methodName) {
+        return new SimpleMethodVisitor(cw, objectType, ACC_PRIVATE, returnType, methodName);
     }
 
     // Begin 5 Protected return class,with classes
-    public static MethodHeader defineProtected(ClassVisitor cw, Type objectType, Class<?> returnClass, String methodName) {
+    public static SimpleMethodHeader defineProtected(ClassVisitor cw, Type objectType, Class<?> returnClass, String methodName) {
         return defineProtected(cw, objectType, typeOf(returnClass), methodName);
     }
 
     // Begin 1 Protected return void,with void params
-    public static MethodHeader defineProtected(ClassVisitor cw, Type objectType, String methodName) {
+    public static SimpleMethodHeader defineProtected(ClassVisitor cw, Type objectType, String methodName) {
         return defineProtected(cw, objectType, Type.VOID_TYPE, methodName);
     }
 
     // End Private
 
-    public static MethodHeader defineProtected(ClassVisitor cw, Type objectType, Type returnType, String methodName) {
-        return new WeMethodVisitor(cw, objectType, ACC_PROTECTED, returnType, methodName);
+    public static SimpleMethodHeader defineProtected(ClassVisitor cw, Type objectType, Type returnType, String methodName) {
+        return new SimpleMethodVisitor(cw, objectType, ACC_PROTECTED, returnType, methodName);
     }
 
     // Begin 5 Public return class,with classes
-    public static MethodHeader definePublic(ClassVisitor cw, Type objectType, Class<?> returnClass, String methodName) {
+    public static SimpleMethodHeader definePublic(ClassVisitor cw, Type objectType, Class<?> returnClass, String methodName) {
         return definePublic(cw, objectType, typeOf(returnClass), methodName);
     }
 
     // Begin 1 Public return void,with void params
-    public static MethodHeader definePublic(ClassVisitor cw, Type objectType, String methodName) {
+    public static SimpleMethodHeader definePublic(ClassVisitor cw, Type objectType, String methodName) {
         return definePublic(cw, objectType, Type.VOID_TYPE, methodName);
     }
 
-    public static MethodHeader definePublic(ClassVisitor cw, Type objectType, Type returnType, String methodName) {
-        return new WeMethodVisitor(cw, objectType, ACC_PUBLIC, returnType, methodName);
+    public static SimpleMethodHeader definePublic(ClassVisitor cw, Type objectType, Type returnType, String methodName) {
+        return new SimpleMethodVisitor(cw, objectType, ACC_PUBLIC, returnType, methodName);
     }
 
     public static Type typeOf(Class<?> clz) {

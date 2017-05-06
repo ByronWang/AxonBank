@@ -4,22 +4,23 @@ import java.util.function.Consumer;
 
 import org.objectweb.asm.Type;
 
-interface MethodHeader extends Types {
-	MethodHeader annotation(Type type, String value);
+interface MethodHeader<H, C> extends Types {
 
-	MethodCode code(Consumer<MethodCode> invocation);
+	H annotation(Type type, String value);
 
-	MethodCode code(int line, Consumer<MethodCode> invocation);
+	C code(Consumer<C> invocation);
 
-	MethodHeader parameter(Field field);
+	C code(int line, Consumer<C> invocation);
 
-	default MethodHeader parameter(String fieldName, Type fieldType) {
+	H parameter(Field field);
+
+	H parameterAnnotation(int parameter, Type type, Object value);
+
+	default H parameter(String fieldName, Type fieldType) {
 		return parameter(new Field(fieldName, fieldType));
 	}
 
-	default MethodHeader parameter(String fieldName, Class<?> clz) {
+	default H parameter(String fieldName, Class<?> clz) {
 		return parameter(new Field(fieldName, typeOf(clz)));
-	}
-
-	MethodHeader parameterAnnotation(int parameter, Type type, Object value);;
+	};
 }

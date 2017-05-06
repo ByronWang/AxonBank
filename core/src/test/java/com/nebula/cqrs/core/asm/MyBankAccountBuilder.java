@@ -15,7 +15,7 @@ public class MyBankAccountBuilder extends AsmBuilderHelper {
 
 		ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
 
-		ClassBody cw = new WeClassVisitor(classWriter, objectType);
+		ClassBody cw = new SimpleClassVisitor(classWriter, objectType);
 		cw.annotation(Aggregate.class);
 		cw.annotation(CqrsEntity.class);
 
@@ -39,42 +39,42 @@ public class MyBankAccountBuilder extends AsmBuilderHelper {
 	private static void visitDefine_init_withfields(ClassBody cw) {
 		cw.publicMethod("<init>").parameter("axonBankAccountId", String.class).parameter("overdraftLimit", long.class).code(38, mc -> {
 
-			mc.thisInitObject();
-			mc.line(39).load(0, 1, 2).thisInvokeSpecial("onCreated", String.class, long.class);
+			mc.initObject();
+			mc.line(39).load(0, 1, 2);
+			mc.invokeSpecial("onCreated", String.class, long.class);
 			mc.line(40).returnVoid();
 		});
 	}
 
 	private static void visitDefine_deposit(ClassBody cw) {
 		cw.publicMethod(boolean.class, "deposit").parameter("amount", long.class).code(44, mv -> {
-			mv.load(0, 1).thisInvokeSpecial("onMoneyAdded", long.class);
+			mv.load(0, 1).invokeSpecial("onMoneyAdded", long.class);
 			mv.line(45).insn(ICONST_1).returnType(boolean.class);
 		});
 	}
 
 	private static void visitDefine_withdraw(ClassBody cw) {
 		{
-			cw.publicMethod(boolean.class, "withdraw").parameter("amount", long.class).code(50, mv -> {
-				mv.load(1);
-				mv.visit(mc -> mc.thisGetField("balance", long.class).thisGetField("overdraftLimit", long.class).insn(LADD));
-				mv.insn(LCMP);
-				Label ifEnd = new Label();
-				mv.jumpInsn(IFGT, ifEnd);
+			cw.publicMethod(boolean.class, "withdraw").parameter("amount", long.class).code(50, mc -> {
+				mc.load(1);
+				mc.block(v -> v.get("balance").get("overdraftLimit").insn(LADD));
+				mc.insn(LCMP);
+				Label ifEnd = mc.defineLabel();
+				mc.jumpInsn(IFGT, ifEnd);
 
-				mv.line(51).load(0, 1).thisInvokeSpecial("onMoneySubtracted", long.class);
-				mv.line(52).insn(ICONST_1).returnType(boolean.class);
+				mc.line(51).load(0, 1).invokeSpecial("onMoneySubtracted", long.class);
+				mc.line(52).insn(ICONST_1).returnType(boolean.class);
 
-				mv.visit(ifEnd, 54).insn(ICONST_0).returnType(boolean.class);
+				mc.accessLabel(ifEnd, 54).insn(ICONST_0).returnType(boolean.class);
 			});
-
 		}
 	}
 
 	private static void visitDefine_onCreated(ClassBody cw) {
 		cw.privateMethod("onCreated").parameter("axonBankAccountId", String.class).parameter("overdraftLimit", long.class).code(97, mc -> {
-			mc.thisPutField(1, "axonBankAccountId", String.class);
-			mc.line(98).thisPutField(2, "overdraftLimit", long.class);
-			mc.line(99).load(0).insn(LCONST_0).thisPutField("balance", long.class);
+			mc.put(1, "axonBankAccountId");
+			mc.line(98).put(2, "overdraftLimit");
+			mc.line(99).load(0).insn(LCONST_0).put("balance");
 			mc.line(100).returnVoid();
 		});
 	}
@@ -82,8 +82,8 @@ public class MyBankAccountBuilder extends AsmBuilderHelper {
 	private static void visitDefine_onMoneyAdded(ClassBody cw) {
 		cw.privateMethod("onMoneyAdded").parameter("amount", long.class).code(104, mc -> {
 			mc.load(0);
-			mc.thisGetField("balance", long.class).load(1).insn(LADD);
-			mc.thisPutField("balance", long.class);
+			mc.get("balance").load(1).insn(LADD);
+			mc.put("balance");
 			mc.line(105).returnVoid();
 		});
 	}
@@ -91,8 +91,8 @@ public class MyBankAccountBuilder extends AsmBuilderHelper {
 	private static void visitDefine_onMoneySubtracted(ClassBody cw) {
 		cw.privateMethod("onMoneySubtracted").parameter("amount", long.class).code(109, mc -> {
 			mc.load(0);
-			mc.thisGetField("balance", long.class).load(1).insn(LSUB);
-			mc.thisPutField("balance", long.class);
+			mc.get("balance").load(1).insn(LSUB);
+			mc.put("balance");
 			mc.line(110).returnVoid();
 		});
 
@@ -100,7 +100,7 @@ public class MyBankAccountBuilder extends AsmBuilderHelper {
 
 	private static void visitDefine_init(ClassBody cw) {
 		cw.privateMethod("<init>").code(34, mc -> {
-			mc.thisInitObject();
+			mc.initObject();
 			mc.line(35).returnVoid();
 		});
 	}

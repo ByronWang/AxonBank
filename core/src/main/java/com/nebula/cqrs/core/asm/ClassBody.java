@@ -49,41 +49,41 @@ public interface ClassBody extends Types, Opcodes {
 		return field(new Field(name, annotationType), annotationType, value);
 	}
 
-	MethodHeader method(int access, Type returnType, String methodName);
+	ClassMethodHeader method(int access, Type returnType, String methodName);
 
-	default MethodHeader privateMethod(Class<?> returnClass, String methodName) {
+	default ClassMethodHeader privateMethod(Class<?> returnClass, String methodName) {
 		return method(ACC_PRIVATE, typeOf(returnClass), methodName);
 	}
 
-	default MethodHeader privateMethod(String methodName) {
+	default ClassMethodHeader privateMethod(String methodName) {
 		return method(ACC_PRIVATE, Type.VOID_TYPE, methodName);
 	}
 
-	default MethodHeader privateMethod(Type returnType, String methodName) {
+	default ClassMethodHeader privateMethod(Type returnType, String methodName) {
 		return method(ACC_PRIVATE, returnType, methodName);
 	}
 
-	default MethodHeader protectdMethod(Class<?> returnClass, String methodName) {
+	default ClassMethodHeader protectdMethod(Class<?> returnClass, String methodName) {
 		return method(ACC_PROTECTED, typeOf(returnClass), methodName);
 	}
 
-	default MethodHeader protectdMethod(String methodName) {
+	default ClassMethodHeader protectdMethod(String methodName) {
 		return method(ACC_PROTECTED, Type.VOID_TYPE, methodName);
 	}
 
-	default MethodHeader protectdMethod(Type returnType, String methodName) {
+	default ClassMethodHeader protectdMethod(Type returnType, String methodName) {
 		return method(ACC_PROTECTED, returnType, methodName);
 	}
 
-	default MethodHeader publicMethod(Class<?> returnClass, String methodName) {
+	default ClassMethodHeader publicMethod(Class<?> returnClass, String methodName) {
 		return method(ACC_PUBLIC, typeOf(returnClass), methodName);
 	}
 
-	default MethodHeader publicMethod(String methodName) {
+	default ClassMethodHeader publicMethod(String methodName) {
 		return method(ACC_PUBLIC, Type.VOID_TYPE, methodName);
 	}
 
-	default MethodHeader publicMethod(Type returnType, String methodName) {
+	default ClassMethodHeader publicMethod(Type returnType, String methodName) {
 		return method(ACC_PUBLIC, returnType, methodName);
 	}
 

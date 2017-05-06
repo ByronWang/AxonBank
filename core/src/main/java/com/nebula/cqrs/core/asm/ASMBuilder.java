@@ -55,8 +55,8 @@ public class ASMBuilder {
 		return types.toArray(new Type[0]);
 	}
 
-	public static void visitAnnotation(FieldVisitor fv, Type annotationType, Object value) {
-		AnnotationVisitor av0 = fv.visitAnnotation(annotationType.getDescriptor(), true);
+	public static void visitAnnotation(ClassVisitor cv, Type annotationType, Object value) {
+		AnnotationVisitor av0 = cv.visitAnnotation(annotationType.getDescriptor(), true);
 		if (value != null) {
 			AnnotationVisitor av1 = av0.visitArray("value");
 			av1.visit(null, value);
@@ -65,8 +65,8 @@ public class ASMBuilder {
 		av0.visitEnd();
 	}
 
-	public static void visitAnnotation(ClassVisitor cv, Type annotationType, Object value) {
-		AnnotationVisitor av0 = cv.visitAnnotation(annotationType.getDescriptor(), true);
+	public static void visitAnnotation(FieldVisitor fv, Type annotationType, Object value) {
+		AnnotationVisitor av0 = fv.visitAnnotation(annotationType.getDescriptor(), true);
 		if (value != null) {
 			AnnotationVisitor av1 = av0.visitArray("value");
 			av1.visit(null, value);
@@ -83,34 +83,6 @@ public class ASMBuilder {
 			av1.visitEnd();
 		}
 		av0.visitEnd();
-	}
-
-	public static void visitParameterAnnotation(MethodVisitor mv, int parameter, Type annotationType, Object value) {
-		AnnotationVisitor av0 = mv.visitParameterAnnotation(parameter, annotationType.getDescriptor(), true);
-		if (value != null) {
-			AnnotationVisitor av1 = av0.visitArray("value");
-			av1.visit(null, value);
-			av1.visitEnd();
-		}
-		av0.visitEnd();
-	}
-
-	public static void visitReturnObject(MethodVisitor mv) {
-		mv.visitInsn(ARETURN);
-	}
-
-	public static void visitReturnType(MethodVisitor mv, Type type) {
-		mv.visitInsn(type.getOpcode(IRETURN));
-	}
-
-	public static MethodVisitor visitDefineMethod(ClassVisitor cw, Type returnType, String methodName, Type... paramTypes) {
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, methodName, Type.getMethodDescriptor(returnType, paramTypes), null, null);
-		return mv;
-	}
-
-	public static MethodVisitor visitDefineMethod(int access, ClassVisitor cw, Type returnType, String methodName, Type... paramTypes) {
-		MethodVisitor mv = cw.visitMethod(access, methodName, Type.getMethodDescriptor(returnType, paramTypes), null, null);
-		return mv;
 	}
 
 	public static void visitDefine_init_withNothing(ClassVisitor cw, Type objectType) {
@@ -130,6 +102,11 @@ public class ASMBuilder {
 		mv.visitEnd();
 	}
 
+	public static void visitDefineField(ClassVisitor cw, String fieldName, Type fieldType) {
+		FieldVisitor fv = cw.visitField(ACC_PRIVATE, fieldName, fieldType.getDescriptor(), null, null);
+		fv.visitEnd();
+	}
+
 	public static FieldVisitor visitDefineField(ClassVisitor cw, String fieldName, Type fieldType, Type annotationType, Object value) {
 		FieldVisitor fv = cw.visitField(ACC_PRIVATE, fieldName, fieldType.getDescriptor(), null, null);
 		if (annotationType != null) visitAnnotation(fv, annotationType, value);
@@ -137,9 +114,14 @@ public class ASMBuilder {
 		return fv;
 	}
 
-	public static void visitDefineField(ClassVisitor cw, String fieldName, Type fieldType) {
-		FieldVisitor fv = cw.visitField(ACC_PRIVATE, fieldName, fieldType.getDescriptor(), null, null);
-		fv.visitEnd();
+	public static MethodVisitor visitDefineMethod(ClassVisitor cw, Type returnType, String methodName, Type... paramTypes) {
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, methodName, Type.getMethodDescriptor(returnType, paramTypes), null, null);
+		return mv;
+	}
+
+	public static MethodVisitor visitDefineMethod(int access, ClassVisitor cw, Type returnType, String methodName, Type... paramTypes) {
+		MethodVisitor mv = cw.visitMethod(access, methodName, Type.getMethodDescriptor(returnType, paramTypes), null, null);
+		return mv;
 	}
 
 	public static void visitDefinePropertyGet(ClassVisitor cw, Type objectType, String fieldName, Type fieldType) {
@@ -195,10 +177,6 @@ public class ASMBuilder {
 		mv.visitMethodInsn(INVOKEVIRTUAL, objectType.getInternalName(), toPropertyGetName(fieldName), Type.getMethodDescriptor(fieldType), false);
 	}
 
-	public static void visitSetProperty(MethodVisitor mv, Type objectType, String fieldName, Type fieldType) {
-		mv.visitMethodInsn(INVOKEVIRTUAL, objectType.getInternalName(), toPropertySetName(fieldName), Type.getMethodDescriptor(Type.VOID_TYPE, fieldType), false);
-	}
-
 	public static void visitInitObject(MethodVisitor mv, int index) {
 		mv.visitVarInsn(ALOAD, index);
 		mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
@@ -206,6 +184,10 @@ public class ASMBuilder {
 
 	public static void visitInitTypeWithAllFields(MethodVisitor mv, Type objectType, Type... paramTypes) {
 		mv.visitMethodInsn(INVOKESPECIAL, objectType.getInternalName(), "<init>", Type.getMethodDescriptor(Type.VOID_TYPE, paramTypes), false);
+	}
+
+	public static void visitInvoke(int opcode, MethodVisitor mv, Type objectType, Type returnType, String methodName, Type... paramTypes) {
+		mv.visitMethodInsn(opcode, objectType.getInternalName(), methodName, Type.getMethodDescriptor(returnType, paramTypes), opcode == INVOKEINTERFACE);
 	}
 
 	public static void visitInvokeInterface(MethodVisitor mv, int objectIndex, Type objectType, Type returnType, String methodName, Type... paramTypes) {
@@ -288,6 +270,16 @@ public class ASMBuilder {
 	// "(Ljava/lang/String;)V", false);
 	// }
 
+	public static void visitParameterAnnotation(MethodVisitor mv, int parameter, Type annotationType, Object value) {
+		AnnotationVisitor av0 = mv.visitParameterAnnotation(parameter, annotationType.getDescriptor(), true);
+		if (value != null) {
+			AnnotationVisitor av1 = av0.visitArray("value");
+			av1.visit(null, value);
+			av1.visitEnd();
+		}
+		av0.visitEnd();
+	}
+
 	public static void visitPutField(MethodVisitor mv, int objectIndex, Type objectType, int dataIndex, String fieldName, Type fieldType) {
 		mv.visitVarInsn(ALOAD, objectIndex);
 		mv.visitVarInsn(fieldType.getOpcode(ILOAD), dataIndex);
@@ -304,6 +296,19 @@ public class ASMBuilder {
 
 	public static void visitReturn(MethodVisitor mv, Type fieldType) {
 		mv.visitInsn(fieldType.getOpcode(IRETURN));
+	}
+
+	public static void visitReturnObject(MethodVisitor mv) {
+		mv.visitInsn(ARETURN);
+	}
+
+	public static void visitReturnType(MethodVisitor mv, Type type) {
+		mv.visitInsn(type.getOpcode(IRETURN));
+	}
+
+	public static void visitSetProperty(MethodVisitor mv, Type objectType, String fieldName, Type fieldType) {
+		mv.visitMethodInsn(INVOKEVIRTUAL, objectType.getInternalName(), toPropertySetName(fieldName), Type.getMethodDescriptor(Type.VOID_TYPE, fieldType),
+		        false);
 	}
 
 	// public static void visitSetProperty(MethodVisitor mv, int objectIndex,

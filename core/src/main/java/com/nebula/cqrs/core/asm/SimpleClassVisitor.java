@@ -1,21 +1,26 @@
 package com.nebula.cqrs.core.asm;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 import com.nebula.cqrs.axon.asm.ClassUtils;
 
-public class WeClassVisitor extends ClassVisitor implements Opcodes, ClassBody {
+public class SimpleClassVisitor extends ClassVisitor implements Opcodes, ClassBody {
 	final static int THIS = 0;
 	final static String THIS_NAME = "this";
 	private final Type thisType;
 
-	public WeClassVisitor(ClassVisitor cv, Type thisType) {
+	Map<String, Field> fields = new HashMap<>();
+
+	public SimpleClassVisitor(ClassVisitor cv, Type thisType) {
 		this(cv, thisType, Type.getType(Object.class));
 	}
 
-	public WeClassVisitor(ClassVisitor cv, Type thisType, Type superType) {
+	public SimpleClassVisitor(ClassVisitor cv, Type thisType, Type superType) {
 		super(Opcodes.ASM5);
 		this.cv = cv;
 		this.thisType = thisType;
@@ -27,12 +32,14 @@ public class WeClassVisitor extends ClassVisitor implements Opcodes, ClassBody {
 
 	@Override
 	public ClassBody field(Field field) {
+		fields.put(field.name, field);
 		ASMBuilder.visitDefineField(cv, field.name, field.type);
 		return this;
 	}
 
 	@Override
 	public ClassBody field(Field field, Type annotationType, Object value) {
+		fields.put(field.name, field);
 		ASMBuilder.visitDefineField(cv, field.name, field.type, annotationType, value);
 		return this;
 	}
@@ -49,7 +56,7 @@ public class WeClassVisitor extends ClassVisitor implements Opcodes, ClassBody {
 	}
 
 	@Override
-	public MethodHeader method(int access, Type returnType, String methodName) {
-		return new WeMethodVisitor(cv, thisType, access, returnType, methodName);
+	public ClassMethodHeader method(int access, Type returnType, String methodName) {
+		return new ClassMethodVisitor(this, thisType, access, returnType, methodName);
 	}
 }
