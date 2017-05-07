@@ -99,7 +99,7 @@ public class MyBankAccountCommandHandlerBuilder implements Opcodes {
 		Type commandHandlerType = Type.getType("Lorg/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountCommandHandler;");
 		Type commandType = Type.getType("Lorg/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountDepositCommand;");
 
-		cw.publicMethod("handle", Exception.class).annotation(CommandHandler.class).parameter("command", commandType).code(mv -> {
+		cw.publicMethod("handle").annotation(CommandHandler.class).parameter("command", commandType).code(mv -> {
 			Type domainType = Type.getType("Lorg/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountImpl;");
 			Type callerType = Type.getType("org/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountCommandHandler$InnerDeposit");
 			mv.localVariable("aggregate", Aggregate.class, domainType);

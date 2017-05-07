@@ -1,6 +1,6 @@
 package com.nebula.cqrs.core.asm;
 
-interface SimpleMethodCode extends Types, MethodCode<SimpleMethodCode> {
+interface SimpleMethodCode extends Types, MethodCode<SimpleUseCaller<SimpleMethodCode>,SimpleMethodCode> {
 	@Override
 	default SimpleMethodCode localVariable(String name, Class<?> clz) {
 		return localVariable(name, typeOf(clz));

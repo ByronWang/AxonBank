@@ -5,7 +5,7 @@ import java.util.function.Consumer;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 
-interface MethodCode<C> extends Types {
+interface MethodCode<M, C extends MethodCode<M, C>> extends Types {
 
 	C accessLabel(Label label);
 
@@ -17,9 +17,23 @@ interface MethodCode<C> extends Types {
 
 	C insn(int d);
 
+	M use(int... varIndex);
+
+	default M use(String... varNames) {
+		return use(vars(varNames));
+	}
+
 	Instance<C> object(int index);
 
 	int var(String variableName);
+
+	default int[] vars(String... varNames) {
+		int[] vars = new int[varNames.length];
+		for (int i = 0; i < varNames.length; i++) {
+			vars[i] = var(varNames[i]);
+		}
+		return vars;
+	}
 
 	default Instance<C> object(String variableName) {
 		return object(var(variableName));
@@ -38,9 +52,7 @@ interface MethodCode<C> extends Types {
 	void load(int... index);
 
 	default void load(String... varNames) {
-		for (String varName : varNames) {
-			load(var(varName));
-		}
+		load(vars(varNames));
 	}
 
 	C store(int index);

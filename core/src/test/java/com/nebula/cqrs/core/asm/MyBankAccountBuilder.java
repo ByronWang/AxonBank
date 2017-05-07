@@ -39,16 +39,14 @@ public class MyBankAccountBuilder extends AsmBuilderHelper {
 	private static void visitDefine_init_withfields(ClassBody cw) {
 		cw.publicMethod("<init>").parameter("axonBankAccountId", String.class).parameter("overdraftLimit", long.class).code(mc -> {
 			mc.line(38).initObject();
-			mc.line(39).load("this", "axonBankAccountId", "overdraftLimit");
-			mc.thisType().invokeSpecial("onCreated", String.class, long.class);
+			mc.line(39).use("this", "axonBankAccountId", "overdraftLimit").invokeSpecial("onCreated", String.class, long.class);
 			mc.line(40).returnVoid();
 		});
 	}
 
 	private static void visitDefine_deposit(ClassBody cw) {
 		cw.publicMethod(boolean.class, "deposit").parameter("amount", long.class).code(mv -> {
-			mv.line(44).load("this", "amount");
-			mv.thisType().invokeSpecial("onMoneyAdded", long.class);
+			mv.line(44).use("this", "amount").invokeSpecial("onMoneyAdded", long.class);
 			mv.line(45).insn(ICONST_1).returnType(boolean.class);
 		});
 	}
@@ -66,8 +64,7 @@ public class MyBankAccountBuilder extends AsmBuilderHelper {
 				Label ifEnd = mc.defineLabel();
 				mc.jumpInsn(IFGT, ifEnd);
 
-				mc.line(51).load("this", "amount");
-				mc.thisType().invokeSpecial("onMoneySubtracted", long.class);
+				mc.line(51).use("this", "amount").invokeSpecial("onMoneySubtracted", long.class);
 				mc.line(52).insn(ICONST_1).returnType(boolean.class);
 
 				mc.accessLabel(ifEnd, 54);
@@ -80,20 +77,18 @@ public class MyBankAccountBuilder extends AsmBuilderHelper {
 		cw.privateMethod("onCreated").parameter("axonBankAccountId", String.class).parameter("overdraftLimit", long.class).code(mc -> {
 			mc.line(97).put("axonBankAccountId", "axonBankAccountId");
 			mc.line(98).put("overdraftLimit", "overdraftLimit");
-			mc.line(99).loadThis();
-			mc.insn(LCONST_0);
-			mc.putTopTo("balance");
+			mc.line(99).useThis().with(e -> e.insn(LCONST_0)).putTopTo("balance");
 			mc.line(100).returnVoid();
 		});
 	}
 
 	private static void visitDefine_onMoneyAdded(ClassBody cw) {
 		cw.privateMethod("onMoneyAdded").parameter("amount", long.class).code(mc -> {
-			mc.line(104).loadThis();
-			mc.get("balance");
-			mc.load("amount");
-			mc.insn(LADD);
-			mc.putTopTo("balance");
+			mc.line(104).useThis().with(e -> {
+			    e.get("balance");
+			    e.load("amount");
+			    e.insn(LADD);
+		    }).putTopTo("balance");
 			mc.line(105).returnVoid();
 		});
 	}

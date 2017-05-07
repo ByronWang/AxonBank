@@ -3,8 +3,26 @@ package com.nebula.cqrs.core.asm;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-public class ClassMethodVisitor extends AbstractMethodVistor<ClassMethodHeader, ClassMethodCode>
+public class ClassMethodVisitor extends AbstractMethodVistor<ClassMethodHeader, ClassUseCaller, ClassMethodCode>
         implements ClassMethodHeader, ClassMethodCode, ClassThisInstance, Opcodes {
+	class RealThisUseCaller extends RealUseCaller implements ClassUseCaller {
+
+		public RealThisUseCaller(Type objectType) {
+			super(objectType);
+		}
+
+		@Override
+		ClassUseCaller caller() {
+			return this;
+		}
+
+		@Override
+		public ClassMethodCode putTopTo(String fieldName) {
+			return putTopTo(cv.fields.get(fieldName));
+		}
+
+	}
+
 	class ThisInstance extends MyInstance implements ClassThisInstance {
 
 		@Override
@@ -97,6 +115,11 @@ public class ClassMethodVisitor extends AbstractMethodVistor<ClassMethodHeader, 
 	}
 
 	@Override
+	ClassUseCaller makeCaller(Type type) {
+		return new RealThisUseCaller(type);
+	}
+
+	@Override
 	public ClassMethodCode put(int dataIndex, Field field) {
 		return loadThis().put(dataIndex, field);
 	}
@@ -124,5 +147,11 @@ public class ClassMethodVisitor extends AbstractMethodVistor<ClassMethodHeader, 
 	@Override
 	public ClassType<ClassMethodCode> thisType() {
 		return type(thisObjectType);
+	}
+
+	@Override
+	public ClassUseCaller useThis() {
+		loadThis();
+		return new RealThisUseCaller(thisObjectType);
 	}
 }
