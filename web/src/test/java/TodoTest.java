@@ -2,7 +2,6 @@
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import org.axonframework.samples.bank.web.BankAccountController;
 import org.axonframework.samples.bankcqrssrc.generatedsources.MyBankAccountCommandHandler;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -11,7 +10,7 @@ import org.objectweb.asm.util.TraceClassVisitor;
 
 public class TodoTest {
 
-	public static void main(String[] args) throws IOException {		
+	public static void main(String[] args) throws IOException {
 		ClassReader cr = new ClassReader(MyBankAccountCommandHandler.class.getName());
 		ClassVisitor visitor = new TraceClassVisitor(null, new ASMifier(), new PrintWriter(System.out));
 		cr.accept(visitor, ClassReader.EXPAND_FRAMES);
