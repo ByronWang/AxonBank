@@ -37,8 +37,10 @@ interface MethodCode<C> extends Types {
 
 	void load(int... index);
 
-	default void load(String varName) {
-		load(var(varName));
+	default void load(String... varNames) {
+		for (String varName : varNames) {
+			load(var(varName));
+		}
 	}
 
 	C store(int index);

@@ -5,10 +5,6 @@ import org.objectweb.asm.Type;
 
 public class ClassMethodVisitor extends AbstractMethodVistor<ClassMethodHeader, ClassMethodCode>
         implements ClassMethodHeader, ClassMethodCode, ClassThisInstance, Opcodes {
-	SimpleClassVisitor cv;
-
-	ThisInstance thisInstance = new ThisInstance();
-
 	class ThisInstance extends MyInstance implements ClassThisInstance {
 
 		@Override
@@ -17,13 +13,19 @@ public class ClassMethodVisitor extends AbstractMethodVistor<ClassMethodHeader, 
 		}
 
 		@Override
+		public Instance<ClassMethodCode> getProperty(String fieldName) {
+			return getProperty(cv.fields.get(fieldName));
+		}
+
+		@Override
 		public ClassMethodCode put(int dataIndex, String fieldName) {
 			return put(dataIndex, cv.fields.get(fieldName));
 		}
 
 		@Override
-		public Instance<ClassMethodCode> getProperty(String fieldName) {
-			return getProperty(cv.fields.get(fieldName));
+		public ClassMethodCode put(String varName, String fieldName) {
+			// TODO Auto-generated method stub
+			return null;
 		}
 
 		@Override
@@ -32,6 +34,10 @@ public class ClassMethodVisitor extends AbstractMethodVistor<ClassMethodHeader, 
 		}
 
 	}
+
+	SimpleClassVisitor cv;
+
+	ThisInstance thisInstance = new ThisInstance();
 
 	public ClassMethodVisitor(SimpleClassVisitor cv, Type thisType, int access, Type returnType, String methodName, Class<?>... exceptionClasses) {
 		super(cv, thisType, access, returnType, methodName, exceptionClasses);
@@ -98,6 +104,11 @@ public class ClassMethodVisitor extends AbstractMethodVistor<ClassMethodHeader, 
 	@Override
 	public ClassMethodCode put(int dataIndex, String fieldName) {
 		return loadThis().put(dataIndex, cv.fields.get(fieldName));
+	}
+
+	@Override
+	public ClassMethodCode put(String varName, String fieldName) {
+		return loadThis().put(var(fieldName), cv.fields.get(fieldName));
 	}
 
 	@Override

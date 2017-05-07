@@ -7,6 +7,8 @@ public interface ClassThisInstance extends Types, Instance<ClassMethodCode> {
 
 	ClassMethodCode put(int dataIndex, String fieldName);
 
+	ClassMethodCode put(String varName, String fieldName);
+
 	Instance<ClassMethodCode> getProperty(String fieldName);
 
 	ClassMethodCode putTopTo(Field field);
