@@ -5,7 +5,7 @@ import java.util.function.Consumer;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 
-interface MethodCode<C, I> extends Types {
+interface MethodCode<C> extends Types {
 
 	C accessLabel(Label label);
 
@@ -16,27 +16,74 @@ interface MethodCode<C, I> extends Types {
 	Label defineLabel();
 
 	C insn(int d);
-	
-	I object(Type objectType);
 
-	default I object(Class<?> returnClass) {
-		return object(typeOf(returnClass));
+	Instance<C> object(int index);
+
+	int var(String variableName);
+
+	default Instance<C> object(String variableName) {
+		return object(var(variableName));
+	}
+
+	ClassType<C> type(Type objectType);
+
+	default ClassType<C> type(Class<?> returnClass) {
+		return type(typeOf(returnClass));
 	}
 
 	C jumpInsn(int ifgt, Label label);
 
 	C line(int line);
 
-	C load(int... index);
+	void load(int... index);
 
-	default C localVariable(String name, Class<?> clz) {
-		return localVariable(name, typeOf(clz));
+	default void load(String varName) {
+		load(var(varName));
 	}
-	
 
-	C localVariable(String name, Type type);
+	C store(int index);
 
-	I me();
+	default C store(String varName) {
+		return store(var(varName));
+	}
+
+	default C localVariable(Field field) {
+		return localVariable(field.name, field.type);
+	}
+
+	default C localVariable(String fieldName, Class<?> clz) {
+		return localVariable(fieldName, typeOf(clz));
+	}
+
+	default C localVariable(String fieldName, Class<?> clz, Class<?>... signatureClasses) {
+		return localVariable(fieldName, typeOf(clz), typesOf(signatureClasses));
+	}
+
+	default C localVariable(String fieldName, Class<?> clz, String signature) {
+		return localVariable(fieldName, typeOf(clz), signature);
+	}
+
+	default C localVariable(String fieldName, Class<?> clz, Type... signatureTypes) {
+		return localVariable(fieldName, typeOf(clz), signatureTypes);
+	}
+
+	C localVariable(String fieldName, Type fieldType, String signature);;
+
+	default C localVariable(String fieldName, Type fieldType, Type... signatureTypes) {
+		String signature = null;
+		if (signatureTypes != null && signatureTypes.length > 0) {
+			StringBuilder sb = new StringBuilder();
+			sb.append("L");
+			sb.append(fieldType.getInternalName());
+			sb.append("<");
+			for (Type signatureType : signatureTypes) {
+				sb.append(signatureType.getDescriptor());
+			}
+			sb.append(">;");
+			signature = sb.toString();
+		}
+		return localVariable(fieldName, fieldType, signature);
+	};
 
 	C returnObject();
 

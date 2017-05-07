@@ -1,13 +1,9 @@
 package com.nebula.cqrs.core.asm;
 
-public interface ClassMethodCode extends MethodCode<ClassMethodCode, Instance<ClassMethodCode>> {
-	ClassMethodCode get(String fieldName);
+public interface ClassMethodCode extends ClassThisInstance, MethodCode<ClassMethodCode> {
+	ClassThisInstance loadThis();
 
-	ClassMethodCode put(String fieldName);
-
-	ClassMethodCode put(int dataIndex, String fieldName);
-
-	ClassMethodCode getProperty(String fieldName);
+	ClassType<ClassMethodCode> thisType();
 
 	ClassMethodCode initObject();
 }

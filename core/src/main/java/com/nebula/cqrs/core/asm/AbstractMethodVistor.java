@@ -1,30 +1,19 @@
 package com.nebula.cqrs.core.asm;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Stack;
 import java.util.function.Consumer;
 
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-public abstract class AbstractMethodVistor<H, C> extends MethodVisitor implements MethodCode<C, Instance<C>>, Instance<C>, MethodHeader<H, C> {
-
-	@Override
-	public C newInstace() {
-		ASMBuilder.visitNewObject(mv, targetType);
-		return _code();
-	}
-
-	Type targetType;
-
-	@Override
-	public Instance<C> object(Type targetType) {
-		this.targetType = targetType;
-		return (Instance<C>) this;
-	}
+public abstract class AbstractMethodVistor<H, C> extends MethodVisitor implements MethodCode<C>, MethodHeader<H, C>, Opcodes {
 
 	class Annotation {
 		int parameter;
@@ -47,11 +36,84 @@ public abstract class AbstractMethodVistor<H, C> extends MethodVisitor implement
 		}
 	}
 
+	class MyClassType implements ClassType<C> {
+		Type currentClassType;
+
+		@Override
+		public C newInstace() {
+			ASMBuilder.visitNewObject(mv, currentClassType);
+			return _code();
+		}
+
+		@Override
+		public void invoke(int invoketype, String methodName, Type... params) {
+			ASMBuilder.visitInvoke(invoketype, mv, currentClassType, Type.VOID_TYPE, methodName, params);
+		}
+
+		@Override
+		public Instance<C> invoke(int invoketype, Type returnType, String methodName, Type... params) {
+			ASMBuilder.visitInvoke(invoketype, mv, currentClassType, returnType, methodName, params);
+			return top(returnType);
+		}
+
+		@Override
+		public C putTopTo(Field field) {
+			ASMBuilder.visitPutField(mv, currentClassType, field.name, field.type);
+			return _code();
+		}
+	}
+
+	protected Instance<C> top(Type type) {
+		currentClassType.currentClassType = type;
+		return currentInstance;
+	}
+
+	class MyInstance implements Instance<C> {
+		int index;
+
+		@Override
+		public Instance<C> get(Field field) {
+			ASMBuilder.visitGetField(mv, currentClassType.currentClassType, field.name, field.type);
+			return top(field.type);
+		}
+
+		@Override
+		public Instance<C> getProperty(Field field) {
+			ASMBuilder.visitGetProperty(mv, currentClassType.currentClassType, field.name, field.type);
+			return top(field.type);
+		}
+
+		@Override
+		public void invoke(int invoketype, String methodName, Type... params) {
+			ASMBuilder.visitInvoke(invoketype, mv, currentClassType.currentClassType, Type.VOID_TYPE, methodName, params);
+		}
+
+		@Override
+		public Instance<C> invoke(int invoketype, Type returnType, String methodName, Type... params) {
+			ASMBuilder.visitInvoke(invoketype, mv, currentClassType.currentClassType, returnType, methodName, params);
+			return top(returnType);
+		}
+
+		@Override
+		public C put(int dataIndex, Field field) {
+			Field var = localFields.get(dataIndex);
+			mv.visitVarInsn(var.type.getOpcode(ILOAD), dataIndex);
+			ASMBuilder.visitPutField(mv, currentClassType.currentClassType, field.name, field.type);
+			return _code();
+		}
+
+		@Override
+		public C putTopTo(Field field) {
+			ASMBuilder.visitPutField(mv, currentClassType.currentClassType, field.name, field.type);
+			return _code();
+		}
+	}
+
 	final static int THIS = 0;
 
 	final static String THIS_NAME = "this";
 
-	static int[] computerLocals(List<Field> fields) {
+	static int[] computerLocalss(List<Field> fields) {
 		int[] locals = new int[fields.size()];
 		int cntLocal = 0;
 		for (int i = 0; i < fields.size(); i++) {
@@ -61,33 +123,49 @@ public abstract class AbstractMethodVistor<H, C> extends MethodVisitor implement
 		return locals;
 	}
 
-	int access;
+	int thisMethodAccess;
+
+	boolean beFirstlabel = false;
 
 	private Label beginLabel;
+	MyClassType currentClassType = new MyClassType();
+
+	MyInstance currentInstance = new MyInstance();
 
 	private final ClassVisitor cv;
 
-	private Stack<Field> localFields = new Stack<Field>();
+	private List<Field> definedParams = new ArrayList<>();
+
+	// final Type thisType;
+	Class<?>[] thisMethodExceptionClasses;
+
+	protected Stack<Field> localFields = new Stack<Field>();
 
 	int[] locals;
-	private String methodName;
-	private List<Field> definedParams = new ArrayList<>();
-	private final Type returnType;
+
+	Map<String, Integer> localVariables = new HashMap<>();
+
+	private String thisMethodName;
+
+	private final Type thisMethodReturnType;
+
+	// Type targetType;
+
 	List<Annotation> thisMethodAnnotations = new ArrayList<>();
+
 	List<Annotation> thisParameteAnnotations = new ArrayList<>(10);
-	final Type thisType;
+
+	Type thisObjectType;
 
 	public AbstractMethodVistor(ClassVisitor cv, Type thisType, int access, Type returnType, String methodName, Class<?>... exceptionClasses) {
 		super(ASM5);
 		this.cv = cv;
-		this.thisType = thisType;
-		this.methodName = methodName;
-		this.access = access;
-		this.returnType = returnType;
-		this.exceptionClasses = exceptionClasses;
+		this.thisMethodName = methodName;
+		this.thisMethodAccess = access;
+		this.thisMethodReturnType = returnType;
+		this.thisMethodExceptionClasses = exceptionClasses;
+		this.thisObjectType = thisType;
 	}
-
-	Class<?>[] exceptionClasses;
 
 	abstract C _code();
 
@@ -120,7 +198,7 @@ public abstract class AbstractMethodVistor<H, C> extends MethodVisitor implement
 	private C begin() {
 		String signature = null;
 		boolean definedSignature = false;
-		localFields.push(new Field(THIS_NAME, thisType));
+		localFields.push(new Field(THIS_NAME, thisObjectType));
 		StringBuilder sb = new StringBuilder();
 		sb.append("(");
 		for (Field field : definedParams) {
@@ -133,29 +211,29 @@ public abstract class AbstractMethodVistor<H, C> extends MethodVisitor implement
 			}
 		}
 		sb.append(")");
-		sb.append(returnType.getDescriptor());
+		sb.append(this.thisMethodReturnType.getDescriptor());
 		String signatureFromParameter = sb.toString();
 
 		if (definedSignature) {
 			signature = signatureFromParameter;
 		}
-
-		locals = computerLocals(localFields);
+		recomputerLocals();
 
 		List<Field> params = new ArrayList<>();
 		params.addAll(this.definedParams);
 
 		String[] excptions;
-		if (exceptionClasses != null && exceptionClasses.length > 0) {
-			excptions = new String[exceptionClasses.length];
-			for (int i = 0; i < exceptionClasses.length; i++) {
-				excptions[i] = Type.getInternalName(exceptionClasses[i]);
+		if (thisMethodExceptionClasses != null && thisMethodExceptionClasses.length > 0) {
+			excptions = new String[thisMethodExceptionClasses.length];
+			for (int i = 0; i < thisMethodExceptionClasses.length; i++) {
+				excptions[i] = Type.getInternalName(thisMethodExceptionClasses[i]);
 			}
 		} else {
 			excptions = new String[0];
 		}
 
-		this.mv = ASMBuilder.visitDefineMethod(cv, access, returnType, methodName, AsmBuilderHelper.typesOf(params), signature, excptions);
+		this.mv = ASMBuilder.visitDefineMethod(cv, thisMethodAccess, thisMethodReturnType, thisMethodName, AsmBuilderHelper.typesOf(params), signature,
+		        excptions);
 		for (Annotation annotation : thisMethodAnnotations) {
 			ASMBuilder.visitAnnotation(mv, annotation.type, annotation.value);
 		}
@@ -200,26 +278,9 @@ public abstract class AbstractMethodVistor<H, C> extends MethodVisitor implement
 	}
 
 	@Override
-	public C get(Field field) {
-		ASMBuilder.visitGetField(mv, THIS, thisType, field.name, field.type);
-		return _code();
-	}
-
-	@Override
-	public C getProperty(Field field) {
-		ASMBuilder.visitGetProperty(mv, THIS, thisType, field.name, field.type);
-		return _code();
-	}
-
-	@Override
 	public C insn(int opcode) {
 		mv.visitInsn(opcode);
 		return _code();
-	}
-
-	@Override
-	public void invoke(int invoketype, Type returnType, String methodName, Type... params) {
-		ASMBuilder.visitInvoke(invoketype, mv, targetType, returnType, methodName, params);
 	}
 
 	@Override
@@ -234,8 +295,6 @@ public abstract class AbstractMethodVistor<H, C> extends MethodVisitor implement
 		return label;
 	}
 
-	boolean beFirstlabel = false;
-
 	public C line(int line) {
 		Label label;
 		if (!beFirstlabel) {
@@ -249,23 +308,25 @@ public abstract class AbstractMethodVistor<H, C> extends MethodVisitor implement
 	}
 
 	@Override
-	public C load(int... indexes) {
+	public void load(int... indexes) {
 		for (int i : indexes) {
 			mv.visitVarInsn(localFields.get(i).type.getOpcode(ILOAD), i);
 		}
+	}
+
+	@Override
+	public C localVariable(String name, Type type, String signature) {
+		localFields.push(new Field(name, type, signature));
+		recomputerLocals();
 		return _code();
 	}
 
 	@Override
-	public C localVariable(String name, Type type) {
-		localFields.push(new Field(name, type));
-		return _code();
-	}
-
-	@Override
-	public Instance<C> me() {
-		targetType = thisType;
-		return (Instance<C>) this;
+	public Instance<C> object(int index) {
+		currentInstance.index = index;
+		Field var = localFields.get(index);
+		mv.visitVarInsn(var.type.getOpcode(ILOAD), index);
+		return top(var.type);
 	}
 
 	@Override
@@ -281,22 +342,11 @@ public abstract class AbstractMethodVistor<H, C> extends MethodVisitor implement
 		return _header();
 	}
 
-	@Override
-	public C put(Field field) {
-		ASMBuilder.visitPutField(mv, thisType, field.name, field.type);
-		return _code();
-	}
-
-	@Override
-	public C put(int dataIndex, Field field) {
-		ASMBuilder.visitPutField(mv, THIS, thisType, dataIndex, field.name, field.type);
-		return _code();
-	}
-
-	@Override
-	public C put(int dataIndex, String fieldName, Type fieldType) {
-		ASMBuilder.visitPutField(mv, THIS, thisType, dataIndex, fieldName, fieldType);
-		return _code();
+	void recomputerLocals() {
+		this.locals = computerLocalss(localFields);
+		for (int i = 0; i < localFields.size(); i++) {
+			localVariables.put(localFields.get(i).name, i);
+		}
 	}
 
 	@Override
@@ -315,6 +365,23 @@ public abstract class AbstractMethodVistor<H, C> extends MethodVisitor implement
 	public C returnVoid() {
 		ASMBuilder.visitReturn(mv);
 		return _code();
+	}
+
+	@Override
+	public C store(int index) {
+		mv.visitVarInsn(ASTORE, index);
+		return _code();
+	}
+
+	@Override
+	public ClassType<C> type(Type objectType) {
+		currentClassType.currentClassType = objectType;
+		return currentClassType;
+	}
+
+	@Override
+	public int var(String variableName) {
+		return localVariables.get(variableName);
 	}
 
 }

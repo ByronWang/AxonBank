@@ -107,10 +107,6 @@ public class ASMBuilder {
 		fv.visitEnd();
 	}
 
-	public static FieldVisitor visitDefineField(ClassVisitor cw, String fieldName, Type fieldType, Type annotationType, Object value) {
-		return visitDefineField(cw, fieldName, fieldType, null, annotationType, value);
-	}
-
 	public static FieldVisitor visitDefineField(ClassVisitor cw, String fieldName, Type fieldType, String signature, Type annotationType, Object value) {
 		FieldVisitor fv = cw.visitField(ACC_PRIVATE, fieldName, fieldType.getDescriptor(), signature, null);
 		if (annotationType != null) visitAnnotation(fv, annotationType, value);
@@ -118,14 +114,18 @@ public class ASMBuilder {
 		return fv;
 	}
 
-	public static MethodVisitor visitDefineMethod(ClassVisitor cw, Type returnType, String methodName, Type... paramTypes) {
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, methodName, Type.getMethodDescriptor(returnType, paramTypes), null, null);
-		return mv;
+	public static FieldVisitor visitDefineField(ClassVisitor cw, String fieldName, Type fieldType, Type annotationType, Object value) {
+		return visitDefineField(cw, fieldName, fieldType, null, annotationType, value);
 	}
 
 	public static MethodVisitor visitDefineMethod(ClassVisitor cw, int access, Type returnType, String methodName, Type[] paramTypes, String signature,
 	        String[] exceptions) {
 		MethodVisitor mv = cw.visitMethod(access, methodName, Type.getMethodDescriptor(returnType, paramTypes), signature, exceptions);
+		return mv;
+	}
+
+	public static MethodVisitor visitDefineMethod(ClassVisitor cw, Type returnType, String methodName, Type... paramTypes) {
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, methodName, Type.getMethodDescriptor(returnType, paramTypes), null, null);
 		return mv;
 	}
 
@@ -170,6 +170,10 @@ public class ASMBuilder {
 
 	public static void visitGetField(MethodVisitor mv, int objectIndex, Type objectType, String fieldName, Type fieldType) {
 		mv.visitVarInsn(ALOAD, objectIndex);
+		mv.visitFieldInsn(GETFIELD, objectType.getInternalName(), fieldName, fieldType.getDescriptor());
+	}
+
+	public static void visitGetField(MethodVisitor mv, Type objectType, String fieldName, Type fieldType) {
 		mv.visitFieldInsn(GETFIELD, objectType.getInternalName(), fieldName, fieldType.getDescriptor());
 	}
 

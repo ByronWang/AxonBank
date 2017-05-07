@@ -4,8 +4,7 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-public class SimpleMethodVisitor extends AbstractMethodVistor<SimpleMethodHeader, SimpleMethodCode>
-        implements SimpleMethodCode, Instance<SimpleMethodCode>, SimpleMethodHeader, Opcodes {
+public class SimpleMethodVisitor extends AbstractMethodVistor<SimpleMethodHeader, SimpleMethodCode> implements SimpleMethodCode, SimpleMethodHeader, Opcodes {
 
 	public SimpleMethodVisitor(ClassVisitor cv, Type thisType, int access, String methodName) {
 		this(cv, thisType, access, Type.VOID_TYPE, methodName);
