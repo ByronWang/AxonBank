@@ -3,7 +3,7 @@ package com.nebula.cqrs.core.asm;
 public interface ClassMethodCode extends ClassThisInstance, MethodCode<ClassUseCaller,ClassMethodCode> {
 	ClassThisInstance loadThis();
 
-	ClassType<ClassMethodCode> thisType();
+	ClassType<ClassUseCaller,ClassMethodCode> thisType();
 
 	ClassMethodCode initObject();
 

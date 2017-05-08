@@ -37,8 +37,13 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		}
 	}
 
-	class MyClassType implements ClassType<C> {
+	class MyClassType implements ClassType<M,C> {
 		Type currentClassType;
+
+		@Override
+		public Type getType() {
+			return currentClassType;
+		}
 
 		@Override
 		public void invoke(int invoketype, String methodName, Type... params) {
@@ -46,37 +51,36 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		}
 
 		@Override
-		public Instance<C> invoke(int invoketype, Type returnType, String methodName, Type... params) {
+		public Instance<M,C> invoke(int invoketype, Type returnType, String methodName, Type... params) {
 			ASMBuilder.visitInvoke(invoketype, mv, currentClassType, returnType, methodName, params);
 			return top(returnType);
 		}
 
 		@Override
-		public C newInstace() {
-			ASMBuilder.visitNewObject(mv, currentClassType);
-			return _code();
-		}
-
-		@Override
 		public C putTopTo(Field field) {
 			ASMBuilder.visitPutField(mv, currentClassType, field.name, field.type);
-			return _code();
+			return code();
 		}
 	}
 
-	class MyInstance implements Instance<C> {
+	class MyInstance implements Instance<M,C> {
 		int index;
 
 		@Override
-		public Instance<C> get(Field field) {
+		public Instance<M,C> get(Field field) {
 			ASMBuilder.visitGetField(mv, currentClassType.currentClassType, field.name, field.type);
 			return top(field.type);
 		}
 
 		@Override
-		public Instance<C> getProperty(Field field) {
+		public Instance<M,C> getProperty(Field field) {
 			ASMBuilder.visitGetProperty(mv, currentClassType.currentClassType, field.name, field.type);
 			return top(field.type);
+		}
+
+		@Override
+		public Type getType() {
+			return currentClassType.currentClassType;
 		}
 
 		@Override
@@ -85,7 +89,7 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		}
 
 		@Override
-		public Instance<C> invoke(int invoketype, Type returnType, String methodName, Type... params) {
+		public Instance<M,C> invoke(int invoketype, Type returnType, String methodName, Type... params) {
 			ASMBuilder.visitInvoke(invoketype, mv, currentClassType.currentClassType, returnType, methodName, params);
 			return top(returnType);
 		}
@@ -93,15 +97,21 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		@Override
 		public C put(int dataIndex, Field field) {
 			Field var = variablesStack.get(dataIndex);
+			accessVar(dataIndex);
 			mv.visitVarInsn(var.type.getOpcode(ILOAD), dataIndex);
 			ASMBuilder.visitPutField(mv, currentClassType.currentClassType, field.name, field.type);
-			return _code();
+			return code();
 		}
 
 		@Override
 		public C putTopTo(Field field) {
 			ASMBuilder.visitPutField(mv, currentClassType.currentClassType, field.name, field.type);
-			return _code();
+			return code();
+		}
+
+		@Override
+		public M use() {
+			return useTop(currentClassType.currentClassType);
 		}
 	}
 
@@ -114,27 +124,16 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		}
 
 		@Override
-		public M with(Consumer<C> invocation) {
-			invocation.accept(_code());
-			return caller();
-		}
-
-		@Override
 		public M add(int varIndex) {
 			load(varIndex);
 			return caller();
 		}
 
 		abstract M caller();
-		// @Override
-		// public UseCaller<M,C> add(int varIndex) {
-		// load(varIndex);
-		// return this;
-		// }
 
 		@Override
-		public C code() {
-			return _code();
+		public Type getType() {
+			return objectType;
 		}
 
 		@Override
@@ -143,7 +142,7 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		}
 
 		@Override
-		public Instance<C> invoke(int invoketype, Type returnType, String methodName, Type... params) {
+		public Instance<M,C> invoke(int invoketype, Type returnType, String methodName, Type... params) {
 			return type(objectType).invoke(invoketype, returnType, methodName, params);
 		}
 
@@ -152,13 +151,45 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 			return type(objectType).putTopTo(field);
 		}
 
+		@Override
+		public void returnMe() {
+			returnTop(objectType);
+		}
+
+		@Override
+		public M with(Consumer<C> invocation) {
+			invocation.accept(code());
+			return caller();
+		}
+
+	}
+
+	static class Variable extends Field {
+		Label startFrom;
+
+		public Variable(Field field, Label startFrom) {
+			this(field.name, field.type, field.signature, startFrom);
+		}
+
+		public Variable(String name, Type type, String signature) {
+			super(name, type, signature);
+		}
+
+		public Variable(String name, Type type) {
+			this(name, type, null);
+		}
+
+		public Variable(String name, Type type, String signature, Label startFrom) {
+			super(name, type, signature);
+			this.startFrom = startFrom;
+		}
 	}
 
 	final static int THIS = 0;
 
 	final static String THIS_NAME = "this";
 
-	static int[] computerLocalss(List<Field> fields) {
+	static int[] computerLocalss(List<Variable> fields) {
 		int[] locals = new int[fields.size()];
 		int cntLocal = 0;
 		for (int i = 0; i < fields.size(); i++) {
@@ -168,19 +199,19 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		return locals;
 	}
 
-	boolean beFirstlabel = false;
-
-	private Label beginLabel;
-
 	MyClassType currentClassType = new MyClassType();
 
 	MyInstance currentInstance = new MyInstance();
 
 	private final ClassVisitor cv;
+
+	private Label labelCurrent;
+
+	boolean labelHasDefineBegin = false;
+
 	int thisMethodAccess;
 
 	List<Annotation> thisMethodAnnotations = new ArrayList<>();
-
 	// final Type thisType;
 	Class<?>[] thisMethodExceptionClasses;
 
@@ -198,9 +229,7 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 
 	Map<String, Integer> variablesMap = new HashMap<>();
 
-	// Type targetType;
-
-	protected Stack<Field> variablesStack = new Stack<Field>();
+	protected Stack<Variable> variablesStack = new Stack<>();
 
 	public AbstractMethodVistor(ClassVisitor cv, Type thisType, int access, Type returnType, String methodName, Class<?>... exceptionClasses) {
 		super(ASM5);
@@ -212,59 +241,95 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		this.thisObjectType = thisType;
 	}
 
-	abstract C _code();
-
-	abstract M makeCaller(Type type);
-
-	abstract H _header();
-
 	@Override
 	public C accessLabel(Label label) {
+		labelCurrent = label;
 		mv.visitLabel(label);
-		return _code();
+		return code();
 	}
 
 	@Override
 	public C accessLabel(Label label, int line) {
+		labelCurrent = label;
 		mv.visitLabel(label);
 		mv.visitLineNumber(line, label);
-		return _code();
+		return code();
 	}
 
 	public C annotation(Class<?> annotation, String value) {
 		thisMethodAnnotations.add(new Annotation(value, AsmBuilderHelper.typeOf(annotation)));
-		return _code();
+		return code();
 	}
 
 	@Override
 	public H annotation(Type type, String value) {
 		this.thisMethodAnnotations.add(new Annotation(value, type));
-		return _header();
+		return header();
 	}
 
 	private C begin() {
-		String signature = null;
-		boolean definedSignature = false;
-		variablesStack.push(new Field(THIS_NAME, thisObjectType));
-		StringBuilder sb = new StringBuilder();
-		sb.append("(");
-		for (Field field : thisMethodParams) {
-			variablesStack.push(field);
-			if (field.signature != null) {
-				sb.append(field.signature);
-				definedSignature = true;
-			} else {
-				sb.append(field.type.getDescriptor());
-			}
-		}
-		sb.append(")");
-		sb.append(this.thisMethodReturnType.getDescriptor());
-		String signatureFromParameter = sb.toString();
+		mv.visitCode();
 
-		if (definedSignature) {
-			signature = signatureFromParameter;
+		labelCurrent = labelWithoutLineNumber();
+		// TODO add class sign
+		variablesStack.push(new Variable(THIS_NAME, thisObjectType, null, labelCurrent));
+		for (Field field : thisMethodParams) {
+			variablesStack.push(new Variable(field, labelCurrent));
 		}
 		recomputerLocals();
+		return code();
+	}
+
+	@Override
+	public C block(Consumer<C> invocation) {
+		invocation.accept(code());
+		return code();
+	}
+
+	@Override
+	public C code(Consumer<C> invocation) {
+		defineMethod();
+		begin();
+		invocation.accept(code());
+		end();
+		return code();
+	}
+
+	@Override
+	public C def(String name, Type type, String signature) {
+		variablesStack.push(new Variable(name, type, signature));
+		recomputerLocals();
+		return code();
+	}
+
+	@Override
+	public Label defineLabel() {
+		Label label = new Label();
+		return label;
+	}
+
+	private void defineMethod() {
+		String signature = null;
+		boolean definedSignature = false;
+		{
+			StringBuilder sb = new StringBuilder();
+			sb.append("(");
+			for (Field field : thisMethodParams) {
+				if (field.signature != null) {
+					sb.append(field.signature);
+					definedSignature = true;
+				} else {
+					sb.append(field.type.getDescriptor());
+				}
+			}
+			sb.append(")");
+			sb.append(this.thisMethodReturnType.getDescriptor());
+			String signatureFromParameter = sb.toString();
+
+			if (definedSignature) {
+				signature = signatureFromParameter;
+			}
+		}
 
 		String[] excptions;
 		if (thisMethodExceptionClasses != null && thisMethodExceptionClasses.length > 0) {
@@ -286,36 +351,13 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 				ASMBuilder.visitParameterAnnotation(mv, annotation.parameter, annotation.type, annotation.value);
 			}
 		}
-		mv.visitCode();
-		beginLabel = labelWithoutLineNumber();
-		return _code();
-	}
-
-	@Override
-	public C block(Consumer<C> invocation) {
-		invocation.accept(_code());
-		return _code();
-	}
-
-	@Override
-	public C code(Consumer<C> invocation) {
-		begin();
-		invocation.accept(_code());
-		end();
-		return _code();
-	}
-
-	@Override
-	public Label defineLabel() {
-		Label label = new Label();
-		return label;
 	}
 
 	public void end() {
 		Label endLabel = this.labelWithoutLineNumber();
 		int i = 0;
-		for (Field field : variablesStack) {
-			mv.visitLocalVariable(field.name, field.type.getDescriptor(), field.signature, beginLabel, endLabel, variablesInt[i++]);
+		for (Variable var : variablesStack) {
+			mv.visitLocalVariable(var.name, var.type.getDescriptor(), var.signature, var.startFrom, endLabel, variablesInt[i++]);
 		}
 		mv.visitMaxs(0, 0);
 		mv.visitEnd();
@@ -324,31 +366,33 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 	@Override
 	public C insn(int opcode) {
 		mv.visitInsn(opcode);
-		return _code();
+		return code();
 	}
 
 	@Override
 	public C jumpInsn(int ifgt, Label label) {
 		mv.visitJumpInsn(IFGT, label);
-		return _code();
+		return code();
 	}
 
 	private Label labelWithoutLineNumber() {
 		Label label = new Label();
+		labelCurrent = label;
 		mv.visitLabel(label);
 		return label;
 	}
 
 	public C line(int line) {
 		Label label;
-		if (!beFirstlabel) {
+		if (!labelHasDefineBegin) {
 			label = new Label();
+			labelCurrent = label;
+			mv.visitLabel(label);
 		} else {
-			label = beginLabel;
+			label = labelCurrent;
 		}
-		mv.visitLabel(label);
 		mv.visitLineNumber(line, label);
-		return _code();
+		return code();
 	}
 
 	@Override
@@ -356,17 +400,18 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		for (int i : indexes) {
 			mv.visitVarInsn(variablesStack.get(i).type.getOpcode(ILOAD), i);
 		}
+		accessVar(indexes);
 	}
 
 	@Override
-	public C localVariable(String name, Type type, String signature) {
-		variablesStack.push(new Field(name, type, signature));
-		recomputerLocals();
-		return _code();
+	public M newInstace(Type type) {
+		ASMBuilder.visitNewObject(mv, type);
+		return useTop(type);
 	}
 
 	@Override
-	public Instance<C> object(int index) {
+	public Instance<M,C> object(int index) {
+		accessVar(index);
 		currentInstance.index = index;
 		Field var = variablesStack.get(index);
 		mv.visitVarInsn(var.type.getOpcode(ILOAD), index);
@@ -377,13 +422,13 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 	public H parameter(String fieldName, Type fieldType, String signature) {
 		thisMethodParams.add(new Field(fieldName, fieldType, signature));
 		thisMethodParameterAnnotations.add(null);
-		return _header();
+		return header();
 	}
 
 	@Override
 	public H parameterAnnotation(Type type, Object value) {
 		thisMethodParameterAnnotations.set(thisMethodParams.size() - 1, new Annotation(value, type));
-		return _header();
+		return header();
 	}
 
 	void recomputerLocals() {
@@ -394,36 +439,33 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 	}
 
 	@Override
-	public C returnObject() {
+	public void returnObject() {
 		ASMBuilder.visitReturnObject(mv);
-		return _code();
 	}
 
 	@Override
-	public C returnType(Type type) {
+	public void returnTop(Type type) {
 		ASMBuilder.visitReturnType(mv, type);
-		return _code();
 	}
 
 	@Override
-	public C returnVoid() {
+	public void returnVoid() {
 		ASMBuilder.visitReturn(mv);
-		return _code();
 	}
 
 	@Override
 	public C store(int index) {
 		mv.visitVarInsn(ASTORE, index);
-		return _code();
+		return code();
 	}
 
-	protected Instance<C> top(Type type) {
+	protected Instance<M,C> top(Type type) {
 		currentClassType.currentClassType = type;
 		return currentInstance;
 	}
 
 	@Override
-	public ClassType<C> type(Type objectType) {
+	public ClassType<M,C> type(Type objectType) {
 		currentClassType.currentClassType = objectType;
 		return currentClassType;
 	}
@@ -431,13 +473,23 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 	@Override
 	public M use(int... varIndexes) {
 		Field object = variablesStack.get(varIndexes[0]);
-		M caller = makeCaller(object.type);
 		load(varIndexes);
-		return caller;
+		accessVar(varIndexes);
+		return useTop(object.type);
+	}
+
+	private void accessVar(int... varIndexes) {
+		for (int i : varIndexes) {
+			Variable var = variablesStack.get(i);
+			if (var.startFrom == null) {
+				var.startFrom = labelCurrent;
+			}
+		}
 	}
 
 	@Override
-	public int var(String variableName) {
+	public int varIndex(String variableName) {
+		int index = variablesMap.get(variableName);
 		return variablesMap.get(variableName);
 	}
 

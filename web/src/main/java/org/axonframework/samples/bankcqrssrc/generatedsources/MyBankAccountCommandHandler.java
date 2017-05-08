@@ -19,19 +19,24 @@ public class MyBankAccountCommandHandler {
 
 	@CommandHandler
 	public void handle(MyBankAccountCreateCommand command) throws Exception {
-		this.repository.newInstance(new InnerCreate(command));
+		InnerCreate caller = new InnerCreate(command);
+		this.repository.newInstance(caller);
 	}
 
 	@CommandHandler
 	public void handle(MyBankAccountDepositCommand command) {
-		Aggregate<MyBankAccountImpl> aggregate = this.repository.load(command.getAxonBankAccountId());
-		aggregate.execute(new InnerDeposit(command));
+		String axonBankAccountId = command.getAxonBankAccountId();
+		Aggregate<MyBankAccountImpl> aggregate = this.repository.load(axonBankAccountId);
+		InnerDeposit caller = new InnerDeposit(command);
+		aggregate.execute(caller);
 	}
 
 	@CommandHandler
 	public void handle(MyBankAccountWithdrawCommand command) {
-		Aggregate<MyBankAccountImpl> aggregate = this.repository.load(command.getAxonBankAccountId());
-		aggregate.execute(new InnerWithdraw(command));
+		String axonBankAccountId = command.getAxonBankAccountId();
+		Aggregate<MyBankAccountImpl> aggregate = this.repository.load(axonBankAccountId);
+		InnerWithdraw caller = new InnerWithdraw(command);
+		aggregate.execute(caller);
 	}
 
 	class InnerDeposit implements Consumer<MyBankAccountImpl> {

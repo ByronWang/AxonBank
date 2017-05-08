@@ -18,6 +18,10 @@ public class SimpleMethodVisitor extends AbstractMethodVistor<SimpleMethodHeader
 			return this;
 		}
 
+		@Override
+		public SimpleMethodCode code() {
+			return SimpleMethodVisitor.this;
+		}
 	}
 
 	public SimpleMethodVisitor(ClassVisitor cv, Type thisType, int access, String methodName) {
@@ -29,18 +33,18 @@ public class SimpleMethodVisitor extends AbstractMethodVistor<SimpleMethodHeader
 	}
 
 	@Override
-	SimpleMethodCode _code() {
+	public SimpleMethodCode code() {
 		return this;
 	}
 
 	@Override
-	SimpleMethodHeader _header() {
-		return this;
-	}
-
-	@Override
-	SimpleUseCaller<SimpleMethodCode> makeCaller(Type type) {
+	public SimpleUseCaller<SimpleMethodCode> useTop(Type type) {
 		return new RealSimpleUseCaller(type);
+	}
+
+	@Override
+	public SimpleMethodHeader header() {
+		return this;
 	}
 
 }

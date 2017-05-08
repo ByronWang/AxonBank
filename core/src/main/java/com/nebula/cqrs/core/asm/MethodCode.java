@@ -1,6 +1,7 @@
 package com.nebula.cqrs.core.asm;
 
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
@@ -17,31 +18,42 @@ interface MethodCode<M, C extends MethodCode<M, C>> extends Types {
 
 	C insn(int d);
 
+	C code();
+
 	M use(int... varIndex);
+
+	default M use(Function<C, ToType> func) {
+		ToType toType = func.apply(code());
+		return useTop(toType.getType());
+	}
+
+	M useTop(Type type);
 
 	default M use(String... varNames) {
 		return use(vars(varNames));
 	}
 
-	Instance<C> object(int index);
+	M newInstace(Type type);
 
-	int var(String variableName);
+	Instance<M,C> object(int index);
+
+	int varIndex(String variableName);
 
 	default int[] vars(String... varNames) {
 		int[] vars = new int[varNames.length];
 		for (int i = 0; i < varNames.length; i++) {
-			vars[i] = var(varNames[i]);
+			vars[i] = varIndex(varNames[i]);
 		}
 		return vars;
 	}
 
-	default Instance<C> object(String variableName) {
-		return object(var(variableName));
+	default Instance<M,C> object(String variableName) {
+		return object(varIndex(variableName));
 	}
 
-	ClassType<C> type(Type objectType);
+	ClassType<M,C> type(Type objectType);
 
-	default ClassType<C> type(Class<?> returnClass) {
+	default ClassType<M,C> type(Class<?> returnClass) {
 		return type(typeOf(returnClass));
 	}
 
@@ -58,32 +70,32 @@ interface MethodCode<M, C extends MethodCode<M, C>> extends Types {
 	C store(int index);
 
 	default C store(String varName) {
-		return store(var(varName));
+		return store(varIndex(varName));
 	}
 
-	default C localVariable(Field field) {
-		return localVariable(field.name, field.type);
+	default C def(Field field) {
+		return def(field.name, field.type);
 	}
 
-	default C localVariable(String fieldName, Class<?> clz) {
-		return localVariable(fieldName, typeOf(clz));
+	default C def(String fieldName, Class<?> clz) {
+		return def(fieldName, typeOf(clz));
 	}
 
-	default C localVariable(String fieldName, Class<?> clz, Class<?>... signatureClasses) {
-		return localVariable(fieldName, typeOf(clz), typesOf(signatureClasses));
+	default C def(String fieldName, Class<?> clz, Class<?>... signatureClasses) {
+		return def(fieldName, typeOf(clz), typesOf(signatureClasses));
 	}
 
-	default C localVariable(String fieldName, Class<?> clz, String signature) {
-		return localVariable(fieldName, typeOf(clz), signature);
+	default C def(String fieldName, Class<?> clz, String signature) {
+		return def(fieldName, typeOf(clz), signature);
 	}
 
-	default C localVariable(String fieldName, Class<?> clz, Type... signatureTypes) {
-		return localVariable(fieldName, typeOf(clz), signatureTypes);
+	default C def(String fieldName, Class<?> clz, Type... signatureTypes) {
+		return def(fieldName, typeOf(clz), signatureTypes);
 	}
 
-	C localVariable(String fieldName, Type fieldType, String signature);;
+	C def(String fieldName, Type fieldType, String signature);;
 
-	default C localVariable(String fieldName, Type fieldType, Type... signatureTypes) {
+	default C def(String fieldName, Type fieldType, Type... signatureTypes) {
 		String signature = null;
 		if (signatureTypes != null && signatureTypes.length > 0) {
 			StringBuilder sb = new StringBuilder();
@@ -96,17 +108,19 @@ interface MethodCode<M, C extends MethodCode<M, C>> extends Types {
 			sb.append(">;");
 			signature = sb.toString();
 		}
-		return localVariable(fieldName, fieldType, signature);
+		return def(fieldName, fieldType, signature);
 	};
 
-	C returnObject();
+	void returnObject();
 
-	default C returnType(Class<?> returnClass) {
-		return returnType(typeOf(returnClass));
+	@Deprecated
+	default void returnTop(Class<?> returnClass) {
+		returnTop(typeOf(returnClass));
 	}
 
-	C returnType(Type type);
+	@Deprecated
+	void returnTop(Type type);
 
-	C returnVoid();
+	void returnVoid();
 
 }

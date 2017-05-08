@@ -21,17 +21,22 @@ public class ClassMethodVisitor extends AbstractMethodVistor<ClassMethodHeader, 
 			return putTopTo(cv.fields.get(fieldName));
 		}
 
+		@Override
+		public ClassMethodCode code() {
+			return ClassMethodVisitor.this;
+		}
+
 	}
 
 	class ThisInstance extends MyInstance implements ClassThisInstance {
 
 		@Override
-		public Instance<ClassMethodCode> get(String fieldName) {
+		public Instance<ClassUseCaller, ClassMethodCode> get(String fieldName) {
 			return get(cv.fields.get(fieldName));
 		}
 
 		@Override
-		public Instance<ClassMethodCode> getProperty(String fieldName) {
+		public Instance<ClassUseCaller, ClassMethodCode> getProperty(String fieldName) {
 			return getProperty(cv.fields.get(fieldName));
 		}
 
@@ -63,39 +68,39 @@ public class ClassMethodVisitor extends AbstractMethodVistor<ClassMethodHeader, 
 	}
 
 	@Override
-	ClassMethodCode _code() {
+	public ClassMethodCode code() {
 		return this;
 	}
 
 	@Override
-	ClassMethodHeader _header() {
+	public ClassMethodHeader header() {
 		return this;
 	}
 
 	@Override
-	public Instance<ClassMethodCode> get(Field field) {
+	public Instance<ClassUseCaller, ClassMethodCode> get(Field field) {
 		return loadThis().get(field);
 	}
 
 	@Override
-	public Instance<ClassMethodCode> get(String fieldName) {
+	public Instance<ClassUseCaller, ClassMethodCode> get(String fieldName) {
 		return loadThis().get(cv.fields.get(fieldName));
 	}
 
 	@Override
-	public Instance<ClassMethodCode> getProperty(Field field) {
+	public Instance<ClassUseCaller, ClassMethodCode> getProperty(Field field) {
 		return loadThis().getProperty(field);
 	}
 
 	@Override
-	public Instance<ClassMethodCode> getProperty(String fieldName) {
+	public Instance<ClassUseCaller, ClassMethodCode> getProperty(String fieldName) {
 		return loadThis().getProperty(cv.fields.get(fieldName));
 	}
 
 	@Override
 	public ClassMethodCode initObject() {
 		ASMBuilder.visitInitObject(mv, THIS);
-		return _code();
+		return code();
 	}
 
 	@Override
@@ -104,7 +109,7 @@ public class ClassMethodVisitor extends AbstractMethodVistor<ClassMethodHeader, 
 	}
 
 	@Override
-	public Instance<ClassMethodCode> invoke(int invoketype, Type returnType, String methodName, Type... params) {
+	public Instance<ClassUseCaller, ClassMethodCode> invoke(int invoketype, Type returnType, String methodName, Type... params) {
 		return loadThis().invoke(invoketype, returnType, methodName, params);
 	}
 
@@ -112,11 +117,6 @@ public class ClassMethodVisitor extends AbstractMethodVistor<ClassMethodHeader, 
 	public ClassThisInstance loadThis() {
 		object(THIS);
 		return thisInstance;
-	}
-
-	@Override
-	ClassUseCaller makeCaller(Type type) {
-		return new RealThisUseCaller(type);
 	}
 
 	@Override
@@ -131,7 +131,7 @@ public class ClassMethodVisitor extends AbstractMethodVistor<ClassMethodHeader, 
 
 	@Override
 	public ClassMethodCode put(String varName, String fieldName) {
-		return loadThis().put(var(fieldName), cv.fields.get(fieldName));
+		return loadThis().put(varIndex(fieldName), cv.fields.get(fieldName));
 	}
 
 	@Override
@@ -145,7 +145,7 @@ public class ClassMethodVisitor extends AbstractMethodVistor<ClassMethodHeader, 
 	}
 
 	@Override
-	public ClassType<ClassMethodCode> thisType() {
+	public ClassType<ClassUseCaller, ClassMethodCode> thisType() {
 		return type(thisObjectType);
 	}
 
@@ -153,5 +153,20 @@ public class ClassMethodVisitor extends AbstractMethodVistor<ClassMethodHeader, 
 	public ClassUseCaller useThis() {
 		loadThis();
 		return new RealThisUseCaller(thisObjectType);
+	}
+
+	@Override
+	public Type getType() {
+		return thisObjectType;
+	}
+
+	@Override
+	public ClassUseCaller useTop(Type type) {
+		return new RealThisUseCaller(type);
+	}
+
+	@Override
+	public ClassUseCaller use() {
+		return useThis();
 	}
 }

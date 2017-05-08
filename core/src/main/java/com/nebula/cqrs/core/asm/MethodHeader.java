@@ -64,5 +64,7 @@ interface MethodHeader<H, C> extends Types {
 		return parameterAnnotation(type, null);
 	}
 
+	H header();
+	
 	H parameterAnnotation(Type type, Object value);
 }

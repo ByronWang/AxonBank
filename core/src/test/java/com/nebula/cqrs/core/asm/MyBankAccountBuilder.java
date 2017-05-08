@@ -47,7 +47,7 @@ public class MyBankAccountBuilder extends AsmBuilderHelper {
 	private static void visitDefine_deposit(ClassBody cw) {
 		cw.publicMethod(boolean.class, "deposit").parameter("amount", long.class).code(mv -> {
 			mv.line(44).use("this", "amount").invokeSpecial("onMoneyAdded", long.class);
-			mv.line(45).insn(ICONST_1).returnType(boolean.class);
+			mv.line(45).insn(ICONST_1).returnTop(boolean.class);
 		});
 	}
 
@@ -65,10 +65,10 @@ public class MyBankAccountBuilder extends AsmBuilderHelper {
 				mc.jumpInsn(IFGT, ifEnd);
 
 				mc.line(51).use("this", "amount").invokeSpecial("onMoneySubtracted", long.class);
-				mc.line(52).insn(ICONST_1).returnType(boolean.class);
+				mc.line(52).insn(ICONST_1).returnTop(boolean.class);
 
 				mc.accessLabel(ifEnd, 54);
-				mc.insn(ICONST_0).returnType(boolean.class);
+				mc.insn(ICONST_0).returnTop(boolean.class);
 			});
 		}
 	}
