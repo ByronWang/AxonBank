@@ -5,11 +5,9 @@ import org.objectweb.asm.Type;
 
 import com.nebula.cqrs.core.asm.ASMBuilder;
 import com.nebula.cqrs.core.asm.Field;
-import com.nebula.cqrs.core.asm.wrap.AbstractMethodVistor.MyInstance;
-import com.nebula.cqrs.core.asm.wrap.AbstractMethodVistor.RealUseCaller;
 
 public class ClassMethodVisitor extends AbstractMethodVistor<MethodHeader<ClassMethodCode>, ClassUseCaller, ClassMethodCode>
-        implements ClassMethodHeader, ClassMethodCode, ClassThisInstance, Opcodes {
+        implements MethodHeader<ClassMethodCode>, ClassMethodCode, ClassThisInstance, Opcodes {
 	class RealThisUseCaller extends RealUseCaller implements ClassUseCaller {
 
 		public RealThisUseCaller(Type objectType) {

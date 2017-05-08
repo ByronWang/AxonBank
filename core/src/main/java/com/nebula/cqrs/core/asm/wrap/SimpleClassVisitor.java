@@ -11,7 +11,7 @@ import com.nebula.cqrs.axon.asm.ClassUtils;
 import com.nebula.cqrs.core.asm.ASMBuilder;
 import com.nebula.cqrs.core.asm.Field;
 
-public class SimpleClassVisitor extends ClassVisitor implements Opcodes, ClassMethodBody {
+public class SimpleClassVisitor extends ClassVisitor implements Opcodes, ClassBody {
 	final static int THIS = 0;
 	final static String THIS_NAME = "this";
 	private final Type thisType;
@@ -37,7 +37,7 @@ public class SimpleClassVisitor extends ClassVisitor implements Opcodes, ClassMe
 	}
 
 	@Override
-	public ClassMethodBody annotation(Type annotationType, Object value) {
+	public ClassBody annotation(Type annotationType, Object value) {
 		ASMBuilder.visitAnnotation(cv, annotationType, value);
 		return this;
 	}
@@ -48,28 +48,28 @@ public class SimpleClassVisitor extends ClassVisitor implements Opcodes, ClassMe
 	}
 
 	@Override
-	public ClassMethodBody field(Field field) {
+	public ClassBody field(Field field) {
 		fields.put(field.name, field);
 		ASMBuilder.visitDefineField(cv, field.name, field.type);
 		return this;
 	}
 
 	@Override
-	public ClassMethodBody field(Field field, Type annotationType, Object value) {
+	public ClassBody field(Field field, Type annotationType, Object value) {
 		fields.put(field.name, field);
 		ASMBuilder.visitDefineField(cv, field.name, field.type, annotationType, value);
 		return this;
 	}
 
 	@Override
-	public ClassMethodBody field(Field field, String signature, Type annotationType, Object value) {
+	public ClassBody field(Field field, String signature, Type annotationType, Object value) {
 		fields.put(field.name, field);
 		ASMBuilder.visitDefineField(cv, field.name, field.type, signature, annotationType, value);
 		return this;
 	}
 
 	@Override
-	public ClassMethodHeader method(int access, Type returnType, String methodName, Class<?>... exceptionClasses) {
+	public MethodHeader<ClassMethodCode> method(int access, Type returnType, String methodName, Class<?>... exceptionClasses) {
 		return new ClassMethodVisitor(this, thisType, access, returnType, methodName, exceptionClasses);
 	}
 }

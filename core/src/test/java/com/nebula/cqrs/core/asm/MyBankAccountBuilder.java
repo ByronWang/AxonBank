@@ -7,7 +7,7 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 
 import com.nebula.cqrs.core.CqrsEntity;
-import com.nebula.cqrs.core.asm.wrap.ClassMethodBody;
+import com.nebula.cqrs.core.asm.wrap.ClassBody;
 import com.nebula.cqrs.core.asm.wrap.SimpleClassVisitor;
 
 public class MyBankAccountBuilder extends AsmBuilderHelper {
@@ -17,7 +17,7 @@ public class MyBankAccountBuilder extends AsmBuilderHelper {
 
 		ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
 
-		ClassMethodBody cw = new SimpleClassVisitor(classWriter, objectType);
+		ClassBody cw = new SimpleClassVisitor(classWriter, objectType);
 		cw.annotation(Aggregate.class);
 		cw.annotation(CqrsEntity.class);
 
@@ -38,7 +38,7 @@ public class MyBankAccountBuilder extends AsmBuilderHelper {
 		return classWriter.toByteArray();
 	}
 
-	private static void visitDefine_init_withfields(ClassMethodBody cw) {
+	private static void visitDefine_init_withfields(ClassBody cw) {
 		cw.publicMethod("<init>").parameter("axonBankAccountId", String.class).parameter("overdraftLimit", long.class).code(mc -> {
 			mc.line(38).initObject();
 			mc.line(39).use("this", "axonBankAccountId", "overdraftLimit").invokeSpecial("onCreated", String.class, long.class);
@@ -46,14 +46,14 @@ public class MyBankAccountBuilder extends AsmBuilderHelper {
 		});
 	}
 
-	private static void visitDefine_deposit(ClassMethodBody cw) {
+	private static void visitDefine_deposit(ClassBody cw) {
 		cw.publicMethod(boolean.class, "deposit").parameter("amount", long.class).code(mv -> {
 			mv.line(44).use("this", "amount").invokeSpecial("onMoneyAdded", long.class);
 			mv.line(45).insn(ICONST_1).returnTop(boolean.class);
 		});
 	}
 
-	private static void visitDefine_withdraw(ClassMethodBody cw) {
+	private static void visitDefine_withdraw(ClassBody cw) {
 		{
 			cw.publicMethod(boolean.class, "withdraw").parameter("amount", long.class).code(mc -> {
 				mc.line(50).load("amount");
@@ -75,7 +75,7 @@ public class MyBankAccountBuilder extends AsmBuilderHelper {
 		}
 	}
 
-	private static void visitDefine_onCreated(ClassMethodBody cw) {
+	private static void visitDefine_onCreated(ClassBody cw) {
 		cw.privateMethod("onCreated").parameter("axonBankAccountId", String.class).parameter("overdraftLimit", long.class).code(mc -> {
 			mc.line(97).put("axonBankAccountId", "axonBankAccountId");
 			mc.line(98).put("overdraftLimit", "overdraftLimit");
@@ -84,7 +84,7 @@ public class MyBankAccountBuilder extends AsmBuilderHelper {
 		});
 	}
 
-	private static void visitDefine_onMoneyAdded(ClassMethodBody cw) {
+	private static void visitDefine_onMoneyAdded(ClassBody cw) {
 		cw.privateMethod("onMoneyAdded").parameter("amount", long.class).code(mc -> {
 			mc.line(104).useThis().with(e -> {
 			    e.get("balance");
@@ -95,7 +95,7 @@ public class MyBankAccountBuilder extends AsmBuilderHelper {
 		});
 	}
 
-	private static void visitDefine_onMoneySubtracted(ClassMethodBody cw) {
+	private static void visitDefine_onMoneySubtracted(ClassBody cw) {
 		cw.privateMethod("onMoneySubtracted").parameter("amount", long.class).code(mc -> {
 			mc.line(109).loadThis();
 			mc.get("balance");
@@ -107,7 +107,7 @@ public class MyBankAccountBuilder extends AsmBuilderHelper {
 
 	}
 
-	private static void visitDefine_init(ClassMethodBody cw) {
+	private static void visitDefine_init(ClassBody cw) {
 		cw.privateMethod("<init>").code(mc -> {
 			mc.line(34).initObject();
 			mc.line(35).returnVoid();
