@@ -14,64 +14,7 @@ interface MethodCode<M extends MethodUseCaller<M, C> , C extends MethodCode<M, C
 
 	C block(Consumer<C> invocation);
 
-	Label defineLabel();
-
-	C insn(int d);
-
 	C code();
-
-	M use(int... varIndex);
-
-	default M use(Function<C, ToType> func) {
-		ToType toType = func.apply(code());
-		return useTop(toType.getType());
-	}
-
-	M useTop(Type type);
-
-	default M use(String... varNames) {
-		return use(vars(varNames));
-	}
-
-	Instance<M,C> newInstace(Type type);
-
-	Instance<M,C> object(int index);
-
-	int varIndex(String variableName);
-
-	default int[] vars(String... varNames) {
-		int[] vars = new int[varNames.length];
-		for (int i = 0; i < varNames.length; i++) {
-			vars[i] = varIndex(varNames[i]);
-		}
-		return vars;
-	}
-
-	default Instance<M,C> object(String variableName) {
-		return object(varIndex(variableName));
-	}
-
-	ClassType<M,C> type(Type objectType);
-
-	default ClassType<M,C> type(Class<?> returnClass) {
-		return type(typeOf(returnClass));
-	}
-
-	C jumpInsn(int ifgt, Label label);
-
-	C line(int line);
-
-	void load(int... index);
-
-	default void load(String... varNames) {
-		load(vars(varNames));
-	}
-
-	C storeTop(int index);
-
-	default C storeTop(String varName) {
-		return storeTop(varIndex(varName));
-	}
 
 	default C def(Field field) {
 		return def(field.name, field.type);
@@ -93,7 +36,7 @@ interface MethodCode<M extends MethodUseCaller<M, C> , C extends MethodCode<M, C
 		return def(fieldName, typeOf(clz), signatureTypes);
 	}
 
-	C def(String fieldName, Type fieldType, String signature);;
+	C def(String fieldName, Type fieldType, String signature);
 
 	default C def(String fieldName, Type fieldType, Type... signatureTypes) {
 		String signature = null;
@@ -109,11 +52,34 @@ interface MethodCode<M extends MethodUseCaller<M, C> , C extends MethodCode<M, C
 			signature = sb.toString();
 		}
 		return def(fieldName, fieldType, signature);
-	};
+	}
+
+	Label defineLabel();
+
+	C insn(int d);
+
+	C jumpInsn(int ifgt, Label label);
+
+	C line(int line);
+
+	void load(int... index);
+
+	default void load(String... varNames) {
+		load(vars(varNames));
+	}
+
+	Instance<M,C> newInstace(Type type);
+
+	Instance<M,C> object(int index);
+
+	default Instance<M,C> object(String variableName) {
+		return object(varIndex(variableName));
+	}
+
+	C putTopTo(Field field);
 
 	void returnObject();
 
-	@Deprecated
 	default void returnTop(Class<?> returnClass) {
 		returnTop(typeOf(returnClass));
 	}
@@ -122,5 +88,40 @@ interface MethodCode<M extends MethodUseCaller<M, C> , C extends MethodCode<M, C
 	void returnTop(Type type);
 
 	void returnVoid();
+
+	C storeTop(int index);
+
+	default C storeTop(String varName) {
+		return storeTop(varIndex(varName));
+	}
+
+	default ClassType<M,C> type(Class<?> returnClass) {
+		return type(typeOf(returnClass));
+	}
+
+	ClassType<M,C> type(Type objectType);
+
+	default M use(Function<C, ToType> func) {
+		ToType toType = func.apply(code());
+		return useTop(toType.getType());
+	};
+
+	M use(int... varIndex);;
+
+	default M use(String... varNames) {
+		return use(vars(varNames));
+	}
+
+	M useTop(Type type);
+
+	int varIndex(String variableName);
+
+	default int[] vars(String... varNames) {
+		int[] vars = new int[varNames.length];
+		for (int i = 0; i < varNames.length; i++) {
+			vars[i] = varIndex(varNames[i]);
+		}
+		return vars;
+	}
 
 }

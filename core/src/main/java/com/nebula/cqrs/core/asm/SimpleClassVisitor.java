@@ -14,10 +14,14 @@ public class SimpleClassVisitor extends ClassVisitor implements Opcodes, ClassBo
 	final static String THIS_NAME = "this";
 	private final Type thisType;
 
-	Map<String, Field> fields = new HashMap<>();
+	private Map<String, Field> fields = new HashMap<>();
 
 	public SimpleClassVisitor(ClassVisitor cv, Type thisType) {
 		this(cv, thisType, Type.getType(Object.class));
+	}
+
+	public Field fieldOf(String fieldName) {
+		return fields.get(fieldName);
 	}
 
 	public SimpleClassVisitor(ClassVisitor cv, Type thisType, Type superType) {

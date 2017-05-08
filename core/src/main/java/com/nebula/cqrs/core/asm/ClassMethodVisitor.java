@@ -18,7 +18,7 @@ public class ClassMethodVisitor extends AbstractMethodVistor<ClassMethodHeader, 
 
 		@Override
 		public ClassMethodCode putTopTo(String fieldName) {
-			return putTopTo(cv.fields.get(fieldName));
+			return putTopTo(cv.fieldOf(fieldName));
 		}
 
 		@Override
@@ -29,33 +29,10 @@ public class ClassMethodVisitor extends AbstractMethodVistor<ClassMethodHeader, 
 	}
 
 	class ThisInstance extends MyInstance implements ClassThisInstance {
-
 		@Override
-		public Instance<ClassUseCaller, ClassMethodCode> get(String fieldName) {
-			return get(cv.fields.get(fieldName));
+		public Field fieldOf(String fieldName) {
+			return cv.fieldOf(fieldName);
 		}
-
-		@Override
-		public Instance<ClassUseCaller, ClassMethodCode> getProperty(String fieldName) {
-			return getProperty(cv.fields.get(fieldName));
-		}
-
-		@Override
-		public ClassMethodCode put(int dataIndex, String fieldName) {
-			return put(dataIndex, cv.fields.get(fieldName));
-		}
-
-		@Override
-		public ClassMethodCode put(String varName, String fieldName) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public ClassMethodCode putTopTo(String fieldName) {
-			return putTopTo(cv.fields.get(fieldName));
-		}
-
 	}
 
 	SimpleClassVisitor cv;
@@ -84,7 +61,7 @@ public class ClassMethodVisitor extends AbstractMethodVistor<ClassMethodHeader, 
 
 	@Override
 	public Instance<ClassUseCaller, ClassMethodCode> get(String fieldName) {
-		return loadThis().get(cv.fields.get(fieldName));
+		return loadThis().get(cv.fieldOf(fieldName));
 	}
 
 	@Override
@@ -94,7 +71,7 @@ public class ClassMethodVisitor extends AbstractMethodVistor<ClassMethodHeader, 
 
 	@Override
 	public Instance<ClassUseCaller, ClassMethodCode> getProperty(String fieldName) {
-		return loadThis().getProperty(cv.fields.get(fieldName));
+		return loadThis().getProperty(cv.fieldOf(fieldName));
 	}
 
 	@Override
@@ -126,12 +103,12 @@ public class ClassMethodVisitor extends AbstractMethodVistor<ClassMethodHeader, 
 
 	@Override
 	public ClassMethodCode put(int dataIndex, String fieldName) {
-		return loadThis().put(dataIndex, cv.fields.get(fieldName));
+		return loadThis().put(dataIndex, cv.fieldOf(fieldName));
 	}
 
 	@Override
 	public ClassMethodCode put(String varName, String fieldName) {
-		return loadThis().put(varIndex(fieldName), cv.fields.get(fieldName));
+		return loadThis().put(varIndex(fieldName), cv.fieldOf(fieldName));
 	}
 
 	@Override
@@ -141,7 +118,7 @@ public class ClassMethodVisitor extends AbstractMethodVistor<ClassMethodHeader, 
 
 	@Override
 	public ClassMethodCode putTopTo(String fieldName) {
-		return thisType().putTopTo(cv.fields.get(fieldName));
+		return thisType().putTopTo(cv.fieldOf(fieldName));
 	}
 
 	@Override
@@ -168,5 +145,10 @@ public class ClassMethodVisitor extends AbstractMethodVistor<ClassMethodHeader, 
 	@Override
 	public ClassUseCaller use() {
 		return useThis();
+	}
+
+	@Override
+	public Field fieldOf(String fieldName) {
+		return cv.fieldOf(fieldName);
 	}
 }

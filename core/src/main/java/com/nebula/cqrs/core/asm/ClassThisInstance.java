@@ -2,19 +2,28 @@ package com.nebula.cqrs.core.asm;
 
 import org.objectweb.asm.Type;
 
-public interface ClassThisInstance extends Types, Instance<ClassUseCaller,ClassMethodCode> {
-	Instance<ClassUseCaller,ClassMethodCode> get(String fieldName);
+public interface ClassThisInstance extends Types, Instance<ClassUseCaller, ClassMethodCode> {
+	Field fieldOf(String fieldName);
 
+	default Instance<ClassUseCaller, ClassMethodCode> get(String fieldName) {
+		return get(fieldOf(fieldName));
+	}
 
-	ClassMethodCode put(int dataIndex, String fieldName);
+	default Instance<ClassUseCaller, ClassMethodCode> getProperty(String fieldName) {
+		return getProperty(fieldOf(fieldName));
+	}
 
-	ClassMethodCode put(String varName, String fieldName);
+	default ClassMethodCode put(int varIndex, String fieldName) {
+		return put(varIndex, fieldOf(fieldName));
+	}
 
-	Instance<ClassUseCaller,ClassMethodCode> getProperty(String fieldName);
+	default ClassMethodCode put(String varName, String fieldName) {
+		return put(code().varIndex(varName), fieldName);
+	}
 
-	ClassMethodCode putTopTo(Field field);
-
-	ClassMethodCode putTopTo(String fieldName);
+	default ClassMethodCode putTopTo(String fieldName) {
+		return code().putTopTo(fieldOf(fieldName));
+	}
 
 	default ClassMethodCode putTopTo(String fieldName, Class<?> fieldClass) {
 		return putTopTo(new Field(fieldName, typeOf(fieldClass)));

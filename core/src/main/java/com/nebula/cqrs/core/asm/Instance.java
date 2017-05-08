@@ -27,16 +27,16 @@ public interface Instance<M extends MethodUseCaller<M, C>, C extends MethodCode<
 		return getProperty(new Field(fieldName, typeOf(fieldClass)));
 	}
 
-	C put(int dataIndex, Field field);
+	C put(int varIndex, Field field);
 
-	default C put(String varname, Field field) {
-		return put(code().varIndex(varname), field);
+	default C put(String varName, Field field) {
+		return put(code().varIndex(varName), field);
 	}
 
 	C code();
 
-	default void store(String varname) {
-		code().storeTop(varname);
+	default void store(String varName) {
+		code().storeTop(varName);
 	}
 
 	default void store(int varIndex) {

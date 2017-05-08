@@ -16,6 +16,12 @@ import org.objectweb.asm.Type;
 public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C extends MethodCode<M, C>> extends MethodVisitor
         implements MethodCode<M, C>, MethodHeader<H, C>, Opcodes {
 
+	@Override
+	public C putTopTo(Field field) {
+		ASMBuilder.visitPutField(mv, currentClassType.currentClassType, field.name, field.type);
+		return code();
+	}
+
 	class Annotation {
 		int parameter;
 
