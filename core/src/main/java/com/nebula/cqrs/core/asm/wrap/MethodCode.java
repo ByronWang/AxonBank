@@ -8,7 +8,7 @@ import org.objectweb.asm.Type;
 
 import com.nebula.cqrs.core.asm.Field;
 
-interface MethodCode<M extends MethodUseCaller<M, C> , C extends MethodCode<M, C>> extends Types {
+interface MethodCode<M extends MethodUseCaller<M, C>, C extends MethodCode<M, C>> extends Types {
 
 	C accessLabel(Label label);
 
@@ -70,11 +70,11 @@ interface MethodCode<M extends MethodUseCaller<M, C> , C extends MethodCode<M, C
 		load(vars(varNames));
 	}
 
-	Instance<M,C> newInstace(Type type);
+	Instance<M, C> newInstace(Type type);
 
-	Instance<M,C> object(int index);
+	Instance<M, C> object(int index);
 
-	default Instance<M,C> object(String variableName) {
+	default Instance<M, C> object(String variableName) {
 		return object(varIndex(variableName));
 	}
 
@@ -97,11 +97,11 @@ interface MethodCode<M extends MethodUseCaller<M, C> , C extends MethodCode<M, C
 		return storeTop(varIndex(varName));
 	}
 
-	default ClassType<M,C> type(Class<?> returnClass) {
+	default Instance<M, C> type(Class<?> returnClass) {
 		return type(typeOf(returnClass));
 	}
 
-	ClassType<M,C> type(Type objectType);
+	Instance<M, C> type(Type objectType);
 
 	default M use(Function<C, ToType> func) {
 		ToType toType = func.apply(code());

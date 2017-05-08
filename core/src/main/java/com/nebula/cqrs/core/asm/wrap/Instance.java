@@ -18,11 +18,7 @@ public interface Instance<M extends MethodUseCaller<M, C>, C extends MethodCode<
 	}
 
 	default Instance<M, C> getProperty(Field field) {
-		return null;
-	}
-
-	default Instance<M, C> getProperty(String fieldName, Type fieldType) {
-		return getProperty(new Field(fieldName, fieldType));
+		return getProperty(field.name, field.type);
 	}
 
 	default Instance<M, C> getProperty(String fieldName, Class<?> fieldClass) {

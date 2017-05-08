@@ -1,5 +1,6 @@
 package com.nebula.cqrs.core.asm.wrap;
 
+import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
@@ -10,8 +11,8 @@ public class ClassMethodVisitor extends AbstractMethodVistor<MethodHeader<ClassM
         implements MethodHeader<ClassMethodCode>, ClassMethodCode, Opcodes {
 	class RealThisUseCaller extends RealUseCaller implements ClassUseCaller {
 
-		public RealThisUseCaller(Type objectType) {
-			super(objectType);
+		public RealThisUseCaller(MethodVisitor mv, Type objectType) {
+			super(mv, objectType);
 		}
 
 		@Override
@@ -21,15 +22,25 @@ public class ClassMethodVisitor extends AbstractMethodVistor<MethodHeader<ClassM
 	}
 
 	class ThisInstance extends MyInstance implements ClassThisInstance {
+		ThisInstance(MethodVisitor mv) {
+			super(mv);
+		}
+
 		@Override
 		public Field fieldOf(String fieldName) {
 			return cv.fieldOf(fieldName);
 		}
 	}
 
+	@Override
+	protected ClassMethodCode methodBegin() {
+		thisInstance = new ThisInstance(mv);
+		return super.methodBegin();
+	}
+
 	SimpleClassVisitor cv;
 
-	ThisInstance thisInstance = new ThisInstance();
+	ThisInstance thisInstance;
 
 	public ClassMethodVisitor(SimpleClassVisitor cv, Type thisType, int access, Type returnType, String methodName, Class<?>... exceptionClasses) {
 		super(cv, thisType, access, returnType, methodName, exceptionClasses);
@@ -54,19 +65,19 @@ public class ClassMethodVisitor extends AbstractMethodVistor<MethodHeader<ClassM
 	}
 
 	@Override
-	public ClassType<ClassUseCaller, ClassMethodCode> thisType() {
+	public Instance<ClassUseCaller, ClassMethodCode> thisType() {
 		return type(thisObjectType);
 	}
 
 	@Override
 	public ClassUseCaller useThis() {
 		This();
-		return new RealThisUseCaller(thisObjectType);
+		return new RealThisUseCaller(mv,thisObjectType);
 	}
 
 	@Override
 	public ClassUseCaller useTop(Type type) {
-		return new RealThisUseCaller(type);
+		return new RealThisUseCaller(mv,type);
 	}
 
 	@Override

@@ -5,7 +5,7 @@ import com.nebula.cqrs.core.asm.Field;
 public interface ClassMethodCode extends MethodCode<ClassUseCaller,ClassMethodCode> {
 	ClassThisInstance This();
 
-	ClassType<ClassUseCaller,ClassMethodCode> thisType();
+	Instance<ClassUseCaller,ClassMethodCode> thisType();
 	
 	ClassMethodCode initObject();
 

@@ -16,6 +16,7 @@ import org.objectweb.asm.Type;
 import com.nebula.cqrs.core.asm.ASMBuilder;
 import com.nebula.cqrs.core.asm.AsmBuilderHelper;
 import com.nebula.cqrs.core.asm.Field;
+import com.nebula.cqrs.core.asm.wrap.ClassMethodVisitor.ThisInstance;
 
 public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C extends MethodCode<M, C>> extends MethodVisitor
         implements MethodCode<M, C>, MethodHeader<C>, Types {
@@ -41,34 +42,12 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		}
 	}
 
-	class MyClassType implements ClassType<M, C> {
-		Type currentClassType;
+	class MyInstance extends AbstractInvokeMethod<M, C> implements Instance<M, C> {
+		private int topIndex;
 
-		@Override
-		public Type getType() {
-			return currentClassType;
+		MyInstance(MethodVisitor mv) {
+			super(mv);
 		}
-
-		@Override
-		public void invoke(int invoketype, String methodName, Type... params) {
-			ASMBuilder.visitInvoke(invoketype, mv, currentClassType, Type.VOID_TYPE, methodName, params);
-		}
-
-		@Override
-		public Instance<M, C> invoke(int invoketype, Type returnType, String methodName, Type... params) {
-			ASMBuilder.visitInvoke(invoketype, mv, currentClassType, returnType, methodName, params);
-			return top(returnType);
-		}
-
-		@Override
-		public C putTo(Field field) {
-			ASMBuilder.visitPutField(mv, currentClassType, field.name, field.type);
-			return code();
-		}
-	}
-
-	class MyInstance implements Instance<M, C> {
-		int index;
 
 		@Override
 		public C code() {
@@ -77,58 +56,44 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 
 		@Override
 		public Instance<M, C> get(Field field) {
-			ASMBuilder.visitGetField(mv, currentClassType.currentClassType, field.name, field.type);
-			return top(field.type);
+			ASMBuilder.visitGetField(mv, getType(), field.name, field.type);
+			return AbstractMethodVistor.this.type(field.type);
 		}
 
-		@Override
-		public Instance<M, C> getProperty(Field field) {
-			ASMBuilder.visitGetProperty(mv, currentClassType.currentClassType, field.name, field.type);
-			return top(field.type);
+		public int getIndex() {
+			return topIndex;
 		}
 
 		@Override
 		public Type getType() {
-			return currentClassType.currentClassType;
+			return AbstractMethodVistor.this.getTopType();
 		}
 
 		@Override
-		public void invoke(int invoketype, String methodName, Type... params) {
-			ASMBuilder.visitInvoke(invoketype, mv, currentClassType.currentClassType, Type.VOID_TYPE, methodName, params);
-		}
-
-		@Override
-		public Instance<M, C> invoke(int invoketype, Type returnType, String methodName, Type... params) {
-			ASMBuilder.visitInvoke(invoketype, mv, currentClassType.currentClassType, returnType, methodName, params);
-			return top(returnType);
-		}
-
-		@Override
-		public C put(int dataIndex, Field field) {
-			Field var = variablesStack.get(dataIndex);
-			accessVar(dataIndex);
-			mv.visitVarInsn(var.type.getOpcode(ILOAD), variablesLocals[dataIndex]);
-			ASMBuilder.visitPutField(mv, currentClassType.currentClassType, field.name, field.type);
+		public C put(int varIndex, Field field) {
+			Field var = variablesStack.get(varIndex);
+			accessVar(varIndex);
+			mv.visitVarInsn(var.type.getOpcode(ILOAD), variablesLocals[varIndex]);
+			ASMBuilder.visitPutField(mv, getType(), field.name, field.type);
 			return code();
 		}
 
-		@Override
-		public C putTo(Field field) {
-			ASMBuilder.visitPutField(mv, currentClassType.currentClassType, field.name, field.type);
-			return code();
+		public void setIndex(int index) {
+			this.topIndex = index;
 		}
 
 		@Override
 		public M use() {
-			return useTop(currentClassType.currentClassType);
+			return AbstractMethodVistor.this.useTop(thisMethodReturnType);
 		}
 	}
 
-	abstract class RealUseCaller implements MethodUseCaller<M, C> {
+	abstract class RealUseCaller extends AbstractInvokeMethod<M, C> implements MethodUseCaller<M, C> {
 
 		Type objectType;
 
-		public RealUseCaller(Type objectType) {
+		public RealUseCaller(MethodVisitor mv, Type objectType) {
+			super(mv);
 			this.objectType = objectType;
 		}
 
@@ -141,28 +106,13 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		abstract M caller();
 
 		@Override
-		public Type getType() {
-			return objectType;
-		}
-
-		@Override
-		public void invoke(int invoketype, String methodName, Type... params) {
-			type(objectType).invoke(invoketype, Type.VOID_TYPE, methodName, params);
-		}
-
-		@Override
-		public Instance<M, C> invoke(int invoketype, Type returnType, String methodName, Type... params) {
-			return type(objectType).invoke(invoketype, returnType, methodName, params);
-		}
-
-		@Override
-		public C putTo(Field field) {
-			return type(objectType).putTo(field);
-		}
-
-		@Override
 		public C code() {
 			return AbstractMethodVistor.this.code();
+		}
+
+		@Override
+		public Type getType() {
+			return objectType;
 		}
 
 		@Override
@@ -175,7 +125,6 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 			invocation.accept(code());
 			return caller();
 		}
-
 	}
 
 	static class Variable extends ClassField {
@@ -213,9 +162,7 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		return locals;
 	}
 
-	MyClassType currentClassType = new MyClassType();
-
-	MyInstance currentInstance = new MyInstance();
+	MyInstance currentInstance;
 
 	private final ClassVisitor cv;
 
@@ -238,6 +185,8 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 	private final Type thisMethodReturnType;
 
 	Type thisObjectType;
+
+	Type topType;
 
 	int[] variablesLocals;
 
@@ -290,19 +239,6 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		return this;
 	}
 
-	private C begin() {
-		mv.visitCode();
-
-		labelCurrent = labelWithoutLineNumber();
-		// TODO add class sign
-		variablesStack.push(new Variable(THIS_NAME, thisObjectType, null, labelCurrent));
-		for (ClassField field : thisMethodParams) {
-			variablesStack.push(new Variable(field, labelCurrent));
-		}
-		recomputerLocals();
-		return code();
-	}
-
 	@Override
 	public C block(Consumer<C> invocation) {
 		invocation.accept(code());
@@ -311,10 +247,10 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 
 	@Override
 	public C code(Consumer<C> invocation) {
-		defineMethod();
-		begin();
+		methodDefine();
+		methodBegin();
 		invocation.accept(code());
-		end();
+		methodEnd();
 		return code();
 	}
 
@@ -331,7 +267,66 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		return label;
 	}
 
-	private void defineMethod() {
+	protected Type getTopType() {
+		return topType;
+	}
+
+	@Override
+	public C insn(int opcode) {
+		mv.visitInsn(opcode);
+		return code();
+	}
+
+	@Override
+	public C jumpInsn(int ifgt, Label label) {
+		mv.visitJumpInsn(IFGT, label);
+		return code();
+	}
+
+	private Label labelWithoutLineNumber() {
+		Label label = new Label();
+		labelCurrent = label;
+		mv.visitLabel(label);
+		return label;
+	}
+
+	public C line(int line) {
+		Label label;
+		if (!labelHasDefineBegin) {
+			label = new Label();
+			labelCurrent = label;
+			mv.visitLabel(label);
+		} else {
+			label = labelCurrent;
+		}
+		mv.visitLineNumber(line, label);
+		return code();
+	}
+
+	@Override
+	public void load(int... indexes) {
+		for (int index : indexes) {
+			mv.visitVarInsn(variablesStack.get(index).type.getOpcode(ILOAD), variablesLocals[index]);
+		}
+		accessVar(indexes);
+	}
+
+	protected C methodBegin() {
+		currentInstance = new MyInstance(mv);
+		mv.visitCode();
+
+		labelCurrent = labelWithoutLineNumber();
+		// TODO add class sign
+		variablesStack.push(new Variable(THIS_NAME, thisObjectType, null, labelCurrent));
+		for (ClassField field : thisMethodParams) {
+			variablesStack.push(new Variable(field, labelCurrent));
+		}
+		recomputerLocals();
+		
+		return code();
+	}
+
+	protected void methodDefine() {
 		String signature = null;
 		boolean definedSignature = false;
 		{
@@ -376,7 +371,7 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		}
 	}
 
-	public void end() {
+	public void methodEnd() {
 		Label endLabel = this.labelWithoutLineNumber();
 		int i = 0;
 		for (Variable var : variablesStack) {
@@ -387,58 +382,17 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 	}
 
 	@Override
-	public C insn(int opcode) {
-		mv.visitInsn(opcode);
-		return code();
-	}
-
-	@Override
-	public C jumpInsn(int ifgt, Label label) {
-		mv.visitJumpInsn(IFGT, label);
-		return code();
-	}
-
-	private Label labelWithoutLineNumber() {
-		Label label = new Label();
-		labelCurrent = label;
-		mv.visitLabel(label);
-		return label;
-	}
-
-	public C line(int line) {
-		Label label;
-		if (!labelHasDefineBegin) {
-			label = new Label();
-			labelCurrent = label;
-			mv.visitLabel(label);
-		} else {
-			label = labelCurrent;
-		}
-		mv.visitLineNumber(line, label);
-		return code();
-	}
-
-	@Override
-	public void load(int... indexes) {
-		for (int index : indexes) {
-			mv.visitVarInsn(variablesStack.get(index).type.getOpcode(ILOAD), variablesLocals[index]);
-		}
-		accessVar(indexes);
-	}
-
-	@Override
 	public Instance<M, C> newInstace(Type type) {
 		ASMBuilder.visitNewObject(mv, type);
-		return top(type);
+		return type(type);
 	}
 
 	@Override
 	public Instance<M, C> object(int index) {
 		accessVar(index);
-		currentInstance.index = index;
 		Field var = variablesStack.get(index);
 		mv.visitVarInsn(var.type.getOpcode(ILOAD), variablesLocals[index]);
-		return top(var.type);
+		return type(var.type);
 	}
 
 	@Override
@@ -456,7 +410,7 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 
 	@Override
 	public C putTopTo(Field field) {
-		ASMBuilder.visitPutField(mv, currentClassType.currentClassType, field.name, field.type);
+		ASMBuilder.visitPutField(mv, getTopType(), field.name, field.type);
 		return code();
 	}
 
@@ -489,15 +443,9 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		return code();
 	}
 
-	protected Instance<M, C> top(Type type) {
-		currentClassType.currentClassType = type;
+	public Instance<M, C> type(Type type) {
+		this.topType = type;
 		return currentInstance;
-	}
-
-	@Override
-	public ClassType<M, C> type(Type objectType) {
-		currentClassType.currentClassType = objectType;
-		return currentClassType;
 	}
 
 	@Override

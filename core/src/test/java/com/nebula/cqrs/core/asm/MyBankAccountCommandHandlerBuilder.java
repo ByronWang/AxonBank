@@ -50,8 +50,8 @@ public class MyBankAccountCommandHandlerBuilder implements Opcodes {
 
 		cw.publicMethod("<init>").parameter("repository", Repository.class, domainType).parameter("eventBus", EventBus.class).code(mv -> {
 			mv.line(15).initObject();
-			mv.line(16).This().put(1, "repository");
-			mv.line(17).This().put(2, "eventBus");
+			mv.line(16).This().put("repository", "repository");
+			mv.line(17).This().put("eventBus", "eventBus");
 			mv.line(18).returnVoid();
 		});
 	}

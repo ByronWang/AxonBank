@@ -11,7 +11,5 @@ public interface MethodUseCaller<M extends MethodUseCaller<M, C>, C extends Meth
 
 	M with(Consumer<C> invocation);
 
-	C code();
-
 	void returnMe();
 }

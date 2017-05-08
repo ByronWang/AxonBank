@@ -1,6 +1,7 @@
 package com.nebula.cqrs.core.asm.wrap;
 
 import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
@@ -16,9 +17,8 @@ public class SimpleMethodVisitor extends AbstractMethodVistor<MethodHeader<Simpl
         implements SimpleMethodCode, MethodHeader<SimpleMethodCode>, Opcodes {
 
 	class RealSimpleUseCaller extends RealUseCaller implements SimpleUseCaller {
-
-		public RealSimpleUseCaller(Type objectType) {
-			super(objectType);
+		public RealSimpleUseCaller(MethodVisitor mv, Type objectType) {
+			super(mv, objectType);
 		}
 
 		@Override
@@ -47,6 +47,12 @@ public class SimpleMethodVisitor extends AbstractMethodVistor<MethodHeader<Simpl
 
 	@Override
 	public SimpleUseCaller useTop(Type type) {
-		return new RealSimpleUseCaller(type);
+		return new RealSimpleUseCaller(mv,type);
+	}
+
+	@Override
+	public Instance<SimpleUseCaller, SimpleMethodCode> type(Type objectType) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }
