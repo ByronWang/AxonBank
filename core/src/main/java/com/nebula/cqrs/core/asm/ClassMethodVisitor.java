@@ -3,7 +3,7 @@ package com.nebula.cqrs.core.asm;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-public class ClassMethodVisitor extends AbstractMethodVistor<ClassMethodHeader, ClassUseCaller, ClassMethodCode>
+public class ClassMethodVisitor extends AbstractMethodVistor<MethodHeader<ClassMethodCode>, ClassUseCaller, ClassMethodCode>
         implements ClassMethodHeader, ClassMethodCode, ClassThisInstance, Opcodes {
 	class RealThisUseCaller extends RealUseCaller implements ClassUseCaller {
 
@@ -41,11 +41,6 @@ public class ClassMethodVisitor extends AbstractMethodVistor<ClassMethodHeader, 
 
 	@Override
 	public ClassMethodCode code() {
-		return this;
-	}
-
-	@Override
-	public ClassMethodHeader header() {
 		return this;
 	}
 

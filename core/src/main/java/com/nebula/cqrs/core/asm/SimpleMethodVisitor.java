@@ -8,16 +8,12 @@ interface SimpleMethodCode extends Types, MethodCode<SimpleUseCaller, SimpleMeth
 
 }
 
-interface SimpleMethodHeader extends MethodHeader<SimpleMethodHeader, SimpleMethodCode> {
-
-}
-
 interface SimpleUseCaller extends MethodUseCaller<SimpleUseCaller, SimpleMethodCode> {
 
 }
 
-public class SimpleMethodVisitor extends AbstractMethodVistor<SimpleMethodHeader, SimpleUseCaller, SimpleMethodCode>
-        implements SimpleMethodCode, SimpleMethodHeader, Opcodes {
+public class SimpleMethodVisitor extends AbstractMethodVistor<MethodHeader<SimpleMethodCode>, SimpleUseCaller, SimpleMethodCode>
+        implements SimpleMethodCode, MethodHeader<SimpleMethodCode>, Opcodes {
 
 	class RealSimpleUseCaller extends RealUseCaller implements SimpleUseCaller {
 
@@ -53,10 +49,4 @@ public class SimpleMethodVisitor extends AbstractMethodVistor<SimpleMethodHeader
 	public SimpleUseCaller useTop(Type type) {
 		return new RealSimpleUseCaller(type);
 	}
-
-	@Override
-	public SimpleMethodHeader header() {
-		return this;
-	}
-
 }

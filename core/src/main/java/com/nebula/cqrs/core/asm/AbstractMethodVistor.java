@@ -14,7 +14,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C extends MethodCode<M, C>> extends MethodVisitor
-        implements MethodCode<M, C>, MethodHeader<H, C>, Opcodes {
+        implements MethodCode<M, C>, MethodHeader<C>, Opcodes {
 
 	@Override
 	public C putTopTo(Field field) {
@@ -273,9 +273,9 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 	}
 
 	@Override
-	public H annotation(Type type, String value) {
+	public MethodHeader<C> annotation(Type type, String value) {
 		this.thisMethodAnnotations.add(new Annotation(value, type));
-		return header();
+		return this;
 	}
 
 	private C begin() {
@@ -430,16 +430,16 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 	}
 
 	@Override
-	public H parameter(String fieldName, Type fieldType, String signature) {
+	public MethodHeader<C> parameter(String fieldName, Type fieldType, String signature) {
 		thisMethodParams.add(new Field(fieldName, fieldType, signature));
 		thisMethodParameterAnnotations.add(null);
-		return header();
+		return this;
 	}
 
 	@Override
-	public H parameterAnnotation(Type type, Object value) {
+	public MethodHeader<C> parameterAnnotation(Type type, Object value) {
 		thisMethodParameterAnnotations.set(thisMethodParams.size() - 1, new Annotation(value, type));
-		return header();
+		return this;
 	}
 
 	void recomputerLocals() {

@@ -4,43 +4,43 @@ import java.util.function.Consumer;
 
 import org.objectweb.asm.Type;
 
-interface MethodHeader<H, C> extends Types {
+interface MethodHeader<C> extends Types {
 
-	H annotation(Type type, String value);
+	MethodHeader<C> annotation(Type type, String value);
 
-	default H annotation(Class<?> annotationClass) {
+	default MethodHeader<C> annotation(Class<?> annotationClass) {
 		return annotation(typeOf(annotationClass), null);
 	}
 
-	default H annotation(Type type) {
+	default MethodHeader<C> annotation(Type type) {
 		return annotation(type, null);
 	}
 
 	C code(Consumer<C> invocation);
 
-	default H parameter(Field field) {
+	default MethodHeader<C> parameter(Field field) {
 		return parameter(field.name, field.type);
 	}
 
-	default H parameter(String fieldName, Class<?> clz) {
+	default MethodHeader<C> parameter(String fieldName, Class<?> clz) {
 		return parameter(fieldName, typeOf(clz));
 	}
 
-	default H parameter(String fieldName, Class<?> clz, Class<?>... signatureClasses) {
+	default MethodHeader<C> parameter(String fieldName, Class<?> clz, Class<?>... signatureClasses) {
 		return parameter(fieldName, typeOf(clz), typesOf(signatureClasses));
 	}
 
-	default H parameter(String fieldName, Class<?> clz, String signature) {
+	default MethodHeader<C> parameter(String fieldName, Class<?> clz, String signature) {
 		return parameter(fieldName, typeOf(clz), signature);
 	}
 
-	default H parameter(String fieldName, Class<?> clz, Type... signatureTypes) {
+	default MethodHeader<C> parameter(String fieldName, Class<?> clz, Type... signatureTypes) {
 		return parameter(fieldName, typeOf(clz), signatureTypes);
 	}
 
-	H parameter(String fieldName, Type fieldType, String signature);;
+	MethodHeader<C> parameter(String fieldName, Type fieldType, String signature);;
 
-	default H parameter(String fieldName, Type fieldType, Type... signatureTypes) {
+	default MethodHeader<C> parameter(String fieldName, Type fieldType, Type... signatureTypes) {
 		String signature = null;
 		if (signatureTypes != null && signatureTypes.length > 0) {
 			StringBuilder sb = new StringBuilder();
@@ -56,15 +56,13 @@ interface MethodHeader<H, C> extends Types {
 		return parameter(fieldName, fieldType, signature);
 	};
 
-	default H parameterAnnotation(Class<?> annotationClass) {
+	default MethodHeader<C> parameterAnnotation(Class<?> annotationClass) {
 		return parameterAnnotation(typeOf(annotationClass), null);
 	}
 
-	default H parameterAnnotation(Type type) {
+	default MethodHeader<C> parameterAnnotation(Type type) {
 		return parameterAnnotation(type, null);
 	}
 
-	H header();
-	
-	H parameterAnnotation(Type type, Object value);
+	MethodHeader<C> parameterAnnotation(Type type, Object value);
 }

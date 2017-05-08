@@ -85,13 +85,13 @@ public class MyBankAccountCommandHandlerDump implements Opcodes {
 			mv.visitLabel(l0);
 			mv.visitLineNumber(22, l0);
 			mv.visitTypeInsn(NEW, "org/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountCommandHandler$InnerCreate");
-			mv.visitInsn(DUP);
+			mv.visitVarInsn(ASTORE, 2);
+			mv.visitVarInsn(ALOAD, 2);
 			mv.visitVarInsn(ALOAD, 0);
 			mv.visitVarInsn(ALOAD, 1);
 			mv.visitMethodInsn(INVOKESPECIAL, "org/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountCommandHandler$InnerCreate", "<init>",
 			        "(Lorg/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountCommandHandler;Lorg/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountCreateCommand;)V",
 			        false);
-			mv.visitVarInsn(ASTORE, 2);
 			Label l1 = new Label();
 			mv.visitLabel(l1);
 			mv.visitLineNumber(23, l1);
@@ -110,9 +110,9 @@ public class MyBankAccountCommandHandlerDump implements Opcodes {
 			mv.visitLabel(l3);
 			mv.visitLocalVariable("this", "Lorg/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountCommandHandler;", null, l0, l3, 0);
 			mv.visitLocalVariable("command", "Lorg/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountCreateCommand;", null, l0, l3, 1);
-			mv.visitLocalVariable("caller", "Lorg/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountCommandHandler$InnerCreate;", null, l1, l3,
+			mv.visitLocalVariable("caller", "Lorg/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountCommandHandler$InnerCreate;", null, l0, l3,
 			        2);
-			mv.visitMaxs(4, 3);
+			mv.visitMaxs(3, 3);
 			mv.visitEnd();
 		}
 		{
@@ -143,13 +143,13 @@ public class MyBankAccountCommandHandlerDump implements Opcodes {
 			mv.visitLabel(l2);
 			mv.visitLineNumber(30, l2);
 			mv.visitTypeInsn(NEW, "org/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountCommandHandler$InnerDeposit");
-			mv.visitInsn(DUP);
+			mv.visitVarInsn(ASTORE, 4);
+			mv.visitVarInsn(ALOAD, 4);
 			mv.visitVarInsn(ALOAD, 0);
 			mv.visitVarInsn(ALOAD, 1);
 			mv.visitMethodInsn(INVOKESPECIAL, "org/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountCommandHandler$InnerDeposit", "<init>",
 			        "(Lorg/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountCommandHandler;Lorg/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountDepositCommand;)V",
 			        false);
-			mv.visitVarInsn(ASTORE, 4);
 			Label l3 = new Label();
 			mv.visitLabel(l3);
 			mv.visitLineNumber(31, l3);
@@ -166,11 +166,11 @@ public class MyBankAccountCommandHandlerDump implements Opcodes {
 			mv.visitLocalVariable("command", "Lorg/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountDepositCommand;", null, l0, l5, 1);
 			mv.visitLocalVariable("axonBankAccountId", "Ljava/lang/String;", null, l1, l5, 2);
 			mv.visitLocalVariable("aggregate", "Lorg/axonframework/commandhandling/model/Aggregate;",
-			        "Lorg/axonframework/commandhandling/model/Aggregate<Lorg/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountImpl;>;", l2, l5,
+			        "Lorg/axonframework/commandhandling/model/Aggregate<Lorg/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountImpl;>;", l3, l5,
 			        3);
-			mv.visitLocalVariable("caller", "Lorg/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountCommandHandler$InnerDeposit;", null, l3, l5,
+			mv.visitLocalVariable("caller", "Lorg/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountCommandHandler$InnerDeposit;", null, l2, l5,
 			        4);
-			mv.visitMaxs(4, 5);
+			mv.visitMaxs(3, 5);
 			mv.visitEnd();
 		}
 		{
@@ -201,13 +201,13 @@ public class MyBankAccountCommandHandlerDump implements Opcodes {
 			mv.visitLabel(l2);
 			mv.visitLineNumber(38, l2);
 			mv.visitTypeInsn(NEW, "org/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountCommandHandler$InnerWithdraw");
-			mv.visitInsn(DUP);
+			mv.visitVarInsn(ASTORE, 4);
+			mv.visitVarInsn(ALOAD, 4);
 			mv.visitVarInsn(ALOAD, 0);
 			mv.visitVarInsn(ALOAD, 1);
 			mv.visitMethodInsn(INVOKESPECIAL, "org/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountCommandHandler$InnerWithdraw", "<init>",
 			        "(Lorg/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountCommandHandler;Lorg/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountWithdrawCommand;)V",
 			        false);
-			mv.visitVarInsn(ASTORE, 4);
 			Label l3 = new Label();
 			mv.visitLabel(l3);
 			mv.visitLineNumber(39, l3);
@@ -224,11 +224,11 @@ public class MyBankAccountCommandHandlerDump implements Opcodes {
 			mv.visitLocalVariable("command", "Lorg/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountWithdrawCommand;", null, l0, l5, 1);
 			mv.visitLocalVariable("axonBankAccountId", "Ljava/lang/String;", null, l1, l5, 2);
 			mv.visitLocalVariable("aggregate", "Lorg/axonframework/commandhandling/model/Aggregate;",
-			        "Lorg/axonframework/commandhandling/model/Aggregate<Lorg/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountImpl;>;", l2, l5,
+			        "Lorg/axonframework/commandhandling/model/Aggregate<Lorg/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountImpl;>;", l3, l5,
 			        3);
-			mv.visitLocalVariable("caller", "Lorg/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountCommandHandler$InnerWithdraw;", null, l3, l5,
+			mv.visitLocalVariable("caller", "Lorg/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountCommandHandler$InnerWithdraw;", null, l2, l5,
 			        4);
-			mv.visitMaxs(4, 5);
+			mv.visitMaxs(3, 5);
 			mv.visitEnd();
 		}
 		cw.visitEnd();
