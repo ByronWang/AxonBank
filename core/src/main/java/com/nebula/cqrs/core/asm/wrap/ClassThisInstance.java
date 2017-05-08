@@ -1,6 +1,8 @@
-package com.nebula.cqrs.core.asm;
+package com.nebula.cqrs.core.asm.wrap;
 
 import org.objectweb.asm.Type;
+
+import com.nebula.cqrs.core.asm.Field;
 
 public interface ClassThisInstance extends Types, Instance<ClassUseCaller, ClassMethodCode> {
 	Field fieldOf(String fieldName);

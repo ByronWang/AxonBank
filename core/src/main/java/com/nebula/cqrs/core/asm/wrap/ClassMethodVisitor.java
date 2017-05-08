@@ -1,7 +1,12 @@
-package com.nebula.cqrs.core.asm;
+package com.nebula.cqrs.core.asm.wrap;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+
+import com.nebula.cqrs.core.asm.ASMBuilder;
+import com.nebula.cqrs.core.asm.Field;
+import com.nebula.cqrs.core.asm.wrap.AbstractMethodVistor.MyInstance;
+import com.nebula.cqrs.core.asm.wrap.AbstractMethodVistor.RealUseCaller;
 
 public class ClassMethodVisitor extends AbstractMethodVistor<MethodHeader<ClassMethodCode>, ClassUseCaller, ClassMethodCode>
         implements ClassMethodHeader, ClassMethodCode, ClassThisInstance, Opcodes {

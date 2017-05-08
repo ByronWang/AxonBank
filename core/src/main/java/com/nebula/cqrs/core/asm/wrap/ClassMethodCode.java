@@ -1,4 +1,4 @@
-package com.nebula.cqrs.core.asm;
+package com.nebula.cqrs.core.asm.wrap;
 
 public interface ClassMethodCode extends ClassThisInstance, MethodCode<ClassUseCaller,ClassMethodCode> {
 	ClassThisInstance loadThis();

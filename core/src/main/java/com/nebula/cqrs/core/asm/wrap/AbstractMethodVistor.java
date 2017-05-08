@@ -1,4 +1,4 @@
-package com.nebula.cqrs.core.asm;
+package com.nebula.cqrs.core.asm.wrap;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,11 +10,15 @@ import java.util.function.Consumer;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
+import static org.objectweb.asm.Opcodes.*;
 import org.objectweb.asm.Type;
 
+import com.nebula.cqrs.core.asm.ASMBuilder;
+import com.nebula.cqrs.core.asm.AsmBuilderHelper;
+import com.nebula.cqrs.core.asm.Field;
+
 public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C extends MethodCode<M, C>> extends MethodVisitor
-        implements MethodCode<M, C>, MethodHeader<C>, Opcodes {
+        implements MethodCode<M, C>, MethodHeader<C>, Types{
 
 	@Override
 	public C putTopTo(Field field) {
@@ -175,10 +179,10 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 
 	}
 
-	static class Variable extends Field {
+	static class Variable extends ClassField {
 		Label startFrom;
 
-		public Variable(Field field, Label startFrom) {
+		public Variable(ClassField field, Label startFrom) {
 			this(field.name, field.type, field.signature, startFrom);
 		}
 
@@ -230,7 +234,7 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 
 	List<Annotation> thisMethodParameterAnnotations = new ArrayList<>(10);
 
-	private List<Field> thisMethodParams = new ArrayList<>();
+	private List<ClassField> thisMethodParams = new ArrayList<>();
 
 	private final Type thisMethodReturnType;
 
@@ -284,7 +288,7 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		labelCurrent = labelWithoutLineNumber();
 		// TODO add class sign
 		variablesStack.push(new Variable(THIS_NAME, thisObjectType, null, labelCurrent));
-		for (Field field : thisMethodParams) {
+		for (ClassField field : thisMethodParams) {
 			variablesStack.push(new Variable(field, labelCurrent));
 		}
 		recomputerLocals();
@@ -325,12 +329,12 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		{
 			StringBuilder sb = new StringBuilder();
 			sb.append("(");
-			for (Field field : thisMethodParams) {
-				if (field.signature != null) {
-					sb.append(field.signature);
+			for (ClassField param : thisMethodParams) {
+				if (param.signature != null) {
+					sb.append(param.signature);
 					definedSignature = true;
 				} else {
-					sb.append(field.type.getDescriptor());
+					sb.append(param.type.getDescriptor());
 				}
 			}
 			sb.append(")");
@@ -352,7 +356,7 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 			excptions = new String[0];
 		}
 
-		this.mv = ASMBuilder.visitDefineMethod(cv, thisMethodAccess, thisMethodReturnType, thisMethodName, AsmBuilderHelper.typesOf(thisMethodParams),
+		this.mv = ASMBuilder.visitDefineMethod(cv, thisMethodAccess, thisMethodReturnType, thisMethodName, ClassField.typesOf(thisMethodParams),
 		        signature, excptions);
 		for (Annotation annotation : thisMethodAnnotations) {
 			ASMBuilder.visitAnnotation(mv, annotation.type, annotation.value);
@@ -431,7 +435,7 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 
 	@Override
 	public MethodHeader<C> parameter(String fieldName, Type fieldType, String signature) {
-		thisMethodParams.add(new Field(fieldName, fieldType, signature));
+		thisMethodParams.add(new ClassField(fieldName, fieldType, signature));
 		thisMethodParameterAnnotations.add(null);
 		return this;
 	}

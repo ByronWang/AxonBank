@@ -1,7 +1,9 @@
-package com.nebula.cqrs.core.asm;
+package com.nebula.cqrs.core.asm.wrap;
 
 import static org.objectweb.asm.Opcodes.*;
 import org.objectweb.asm.Type;
+
+import com.nebula.cqrs.core.asm.Field;
 
 public interface InvokeMethod<M extends MethodUseCaller<M, C>, C extends MethodCode<M, C>> extends Types {
 

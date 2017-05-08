@@ -1,4 +1,4 @@
-package com.nebula.cqrs.core.asm;
+package com.nebula.cqrs.core.asm.wrap;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -8,6 +8,8 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 import com.nebula.cqrs.axon.asm.ClassUtils;
+import com.nebula.cqrs.core.asm.ASMBuilder;
+import com.nebula.cqrs.core.asm.Field;
 
 public class SimpleClassVisitor extends ClassVisitor implements Opcodes, ClassMethodBody {
 	final static int THIS = 0;

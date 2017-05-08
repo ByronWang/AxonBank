@@ -7,6 +7,8 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 
 import com.nebula.cqrs.core.CqrsEntity;
+import com.nebula.cqrs.core.asm.wrap.ClassMethodBody;
+import com.nebula.cqrs.core.asm.wrap.SimpleClassVisitor;
 
 public class MyBankAccountBuilder extends AsmBuilderHelper {
 

@@ -9,6 +9,9 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
+//import com.nebula.cqrs.core.asm.wrap.SimpleMethodVisitor;
+import com.nebula.cqrs.core.asm.wrap.SimpleMethodVisitor;
+
 public class AsmBuilderHelper extends ASMBuilder implements Opcodes {
 
 	public static int[] computerLocals(List<Type> types) {
@@ -31,47 +34,47 @@ public class AsmBuilderHelper extends ASMBuilder implements Opcodes {
 	}
 
 	// Begin 5 Private return class,with classes
-	public static MethodHeader<SimpleMethodCode> definePrivateMethod(ClassVisitor cw, Type objectType, Class<?> returnClass, String methodName) {
+	public static SimpleMethodVisitor definePrivateMethod(ClassVisitor cw, Type objectType, Class<?> returnClass, String methodName) {
 		return definePrivate(cw, objectType, typeOf(returnClass), methodName);
 	}
 
 	// Begin 1 Private return void,with void params
-	public static MethodHeader<SimpleMethodCode> definePrivate(ClassVisitor cw, Type objectType, String methodName) {
+	public static SimpleMethodVisitor definePrivate(ClassVisitor cw, Type objectType, String methodName) {
 		return definePrivate(cw, objectType, Type.VOID_TYPE, methodName);
 	}
 	// End Private
 
-	public static MethodHeader<SimpleMethodCode> definePrivate(ClassVisitor cw, Type objectType, Type returnType, String methodName) {
+	public static SimpleMethodVisitor definePrivate(ClassVisitor cw, Type objectType, Type returnType, String methodName) {
 		return new SimpleMethodVisitor(cw, objectType, ACC_PRIVATE, returnType, methodName);
 	}
 
 	// Begin 5 Protected return class,with classes
-	public static MethodHeader<SimpleMethodCode> defineProtected(ClassVisitor cw, Type objectType, Class<?> returnClass, String methodName) {
+	public static SimpleMethodVisitor defineProtected(ClassVisitor cw, Type objectType, Class<?> returnClass, String methodName) {
 		return defineProtected(cw, objectType, typeOf(returnClass), methodName);
 	}
 
 	// Begin 1 Protected return void,with void params
-	public static MethodHeader<SimpleMethodCode> defineProtected(ClassVisitor cw, Type objectType, String methodName) {
+	public static SimpleMethodVisitor defineProtected(ClassVisitor cw, Type objectType, String methodName) {
 		return defineProtected(cw, objectType, Type.VOID_TYPE, methodName);
 	}
 
 	// End Private
 
-	public static MethodHeader<SimpleMethodCode> defineProtected(ClassVisitor cw, Type objectType, Type returnType, String methodName) {
+	public static SimpleMethodVisitor defineProtected(ClassVisitor cw, Type objectType, Type returnType, String methodName) {
 		return new SimpleMethodVisitor(cw, objectType, ACC_PROTECTED, returnType, methodName);
 	}
 
 	// Begin 5 Public return class,with classes
-	public static MethodHeader<SimpleMethodCode> definePublic(ClassVisitor cw, Type objectType, Class<?> returnClass, String methodName) {
+	public static SimpleMethodVisitor definePublic(ClassVisitor cw, Type objectType, Class<?> returnClass, String methodName) {
 		return definePublic(cw, objectType, typeOf(returnClass), methodName);
 	}
 
 	// Begin 1 Public return void,with void params
-	public static MethodHeader<SimpleMethodCode> definePublic(ClassVisitor cw, Type objectType, String methodName) {
+	public static SimpleMethodVisitor definePublic(ClassVisitor cw, Type objectType, String methodName) {
 		return definePublic(cw, objectType, Type.VOID_TYPE, methodName);
 	}
 
-	public static MethodHeader<SimpleMethodCode> definePublic(ClassVisitor cw, Type objectType, Type returnType, String methodName) {
+	public static SimpleMethodVisitor definePublic(ClassVisitor cw, Type objectType, Type returnType, String methodName) {
 		return new SimpleMethodVisitor(cw, objectType, ACC_PUBLIC, returnType, methodName);
 	}
 

@@ -1,4 +1,4 @@
-package com.nebula.cqrs.core.asm;
+package com.nebula.cqrs.core.asm.wrap;
 
 import org.objectweb.asm.Opcodes;
 

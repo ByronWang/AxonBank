@@ -1,10 +1,12 @@
-package com.nebula.cqrs.core.asm;
+package com.nebula.cqrs.core.asm.wrap;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
+
+import com.nebula.cqrs.core.asm.Field;
 
 interface MethodCode<M extends MethodUseCaller<M, C> , C extends MethodCode<M, C>> extends Types {
 

@@ -1,10 +1,12 @@
-package com.nebula.cqrs.core.asm;
+package com.nebula.cqrs.core.asm.wrap;
 
 import java.util.function.Consumer;
 
 import org.objectweb.asm.Type;
 
-interface MethodHeader<C> extends Types {
+import com.nebula.cqrs.core.asm.Field;
+
+public interface MethodHeader<C> extends Types {
 
 	MethodHeader<C> annotation(Type type, String value);
 
