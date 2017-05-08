@@ -37,7 +37,7 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		}
 	}
 
-	class MyClassType implements ClassType<M,C> {
+	class MyClassType implements ClassType<M, C> {
 		Type currentClassType;
 
 		@Override
@@ -51,7 +51,7 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		}
 
 		@Override
-		public Instance<M,C> invoke(int invoketype, Type returnType, String methodName, Type... params) {
+		public Instance<M, C> invoke(int invoketype, Type returnType, String methodName, Type... params) {
 			ASMBuilder.visitInvoke(invoketype, mv, currentClassType, returnType, methodName, params);
 			return top(returnType);
 		}
@@ -63,17 +63,17 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		}
 	}
 
-	class MyInstance implements Instance<M,C> {
+	class MyInstance implements Instance<M, C> {
 		int index;
 
 		@Override
-		public Instance<M,C> get(Field field) {
+		public Instance<M, C> get(Field field) {
 			ASMBuilder.visitGetField(mv, currentClassType.currentClassType, field.name, field.type);
 			return top(field.type);
 		}
 
 		@Override
-		public Instance<M,C> getProperty(Field field) {
+		public Instance<M, C> getProperty(Field field) {
 			ASMBuilder.visitGetProperty(mv, currentClassType.currentClassType, field.name, field.type);
 			return top(field.type);
 		}
@@ -89,7 +89,7 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		}
 
 		@Override
-		public Instance<M,C> invoke(int invoketype, Type returnType, String methodName, Type... params) {
+		public Instance<M, C> invoke(int invoketype, Type returnType, String methodName, Type... params) {
 			ASMBuilder.visitInvoke(invoketype, mv, currentClassType.currentClassType, returnType, methodName, params);
 			return top(returnType);
 		}
@@ -112,6 +112,11 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		@Override
 		public M use() {
 			return useTop(currentClassType.currentClassType);
+		}
+
+		@Override
+		public C code() {
+			return AbstractMethodVistor.this.code();
 		}
 	}
 
@@ -142,7 +147,7 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		}
 
 		@Override
-		public Instance<M,C> invoke(int invoketype, Type returnType, String methodName, Type... params) {
+		public Instance<M, C> invoke(int invoketype, Type returnType, String methodName, Type... params) {
 			return type(objectType).invoke(invoketype, returnType, methodName, params);
 		}
 
@@ -404,13 +409,13 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 	}
 
 	@Override
-	public M newInstace(Type type) {
+	public Instance<M, C> newInstace(Type type) {
 		ASMBuilder.visitNewObject(mv, type);
-		return useTop(type);
+		return top(type);
 	}
 
 	@Override
-	public Instance<M,C> object(int index) {
+	public Instance<M, C> object(int index) {
 		accessVar(index);
 		currentInstance.index = index;
 		Field var = variablesStack.get(index);
@@ -454,18 +459,18 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 	}
 
 	@Override
-	public C store(int index) {
+	public C storeTop(int index) {
 		mv.visitVarInsn(ASTORE, index);
 		return code();
 	}
 
-	protected Instance<M,C> top(Type type) {
+	protected Instance<M, C> top(Type type) {
 		currentClassType.currentClassType = type;
 		return currentInstance;
 	}
 
 	@Override
-	public ClassType<M,C> type(Type objectType) {
+	public ClassType<M, C> type(Type objectType) {
 		currentClassType.currentClassType = objectType;
 		return currentClassType;
 	}
@@ -489,7 +494,6 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 
 	@Override
 	public int varIndex(String variableName) {
-		int index = variablesMap.get(variableName);
 		return variablesMap.get(variableName);
 	}
 

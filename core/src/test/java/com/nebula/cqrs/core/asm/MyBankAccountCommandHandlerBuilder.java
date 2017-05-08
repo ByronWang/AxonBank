@@ -76,11 +76,11 @@ public class MyBankAccountCommandHandlerBuilder implements Opcodes {
 			Type callerType = Type.getType("Lorg/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountCommandHandler$InnerDeposit;");
 
 			mv.line(28).def("axonBankAccountId", String.class).object("command").getProperty("axonBankAccountId", String.class);
-			mv.store("axonBankAccountId");
+			mv.storeTop("axonBankAccountId");
 
 			mv.line(29).def("aggregate", Aggregate.class, domainType);
 			mv.use(m -> m.get("repository")).add("axonBankAccountId").invokeInterface(Aggregate.class, "load", String.class);
-			mv.store("aggregate");
+			mv.storeTop("aggregate");
 
 			mv.line(30).def("caller", callerType);
 			mv.newInstace(callerType).store("caller");
@@ -103,11 +103,11 @@ public class MyBankAccountCommandHandlerBuilder implements Opcodes {
 			mv.line(36).def("axonBankAccountId", String.class);
 
 			mv.object("command").getProperty("axonBankAccountId", String.class);
-			mv.store("axonBankAccountId");
+			mv.storeTop("axonBankAccountId");
 
 			mv.line(37).def("aggregate", Aggregate.class, domainType);
 			mv.use(m -> m.get("repository")).add("axonBankAccountId").invokeInterface(Aggregate.class, "load", String.class);
-			mv.store("aggregate");
+			mv.storeTop("aggregate");
 
 			mv.line(38).def("caller", callerType);
 			mv.newInstace(callerType).store("caller");

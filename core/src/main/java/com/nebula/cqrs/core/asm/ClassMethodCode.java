@@ -4,7 +4,7 @@ public interface ClassMethodCode extends ClassThisInstance, MethodCode<ClassUseC
 	ClassThisInstance loadThis();
 
 	ClassType<ClassUseCaller,ClassMethodCode> thisType();
-
+	
 	ClassMethodCode initObject();
 
 	ClassUseCaller useThis();

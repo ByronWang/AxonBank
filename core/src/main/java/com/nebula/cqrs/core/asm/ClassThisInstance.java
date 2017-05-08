@@ -5,6 +5,7 @@ import org.objectweb.asm.Type;
 public interface ClassThisInstance extends Types, Instance<ClassUseCaller,ClassMethodCode> {
 	Instance<ClassUseCaller,ClassMethodCode> get(String fieldName);
 
+
 	ClassMethodCode put(int dataIndex, String fieldName);
 
 	ClassMethodCode put(String varName, String fieldName);

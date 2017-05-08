@@ -1,9 +1,9 @@
 package com.nebula.cqrs.core.asm;
 
-import org.objectweb.asm.Opcodes;
+import static org.objectweb.asm.Opcodes.*;
 import org.objectweb.asm.Type;
 
-public interface InvokeMethod<M, C> extends Types, Opcodes {
+public interface InvokeMethod<M extends MethodUseCaller<M, C>, C extends MethodCode<M, C>> extends Types {
 
 	default void invoke(Class<?> returnClass, String methodName, Class<?>... paramClasses) {
 		invoke(INVOKEVIRTUAL, typeOf(returnClass), methodName, typesOf(paramClasses));
@@ -21,7 +21,7 @@ public interface InvokeMethod<M, C> extends Types, Opcodes {
 
 	void invoke(int invoketype, String methodName, Type... params);
 
-	Instance<M,C> invoke(int invoketype, Type returnType, String methodName, Type... params);
+	Instance<M, C> invoke(int invoketype, Type returnType, String methodName, Type... params);
 
 	// default void invoke(String methodName, Type... params) {
 	// invoke(INVOKEVIRTUAL, methodName, params);
@@ -37,7 +37,7 @@ public interface InvokeMethod<M, C> extends Types, Opcodes {
 	// return invoke(INVOKEVIRTUAL, returnType, methodName, params);
 	// }
 
-	default Instance<M,C> invokeInterface(Class<?> returnClass, String methodName, Class<?>... paramClasses) {
+	default Instance<M, C> invokeInterface(Class<?> returnClass, String methodName, Class<?>... paramClasses) {
 		return invoke(INVOKEINTERFACE, typeOf(returnClass), methodName, typesOf(paramClasses));
 	}
 
@@ -49,15 +49,15 @@ public interface InvokeMethod<M, C> extends Types, Opcodes {
 		invoke(INVOKEINTERFACE, methodName, params);
 	}
 
-	default Instance<M,C> invokeInterface(Type returnType, String methodName, Class<?>... paramClasses) {
+	default Instance<M, C> invokeInterface(Type returnType, String methodName, Class<?>... paramClasses) {
 		return invoke(INVOKEINTERFACE, returnType, methodName, typesOf(paramClasses));
 	}
 
-	default Instance<M,C> invokeInterface(Type returnType, String methodName, Type... params) {
+	default Instance<M, C> invokeInterface(Type returnType, String methodName, Type... params) {
 		return invoke(INVOKEINTERFACE, returnType, methodName, params);
 	}
 
-	default Instance<M,C> invokeSpecial(Class<?> returnClass, String methodName, Class<?>... paramClasses) {
+	default Instance<M, C> invokeSpecial(Class<?> returnClass, String methodName, Class<?>... paramClasses) {
 		return invoke(INVOKESPECIAL, typeOf(returnClass), methodName, typesOf(paramClasses));
 	}
 
@@ -69,15 +69,15 @@ public interface InvokeMethod<M, C> extends Types, Opcodes {
 		invoke(INVOKESPECIAL, methodName, params);
 	}
 
-	default Instance<M,C> invokeSpecial(Type returnType, String methodName, Class<?>... paramClasses) {
+	default Instance<M, C> invokeSpecial(Type returnType, String methodName, Class<?>... paramClasses) {
 		return invoke(INVOKESPECIAL, returnType, methodName, typesOf(paramClasses));
 	}
 
-	default Instance<M,C> invokeSpecial(Type returnType, String methodName, Type... params) {
+	default Instance<M, C> invokeSpecial(Type returnType, String methodName, Type... params) {
 		return invoke(INVOKESPECIAL, returnType, methodName, params);
 	}
 
-	default Instance<M,C> invokeVirtual(Class<?> returnClass, String methodName, Class<?>... paramClasses) {
+	default Instance<M, C> invokeVirtual(Class<?> returnClass, String methodName, Class<?>... paramClasses) {
 		return invoke(INVOKEVIRTUAL, typeOf(returnClass), methodName, typesOf(paramClasses));
 	}
 
@@ -89,11 +89,11 @@ public interface InvokeMethod<M, C> extends Types, Opcodes {
 		invoke(INVOKEVIRTUAL, methodName, params);
 	}
 
-	default Instance<M,C> invokeVirtual(Type returnType, String methodName, Class<?>... paramClasses) {
+	default Instance<M, C> invokeVirtual(Type returnType, String methodName, Class<?>... paramClasses) {
 		return invoke(INVOKEVIRTUAL, returnType, methodName, typesOf(paramClasses));
 	}
 
-	default Instance<M,C> invokeVirtual(Type returnType, String methodName, Type... params) {
+	default Instance<M, C> invokeVirtual(Type returnType, String methodName, Type... params) {
 		return invoke(INVOKEVIRTUAL, returnType, methodName, params);
 	}
 }

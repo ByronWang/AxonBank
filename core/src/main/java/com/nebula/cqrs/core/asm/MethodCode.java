@@ -6,7 +6,7 @@ import java.util.function.Function;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 
-interface MethodCode<M, C extends MethodCode<M, C>> extends Types {
+interface MethodCode<M extends MethodUseCaller<M, C> , C extends MethodCode<M, C>> extends Types {
 
 	C accessLabel(Label label);
 
@@ -33,7 +33,7 @@ interface MethodCode<M, C extends MethodCode<M, C>> extends Types {
 		return use(vars(varNames));
 	}
 
-	M newInstace(Type type);
+	Instance<M,C> newInstace(Type type);
 
 	Instance<M,C> object(int index);
 
@@ -67,10 +67,10 @@ interface MethodCode<M, C extends MethodCode<M, C>> extends Types {
 		load(vars(varNames));
 	}
 
-	C store(int index);
+	C storeTop(int index);
 
-	default C store(String varName) {
-		return store(varIndex(varName));
+	default C storeTop(String varName) {
+		return storeTop(varIndex(varName));
 	}
 
 	default C def(Field field) {
