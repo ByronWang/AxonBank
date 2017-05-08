@@ -3,71 +3,71 @@ package com.nebula.cqrs.core.asm;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-public interface ClassBody extends Types, Opcodes {
+public interface ClassMethodBody extends Types, Opcodes {
 
-	default ClassBody annotation(Class<?> annotationClass) {
+	default ClassMethodBody annotation(Class<?> annotationClass) {
 		return annotation(typeOf(annotationClass));
 	}
 
-	default ClassBody annotation(Class<?> annotationClass, Object value) {
+	default ClassMethodBody annotation(Class<?> annotationClass, Object value) {
 		return annotation(typeOf(annotationClass), value);
 	}
 
-	default ClassBody annotation(Type annotationType) {
+	default ClassMethodBody annotation(Type annotationType) {
 		return annotation(annotationType, null);
 	}
 
-	ClassBody annotation(Type annotationType, Object value);
+	ClassMethodBody annotation(Type annotationType, Object value);
 
 	void end();
 
-	default ClassBody field(Field field) {
+	default ClassMethodBody field(Field field) {
 		return field(field, null, null, null);
 	}
 
-	default ClassBody field(Field field, String signature) {
+	default ClassMethodBody field(Field field, String signature) {
 		return field(field, signature, null, null);
 	}
 
-	default ClassBody field(Field field, Type annotationType, Object value) {
+	default ClassMethodBody field(Field field, Type annotationType, Object value) {
 		return field(null, annotationType, annotationType, value);
 	}
 
-	ClassBody field(Field field, String signature, Type annotationType, Object value);
+	ClassMethodBody field(Field field, String signature, Type annotationType, Object value);
 
-	default ClassBody field(String name, Class<?> fieldClass) {
+	default ClassMethodBody field(String name, Class<?> fieldClass) {
 		return field(new Field(name, typeOf(fieldClass)));
 	}
 
-	default ClassBody field(String name, Class<?> fieldClass, Class<?> annotationClass) {
+	default ClassMethodBody field(String name, Class<?> fieldClass, Class<?> annotationClass) {
 		return field(new Field(name, typeOf(fieldClass)), typeOf(annotationClass), null);
 	}
 
-	default ClassBody field(String name, Class<?> fieldClass, Class<?> annotationClass, Object value) {
+	default ClassMethodBody field(String name, Class<?> fieldClass, Class<?> annotationClass, Object value) {
 		return field(new Field(name, typeOf(fieldClass)), typeOf(annotationClass), value);
 	}
 
-	default ClassBody field(String name, Class<?> fieldClass, String signature) {
+	default ClassMethodBody field(String name, Class<?> fieldClass, String signature) {
 		return field(new Field(name, typeOf(fieldClass)), signature, null, null);
 	}
 
-	default ClassBody field(String name, Class<?> fieldClass, String signature, Class<?> annotationClass) {
+	default ClassMethodBody field(String name, Class<?> fieldClass, String signature, Class<?> annotationClass) {
 		return field(new Field(name, typeOf(fieldClass)), signature, typeOf(annotationClass), null);
 	}
 
-	default ClassBody field(String name, Class<?> fieldClass, String signature, Class<?> annotationClass, Object value) {
+	default ClassMethodBody field(String name, Class<?> fieldClass, String signature, Class<?> annotationClass, Object value) {
 		return field(new Field(name, typeOf(fieldClass)), signature, typeOf(annotationClass), value);
 	}
 
-	default ClassBody field(String name, Type type) {
+	default ClassMethodBody field(String name, Type type) {
 		return field(new Field(name, type));
 	}
 
-	default ClassBody field(String name, Type fieldType, Class<?> annotationClass, Object value) {
+	default ClassMethodBody field(String name, Type fieldType, Class<?> annotationClass, Object value) {
 		return field(new Field(name, fieldType), typeOf(annotationClass), value);
 	}
 
-	default ClassBody field(String name, Type fieldType, Type annotationType, Object value) {
+	default ClassMethodBody field(String name, Type fieldType, Type annotationType, Object value) {
 		return field(new Field(name, annotationType), annotationType, value);
 	}
 

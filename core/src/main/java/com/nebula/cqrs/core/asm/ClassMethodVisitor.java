@@ -17,11 +17,6 @@ public class ClassMethodVisitor extends AbstractMethodVistor<ClassMethodHeader, 
 		}
 
 		@Override
-		public ClassMethodCode putTopTo(String fieldName) {
-			return putTopTo(cv.fieldOf(fieldName));
-		}
-
-		@Override
 		public ClassMethodCode code() {
 			return ClassMethodVisitor.this;
 		}

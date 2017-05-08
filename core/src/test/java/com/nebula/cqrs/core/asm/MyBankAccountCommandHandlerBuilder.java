@@ -18,7 +18,7 @@ public class MyBankAccountCommandHandlerBuilder implements Opcodes {
 
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
 
-		ClassBody cb = new SimpleClassVisitor(cw, objectType);
+		ClassMethodBody cb = new SimpleClassVisitor(cw, objectType);
 
 		cw.visitInnerClass("org/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountCommandHandler$InnerCreate",
 		        "org/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountCommandHandler", "InnerCreate", 0);
@@ -42,7 +42,7 @@ public class MyBankAccountCommandHandlerBuilder implements Opcodes {
 		return cw.toByteArray();
 	}
 
-	private static void visitDefine_init(ClassBody cw) {
+	private static void visitDefine_init(ClassMethodBody cw) {
 		Type domainType = Type.getType("Lorg/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountImpl;");
 
 		cw.publicMethod("<init>").parameter("repository", Repository.class, domainType).parameter("eventBus", EventBus.class).code(mv -> {
@@ -53,7 +53,7 @@ public class MyBankAccountCommandHandlerBuilder implements Opcodes {
 		});
 	}
 
-	private static void visitDefine_handle_create(ClassBody cw) {
+	private static void visitDefine_handle_create(ClassMethodBody cw) {
 		Type commandHandlerType = Type.getType("Lorg/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountCommandHandler;");
 		Type commandType = Type.getType("Lorg/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountCreateCommand;");
 		Type callerType = Type.getType("Lorg/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountCommandHandler$InnerCreate;");
@@ -67,7 +67,7 @@ public class MyBankAccountCommandHandlerBuilder implements Opcodes {
 		});
 	}
 
-	private static void visitDefine_handle_deposit(ClassBody cw) {
+	private static void visitDefine_handle_deposit(ClassMethodBody cw) {
 		Type commandHandlerType = Type.getType("Lorg/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountCommandHandler;");
 		Type commandType = Type.getType("Lorg/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountDepositCommand;");
 
@@ -92,7 +92,7 @@ public class MyBankAccountCommandHandlerBuilder implements Opcodes {
 		});
 	}
 
-	private static void visitDefine_handle_withdraw(ClassBody cw) {
+	private static void visitDefine_handle_withdraw(ClassMethodBody cw) {
 		Type commandHandlerType = Type.getType("Lorg/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountCommandHandler;");
 		Type commandType = Type.getType("Lorg/axonframework/samples/bankcqrssrc/generatedsources/MyBankAccountWithdrawCommand;");
 

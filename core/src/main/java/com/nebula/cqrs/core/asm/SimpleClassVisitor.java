@@ -9,7 +9,7 @@ import org.objectweb.asm.Type;
 
 import com.nebula.cqrs.axon.asm.ClassUtils;
 
-public class SimpleClassVisitor extends ClassVisitor implements Opcodes, ClassBody {
+public class SimpleClassVisitor extends ClassVisitor implements Opcodes, ClassMethodBody {
 	final static int THIS = 0;
 	final static String THIS_NAME = "this";
 	private final Type thisType;
@@ -35,7 +35,7 @@ public class SimpleClassVisitor extends ClassVisitor implements Opcodes, ClassBo
 	}
 
 	@Override
-	public ClassBody annotation(Type annotationType, Object value) {
+	public ClassMethodBody annotation(Type annotationType, Object value) {
 		ASMBuilder.visitAnnotation(cv, annotationType, value);
 		return this;
 	}
@@ -46,21 +46,21 @@ public class SimpleClassVisitor extends ClassVisitor implements Opcodes, ClassBo
 	}
 
 	@Override
-	public ClassBody field(Field field) {
+	public ClassMethodBody field(Field field) {
 		fields.put(field.name, field);
 		ASMBuilder.visitDefineField(cv, field.name, field.type);
 		return this;
 	}
 
 	@Override
-	public ClassBody field(Field field, Type annotationType, Object value) {
+	public ClassMethodBody field(Field field, Type annotationType, Object value) {
 		fields.put(field.name, field);
 		ASMBuilder.visitDefineField(cv, field.name, field.type, annotationType, value);
 		return this;
 	}
 
 	@Override
-	public ClassBody field(Field field, String signature, Type annotationType, Object value) {
+	public ClassMethodBody field(Field field, String signature, Type annotationType, Object value) {
 		fields.put(field.name, field);
 		ASMBuilder.visitDefineField(cv, field.name, field.type, signature, annotationType, value);
 		return this;

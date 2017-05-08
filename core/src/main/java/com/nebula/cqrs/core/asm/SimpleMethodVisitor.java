@@ -4,17 +4,29 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-public class SimpleMethodVisitor extends AbstractMethodVistor<SimpleMethodHeader, SimpleUseCaller<SimpleMethodCode>, SimpleMethodCode>
+interface SimpleMethodCode extends Types, MethodCode<SimpleUseCaller, SimpleMethodCode> {
+
+}
+
+interface SimpleMethodHeader extends MethodHeader<SimpleMethodHeader, SimpleMethodCode> {
+
+}
+
+interface SimpleUseCaller extends MethodUseCaller<SimpleUseCaller, SimpleMethodCode> {
+
+}
+
+public class SimpleMethodVisitor extends AbstractMethodVistor<SimpleMethodHeader, SimpleUseCaller, SimpleMethodCode>
         implements SimpleMethodCode, SimpleMethodHeader, Opcodes {
 
-	class RealSimpleUseCaller extends RealUseCaller implements SimpleUseCaller<SimpleMethodCode> {
+	class RealSimpleUseCaller extends RealUseCaller implements SimpleUseCaller {
 
 		public RealSimpleUseCaller(Type objectType) {
 			super(objectType);
 		}
 
 		@Override
-		SimpleUseCaller<SimpleMethodCode> caller() {
+		SimpleUseCaller caller() {
 			return this;
 		}
 
@@ -38,7 +50,7 @@ public class SimpleMethodVisitor extends AbstractMethodVistor<SimpleMethodHeader
 	}
 
 	@Override
-	public SimpleUseCaller<SimpleMethodCode> useTop(Type type) {
+	public SimpleUseCaller useTop(Type type) {
 		return new RealSimpleUseCaller(type);
 	}
 
