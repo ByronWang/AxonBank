@@ -1,13 +1,9 @@
 package com.nebula.cqrs.core.asm;
 
-import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.FieldVisitor;
-import org.objectweb.asm.Label;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
+import java.util.*;
+import org.objectweb.asm.*;
 
-public class MyBankAccountDump implements Opcodes {
+public class MyBankAccountNewDump implements Opcodes {
 
 	public static byte[] dump() throws Exception {
 

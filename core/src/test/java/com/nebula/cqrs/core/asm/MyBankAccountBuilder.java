@@ -13,13 +13,13 @@ import com.nebula.cqrs.core.asm.wrap.SimpleClassVisitor;
 public class MyBankAccountBuilder extends AsmBuilderHelper {
 
 	public static byte[] dump() throws Exception {
-		Type objectType = Type.getObjectType("org/axonframework/samples/bankcqrs/MyBankAccount");
+		Type objectType = Type.getObjectType("com/nebula/cqrs/core/asm/MyBankAccount");
 
 		ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
 
 		ClassBody cw = new SimpleClassVisitor(classWriter, objectType);
-		cw.annotation(Aggregate.class);
 		cw.annotation(CqrsEntity.class);
+		cw.annotation(Aggregate.class);
 
 		cw.field("axonBankAccountId", String.class, AggregateIdentifier.class);
 		cw.field("overdraftLimit", long.class);
@@ -57,11 +57,11 @@ public class MyBankAccountBuilder extends AsmBuilderHelper {
 		{
 			cw.publicMethod(boolean.class, "withdraw").parameter("amount", long.class).code(mc -> {
 				mc.line(50).load("amount");
-				mc.block(v -> {
-				    v.get("balance");
-				    v.get("overdraftLimit");
-				    v.insn(LADD);
-			    });
+
+				mc.This().get("balance");
+				mc.This().get("overdraftLimit");
+				mc.insn(LADD);
+
 				mc.insn(LCMP);
 				Label ifEnd = mc.defineLabel();
 				mc.jumpInsn(IFGT, ifEnd);
@@ -77,32 +77,34 @@ public class MyBankAccountBuilder extends AsmBuilderHelper {
 
 	private static void visitDefine_onCreated(ClassBody cw) {
 		cw.privateMethod("onCreated").parameter("axonBankAccountId", String.class).parameter("overdraftLimit", long.class).code(mc -> {
-			mc.line(97).put("axonBankAccountId", "axonBankAccountId");
-			mc.line(98).put("overdraftLimit", "overdraftLimit");
-			mc.line(99).useThis().with(e -> e.insn(LCONST_0)).putTopTo("balance");
-			mc.line(100).returnVoid();
+			mc.line(100).This().put("axonBankAccountId", "axonBankAccountId");
+			mc.line(101).This().put("overdraftLimit", "overdraftLimit");
+			mc.line(102).useThis().with(e -> e.insn(LCONST_0)).putTo("balance");
+			mc.line(103).returnVoid();
 		});
 	}
 
 	private static void visitDefine_onMoneyAdded(ClassBody cw) {
 		cw.privateMethod("onMoneyAdded").parameter("amount", long.class).code(mc -> {
-			mc.line(104).useThis().with(e -> {
-			    e.get("balance");
-			    e.load("amount");
-			    e.insn(LADD);
-		    }).putTopTo("balance");
-			mc.line(105).returnVoid();
+			mc.def("newbalance", mc.fieldOf("balance").type);
+			mc.line(107).This().get("balance");
+			mc.load("amount");
+			mc.insn(LADD);
+			mc.storeTop("newbalance");
+			mc.line(108).This().put("newbalance", "balance");
+			mc.line(109).returnVoid();
 		});
 	}
 
 	private static void visitDefine_onMoneySubtracted(ClassBody cw) {
 		cw.privateMethod("onMoneySubtracted").parameter("amount", long.class).code(mc -> {
-			mc.line(109).loadThis();
-			mc.get("balance");
-			mc.load(1);
+			mc.def("newbalance", mc.fieldOf("balance").type);
+			mc.line(113).This().get("balance");
+			mc.load("amount");
 			mc.insn(LSUB);
-			mc.putTopTo("balance");
-			mc.line(110).returnVoid();
+			mc.storeTop("newbalance");
+			mc.line(114).This().put("newbalance", "balance");
+			mc.line(115).returnVoid();
 		});
 
 	}

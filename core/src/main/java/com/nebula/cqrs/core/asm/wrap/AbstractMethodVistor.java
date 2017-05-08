@@ -18,13 +18,7 @@ import com.nebula.cqrs.core.asm.AsmBuilderHelper;
 import com.nebula.cqrs.core.asm.Field;
 
 public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C extends MethodCode<M, C>> extends MethodVisitor
-        implements MethodCode<M, C>, MethodHeader<C>, Types{
-
-	@Override
-	public C putTopTo(Field field) {
-		ASMBuilder.visitPutField(mv, currentClassType.currentClassType, field.name, field.type);
-		return code();
-	}
+        implements MethodCode<M, C>, MethodHeader<C>, Types {
 
 	class Annotation {
 		int parameter;
@@ -67,7 +61,7 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		}
 
 		@Override
-		public C putTopTo(Field field) {
+		public C putTo(Field field) {
 			ASMBuilder.visitPutField(mv, currentClassType, field.name, field.type);
 			return code();
 		}
@@ -75,6 +69,11 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 
 	class MyInstance implements Instance<M, C> {
 		int index;
+
+		@Override
+		public C code() {
+			return AbstractMethodVistor.this.code();
+		}
 
 		@Override
 		public Instance<M, C> get(Field field) {
@@ -108,13 +107,13 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		public C put(int dataIndex, Field field) {
 			Field var = variablesStack.get(dataIndex);
 			accessVar(dataIndex);
-			mv.visitVarInsn(var.type.getOpcode(ILOAD), dataIndex);
+			mv.visitVarInsn(var.type.getOpcode(ILOAD), variablesLocals[dataIndex]);
 			ASMBuilder.visitPutField(mv, currentClassType.currentClassType, field.name, field.type);
 			return code();
 		}
 
 		@Override
-		public C putTopTo(Field field) {
+		public C putTo(Field field) {
 			ASMBuilder.visitPutField(mv, currentClassType.currentClassType, field.name, field.type);
 			return code();
 		}
@@ -122,11 +121,6 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		@Override
 		public M use() {
 			return useTop(currentClassType.currentClassType);
-		}
-
-		@Override
-		public C code() {
-			return AbstractMethodVistor.this.code();
 		}
 	}
 
@@ -162,8 +156,13 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		}
 
 		@Override
-		public C putTopTo(Field field) {
-			return type(objectType).putTopTo(field);
+		public C putTo(Field field) {
+			return type(objectType).putTo(field);
+		}
+
+		@Override
+		public C code() {
+			return AbstractMethodVistor.this.code();
 		}
 
 		@Override
@@ -186,12 +185,12 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 			this(field.name, field.type, field.signature, startFrom);
 		}
 
-		public Variable(String name, Type type, String signature) {
-			super(name, type, signature);
-		}
-
 		public Variable(String name, Type type) {
 			this(name, type, null);
+		}
+
+		public Variable(String name, Type type, String signature) {
+			super(name, type, signature);
 		}
 
 		public Variable(String name, Type type, String signature, Label startFrom) {
@@ -227,9 +226,9 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 	int thisMethodAccess;
 
 	List<Annotation> thisMethodAnnotations = new ArrayList<>();
+
 	// final Type thisType;
 	Class<?>[] thisMethodExceptionClasses;
-
 	private String thisMethodName;
 
 	List<Annotation> thisMethodParameterAnnotations = new ArrayList<>(10);
@@ -240,7 +239,7 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 
 	Type thisObjectType;
 
-	int[] variablesInt;
+	int[] variablesLocals;
 
 	Map<String, Integer> variablesMap = new HashMap<>();
 
@@ -269,6 +268,15 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		mv.visitLabel(label);
 		mv.visitLineNumber(line, label);
 		return code();
+	}
+
+	private void accessVar(int... varIndexes) {
+		for (int i : varIndexes) {
+			Variable var = variablesStack.get(i);
+			if (var.startFrom == null) {
+				var.startFrom = labelCurrent;
+			}
+		}
 	}
 
 	public C annotation(Class<?> annotation, String value) {
@@ -356,8 +364,8 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 			excptions = new String[0];
 		}
 
-		this.mv = ASMBuilder.visitDefineMethod(cv, thisMethodAccess, thisMethodReturnType, thisMethodName, ClassField.typesOf(thisMethodParams),
-		        signature, excptions);
+		this.mv = ASMBuilder.visitDefineMethod(cv, thisMethodAccess, thisMethodReturnType, thisMethodName, ClassField.typesOf(thisMethodParams), signature,
+		        excptions);
 		for (Annotation annotation : thisMethodAnnotations) {
 			ASMBuilder.visitAnnotation(mv, annotation.type, annotation.value);
 		}
@@ -372,7 +380,7 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		Label endLabel = this.labelWithoutLineNumber();
 		int i = 0;
 		for (Variable var : variablesStack) {
-			mv.visitLocalVariable(var.name, var.type.getDescriptor(), var.signature, var.startFrom, endLabel, variablesInt[i++]);
+			mv.visitLocalVariable(var.name, var.type.getDescriptor(), var.signature, var.startFrom, endLabel, variablesLocals[i++]);
 		}
 		mv.visitMaxs(0, 0);
 		mv.visitEnd();
@@ -412,8 +420,8 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 
 	@Override
 	public void load(int... indexes) {
-		for (int i : indexes) {
-			mv.visitVarInsn(variablesStack.get(i).type.getOpcode(ILOAD), i);
+		for (int index : indexes) {
+			mv.visitVarInsn(variablesStack.get(index).type.getOpcode(ILOAD), variablesLocals[index]);
 		}
 		accessVar(indexes);
 	}
@@ -429,7 +437,7 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		accessVar(index);
 		currentInstance.index = index;
 		Field var = variablesStack.get(index);
-		mv.visitVarInsn(var.type.getOpcode(ILOAD), index);
+		mv.visitVarInsn(var.type.getOpcode(ILOAD), variablesLocals[index]);
 		return top(var.type);
 	}
 
@@ -446,8 +454,14 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		return this;
 	}
 
+	@Override
+	public C putTopTo(Field field) {
+		ASMBuilder.visitPutField(mv, currentClassType.currentClassType, field.name, field.type);
+		return code();
+	}
+
 	void recomputerLocals() {
-		this.variablesInt = computerLocalss(variablesStack);
+		this.variablesLocals = computerLocalss(variablesStack);
 		for (int i = 0; i < variablesStack.size(); i++) {
 			variablesMap.put(variablesStack.get(i).name, i);
 		}
@@ -470,7 +484,8 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 
 	@Override
 	public C storeTop(int index) {
-		mv.visitVarInsn(ASTORE, index);
+		Field var = variablesStack.get(index);
+		mv.visitVarInsn(var.type.getOpcode(ISTORE), variablesLocals[index]);
 		return code();
 	}
 
@@ -491,15 +506,6 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		load(varIndexes);
 		accessVar(varIndexes);
 		return useTop(object.type);
-	}
-
-	private void accessVar(int... varIndexes) {
-		for (int i : varIndexes) {
-			Variable var = variablesStack.get(i);
-			if (var.startFrom == null) {
-				var.startFrom = labelCurrent;
-			}
-		}
 	}
 
 	@Override

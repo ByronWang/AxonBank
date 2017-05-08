@@ -28,10 +28,10 @@ public interface ClassThisInstance extends Types, Instance<ClassUseCaller, Class
 	}
 
 	default ClassMethodCode putTopTo(String fieldName, Class<?> fieldClass) {
-		return putTopTo(new Field(fieldName, typeOf(fieldClass)));
+		return code().putTopTo(new Field(fieldName, typeOf(fieldClass)));
 	}
 
 	default ClassMethodCode putTopTo(String fieldName, Type fieldType) {
-		return putTopTo(new Field(fieldName, fieldType));
+		return code().putTopTo(new Field(fieldName, fieldType));
 	}
 }

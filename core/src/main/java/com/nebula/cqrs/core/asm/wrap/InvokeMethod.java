@@ -11,33 +11,19 @@ public interface InvokeMethod<M extends MethodUseCaller<M, C>, C extends MethodC
 		invoke(INVOKEVIRTUAL, typeOf(returnClass), methodName, typesOf(paramClasses));
 	}
 
-	C putTopTo(Field field);
+	C putTo(Field field);
 
-	default C putTopTo(String fieldName, Class<?> fieldClass) {
-		return putTopTo(new Field(fieldName, typeOf(fieldClass)));
+	default C putTo(String fieldName, Class<?> fieldClass) {
+		return putTo(new Field(fieldName, typeOf(fieldClass)));
 	}
 
-	default C putTopTo(String fieldName, Type fieldType) {
-		return putTopTo(new Field(fieldName, fieldType));
+	default C putTo(String fieldName, Type fieldType) {
+		return putTo(new Field(fieldName, fieldType));
 	}
 
 	void invoke(int invoketype, String methodName, Type... params);
 
 	Instance<M, C> invoke(int invoketype, Type returnType, String methodName, Type... params);
-
-	// default void invoke(String methodName, Type... params) {
-	// invoke(INVOKEVIRTUAL, methodName, params);
-	// }
-	//
-	// default void invoke(Type returnType, String methodName, Class<?>...
-	// paramClasses) {
-	// invoke(INVOKEVIRTUAL, returnType, methodName, typesOf(paramClasses));
-	// // }
-	//
-	// default Instance<M,C> invoke(Type returnType, String methodName, Type...
-	// params) {
-	// return invoke(INVOKEVIRTUAL, returnType, methodName, params);
-	// }
 
 	default Instance<M, C> invokeInterface(Class<?> returnClass, String methodName, Class<?>... paramClasses) {
 		return invoke(INVOKEINTERFACE, typeOf(returnClass), methodName, typesOf(paramClasses));

@@ -50,8 +50,8 @@ public class MyBankAccountCommandHandlerBuilder implements Opcodes {
 
 		cw.publicMethod("<init>").parameter("repository", Repository.class, domainType).parameter("eventBus", EventBus.class).code(mv -> {
 			mv.line(15).initObject();
-			mv.line(16).loadThis().put(1, "repository");
-			mv.line(17).loadThis().put(2, "eventBus");
+			mv.line(16).This().put(1, "repository");
+			mv.line(17).This().put(2, "eventBus");
 			mv.line(18).returnVoid();
 		});
 	}
@@ -64,7 +64,7 @@ public class MyBankAccountCommandHandlerBuilder implements Opcodes {
 		cw.publicMethod("handle", Exception.class).annotation(CommandHandler.class).parameter("command", commandType).code(mv -> {
 			mv.line(22).def("caller", callerType).newInstace(callerType).store("caller");
 			mv.use("caller", "this", "command").invokeSpecial("<init>", commandHandlerType, commandType);
-			mv.line(23).use(m -> m.get("repository")).add("caller").invokeInterface(Aggregate.class, "newInstance", Callable.class);
+			mv.line(23).use(m -> m.This().get("repository")).add("caller").invokeInterface(Aggregate.class, "newInstance", Callable.class);
 			mv.insn(POP);
 			mv.line(24).returnVoid();
 		});
@@ -82,7 +82,7 @@ public class MyBankAccountCommandHandlerBuilder implements Opcodes {
 			mv.storeTop("axonBankAccountId");
 
 			mv.line(29).def("aggregate", Aggregate.class, domainType);
-			mv.use(m -> m.get("repository")).add("axonBankAccountId").invokeInterface(Aggregate.class, "load", String.class);
+			mv.use(m -> m.This().get("repository")).add("axonBankAccountId").invokeInterface(Aggregate.class, "load", String.class);
 			mv.storeTop("aggregate");
 
 			mv.line(30).def("caller", callerType);
@@ -109,7 +109,7 @@ public class MyBankAccountCommandHandlerBuilder implements Opcodes {
 			mv.storeTop("axonBankAccountId");
 
 			mv.line(37).def("aggregate", Aggregate.class, domainType);
-			mv.use(m -> m.get("repository")).add("axonBankAccountId").invokeInterface(Aggregate.class, "load", String.class);
+			mv.use(m -> m.This().get("repository")).add("axonBankAccountId").invokeInterface(Aggregate.class, "load", String.class);
 			mv.storeTop("aggregate");
 
 			mv.line(38).def("caller", callerType);

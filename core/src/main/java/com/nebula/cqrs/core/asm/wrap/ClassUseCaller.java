@@ -1,7 +1,7 @@
 package com.nebula.cqrs.core.asm.wrap;
 
 public interface ClassUseCaller extends MethodUseCaller<ClassUseCaller, ClassMethodCode> {
-	default public ClassMethodCode putTopTo(String fieldName) {
-		return putTopTo(code().fieldOf(fieldName));
+	default public ClassMethodCode putTo(String fieldName) {
+		return putTo(code().fieldOf(fieldName));
 	}
 }
