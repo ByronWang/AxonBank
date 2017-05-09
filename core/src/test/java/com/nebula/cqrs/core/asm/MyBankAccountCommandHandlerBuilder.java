@@ -12,7 +12,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 import com.nebula.cqrs.core.asm.wrap.ClassBody;
-import com.nebula.cqrs.core.asm.wrap.SimpleClassVisitor;
+import com.nebula.cqrs.core.asm.wrap.ClassBuilder;
 
 public class MyBankAccountCommandHandlerBuilder implements Opcodes {
 
@@ -22,7 +22,7 @@ public class MyBankAccountCommandHandlerBuilder implements Opcodes {
 
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
 
-		ClassBody cb = new SimpleClassVisitor(cw, objectType);
+		ClassBody cb = new ClassBuilder(cw, objectType);
 
 		Type innerCreateType = cb.referInnerClass("InnerCreate");
 		Type innerDepositType = cb.referInnerClass("InnerDeposit");

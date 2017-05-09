@@ -38,11 +38,11 @@ public class ClassMethodVisitor extends AbstractMethodVistor<MethodHeader<ClassM
 		return super.methodBegin();
 	}
 
-	SimpleClassVisitor cv;
+	ClassBuilder cv;
 
 	ThisInstance thisInstance;
 
-	public ClassMethodVisitor(SimpleClassVisitor cv, Type thisType, int access, Type returnType, String methodName, Class<?>... exceptionClasses) {
+	public ClassMethodVisitor(ClassBuilder cv, Type thisType, int access, Type returnType, String methodName, Class<?>... exceptionClasses) {
 		super(cv, thisType, access, returnType, methodName, exceptionClasses);
 		this.cv = cv;
 	}

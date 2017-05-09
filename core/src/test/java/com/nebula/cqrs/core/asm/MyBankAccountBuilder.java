@@ -8,7 +8,7 @@ import org.objectweb.asm.Type;
 
 import com.nebula.cqrs.core.CqrsEntity;
 import com.nebula.cqrs.core.asm.wrap.ClassBody;
-import com.nebula.cqrs.core.asm.wrap.SimpleClassVisitor;
+import com.nebula.cqrs.core.asm.wrap.ClassBuilder;
 
 public class MyBankAccountBuilder extends AsmBuilderHelper {
 
@@ -17,7 +17,7 @@ public class MyBankAccountBuilder extends AsmBuilderHelper {
 
 		ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
 
-		ClassBody cw = new SimpleClassVisitor(classWriter, objectType);
+		ClassBody cw = ClassBuilder.make(classWriter, objectType);
 		cw.annotation(CqrsEntity.class);
 		cw.annotation(Aggregate.class);
 

@@ -11,18 +11,14 @@ import com.nebula.cqrs.axon.asm.ClassUtils;
 import com.nebula.cqrs.core.asm.ASMBuilder;
 import com.nebula.cqrs.core.asm.Field;
 
-public class SimpleClassVisitor extends ClassVisitor implements Opcodes, ClassBody {
+public class ClassBuilder extends ClassVisitor implements Opcodes, ClassBody {
 	final static int THIS = 0;
 	final static String THIS_NAME = "this";
 	private Map<String, Field> fields = new HashMap<>();
 
 	private final Type thisType;
 
-	public SimpleClassVisitor(ClassVisitor cv, Type thisType) {
-		this(cv, thisType, Type.getType(Object.class));
-	}
-
-	public SimpleClassVisitor(ClassVisitor cv, Type thisType, Type superType) {
+	ClassBuilder(ClassVisitor cv, Type thisType, Type superType) {
 		super(Opcodes.ASM5);
 		this.cv = cv;
 		this.thisType = thisType;
@@ -81,7 +77,7 @@ public class SimpleClassVisitor extends ClassVisitor implements Opcodes, ClassBo
 
 		cv.visitInnerClass(internalName, thisType.getInternalName(), name, 0);
 
-		return Type.getType("L" + internalName+";");
+		return Type.getType("L" + internalName + ";");
 	}
 
 	@Override
@@ -94,4 +90,11 @@ public class SimpleClassVisitor extends ClassVisitor implements Opcodes, ClassBo
 		return cv;
 	}
 
+	static public ClassBody make(ClassVisitor cv, Type objectType, Type superType) {
+		return new ClassBuilder(cv, objectType, superType);
+	}
+
+	static public ClassBody make(ClassVisitor cv, Type objectType) {
+		return new ClassBuilder(cv, objectType, Type.getType(Object.class));
+	}
 }
