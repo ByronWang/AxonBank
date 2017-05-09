@@ -1,5 +1,10 @@
 package com.nebula.cqrs.core.asm.wrap;
 
+import static org.objectweb.asm.Opcodes.ASM5;
+import static org.objectweb.asm.Opcodes.IFGT;
+import static org.objectweb.asm.Opcodes.ILOAD;
+import static org.objectweb.asm.Opcodes.ISTORE;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -10,13 +15,11 @@ import java.util.function.Consumer;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
-import static org.objectweb.asm.Opcodes.*;
 import org.objectweb.asm.Type;
 
 import com.nebula.cqrs.core.asm.ASMBuilder;
 import com.nebula.cqrs.core.asm.AsmBuilderHelper;
 import com.nebula.cqrs.core.asm.Field;
-import com.nebula.cqrs.core.asm.wrap.ClassMethodVisitor.ThisInstance;
 
 public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C extends MethodCode<M, C>> extends MethodVisitor
         implements MethodCode<M, C>, MethodHeader<C>, Types {
@@ -176,12 +179,12 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 
 	// final Type thisType;
 	Class<?>[] thisMethodExceptionClasses;
+
 	private String thisMethodName;
 
 	List<Annotation> thisMethodParameterAnnotations = new ArrayList<>(10);
 
 	private List<ClassField> thisMethodParams = new ArrayList<>();
-
 	private final Type thisMethodReturnType;
 
 	Type thisObjectType;
@@ -322,7 +325,7 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 			variablesStack.push(new Variable(field, labelCurrent));
 		}
 		recomputerLocals();
-		
+
 		return code();
 	}
 
@@ -396,9 +399,30 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 	}
 
 	@Override
+	public MethodHeader<C> parameter(String fieldName, Type fieldType) {
+		thisMethodParams.add(new ClassField(fieldName, fieldType));
+		thisMethodParameterAnnotations.add(null);
+		return this;
+	}
+
+	@Override
 	public MethodHeader<C> parameter(String fieldName, Type fieldType, String signature) {
 		thisMethodParams.add(new ClassField(fieldName, fieldType, signature));
 		thisMethodParameterAnnotations.add(null);
+		return this;
+	}
+
+	@Override
+	public MethodHeader<C> parameter(Type annotationType, Object value, String fieldName, Type fieldType) {
+		thisMethodParams.add(new ClassField(fieldName, fieldType));
+		thisMethodParameterAnnotations.set(thisMethodParams.size() - 1, new Annotation(value, annotationType));
+		return this;
+	}
+
+	@Override
+	public MethodHeader<C> parameter(Type annotationType, Object value, String fieldName, Type fieldType, String signature) {
+		thisMethodParams.add(new ClassField(fieldName, fieldType, signature));
+		thisMethodParameterAnnotations.set(thisMethodParams.size() - 1, new Annotation(value, annotationType));
 		return this;
 	}
 

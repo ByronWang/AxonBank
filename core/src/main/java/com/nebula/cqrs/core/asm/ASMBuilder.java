@@ -114,6 +114,12 @@ public class ASMBuilder {
 		return fv;
 	}
 
+	public static FieldVisitor visitDefineField(ClassVisitor cw, String fieldName, Type fieldType, String signature) {
+		FieldVisitor fv = cw.visitField(ACC_PRIVATE, fieldName, fieldType.getDescriptor(), signature, null);
+		fv.visitEnd();
+		return fv;
+	}
+	
 	public static FieldVisitor visitDefineField(ClassVisitor cw, String fieldName, Type fieldType, Type annotationType, Object value) {
 		return visitDefineField(cw, fieldName, fieldType, null, annotationType, value);
 	}

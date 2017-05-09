@@ -48,27 +48,6 @@ public class SimpleClassVisitor extends ClassVisitor implements Opcodes, ClassBo
 	}
 
 	@Override
-	public ClassBody field(Field field) {
-		fields.put(field.name, field);
-		ASMBuilder.visitDefineField(cv, field.name, field.type);
-		return this;
-	}
-
-	@Override
-	public ClassBody field(Field field, Type annotationType, Object value) {
-		fields.put(field.name, field);
-		ASMBuilder.visitDefineField(cv, field.name, field.type, annotationType, value);
-		return this;
-	}
-
-	@Override
-	public ClassBody field(Field field, String signature, Type annotationType, Object value) {
-		fields.put(field.name, field);
-		ASMBuilder.visitDefineField(cv, field.name, field.type, signature, annotationType, value);
-		return this;
-	}
-
-	@Override
 	public MethodHeader<ClassMethodCode> method(int access, Type returnType, String methodName, Class<?>... exceptionClasses) {
 		return new ClassMethodVisitor(this, thisType, access, returnType, methodName, exceptionClasses);
 	}
@@ -77,4 +56,33 @@ public class SimpleClassVisitor extends ClassVisitor implements Opcodes, ClassBo
 	public ClassVisitor visitor() {
 		return cv;
 	}
+
+	@Override
+	public ClassBody field(String fieldName, Type fieldType) {
+		fields.put(fieldName, new Field(fieldName, fieldType));
+		ASMBuilder.visitDefineField(cv, fieldName, fieldType);
+		return this;
+	}
+
+	@Override
+	public ClassBody field(String fieldName, Type fieldType, String signature) {
+		fields.put(fieldName, new ClassField(fieldName, fieldType, signature));
+		ASMBuilder.visitDefineField(cv, fieldName, fieldType, signature);
+		return this;
+	}
+
+	@Override
+	public ClassBody field(Type annotationType, Object value, String fieldName, Type fieldType) {
+		fields.put(fieldName, new ClassField(fieldName, fieldType));
+		ASMBuilder.visitDefineField(cv, fieldName, fieldType, annotationType, value);
+		return this;
+	}
+
+	@Override
+	public ClassBody field(Type annotationType, Object value, String fieldName, Type fieldType, String signature) {
+		fields.put(fieldName, new ClassField(fieldName, fieldType, signature));
+		ASMBuilder.visitDefineField(cv, fieldName, fieldType, signature, annotationType, value);
+		return this;
+	}
+
 }

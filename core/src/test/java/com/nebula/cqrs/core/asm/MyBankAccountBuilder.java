@@ -21,7 +21,7 @@ public class MyBankAccountBuilder extends AsmBuilderHelper {
 		cw.annotation(CqrsEntity.class);
 		cw.annotation(Aggregate.class);
 
-		cw.field("axonBankAccountId", String.class, AggregateIdentifier.class);
+		cw.field(AggregateIdentifier.class, "axonBankAccountId", String.class);
 		cw.field("overdraftLimit", long.class);
 		cw.field("balance", long.class);
 
