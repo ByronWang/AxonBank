@@ -7,8 +7,8 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
-import com.nebula.cqrs.core.asm.AsmBuilderHelper;
-import com.nebula.cqrs.core.asm.Field;
+import com.nebula.tinyasm.util.AsmBuilderHelper;
+import com.nebula.tinyasm.util.Field;
 
 public class AxonAsmBuilder extends AsmBuilderHelper {
 

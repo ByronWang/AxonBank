@@ -4,8 +4,8 @@ import java.util.Map;
 
 import org.objectweb.asm.Type;
 
-import com.nebula.cqrs.core.asm.Field;
-import com.nebula.cqrs.core.asm.Method;
+import com.nebula.tinyasm.util.Field;
+import com.nebula.tinyasm.util.Method;
 
 public class DomainDefinition {
     private final String defineName;

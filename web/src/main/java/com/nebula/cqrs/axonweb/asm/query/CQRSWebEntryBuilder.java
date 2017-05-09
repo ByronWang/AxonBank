@@ -9,7 +9,7 @@ import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Type;
 
 import com.nebula.cqrs.axon.pojo.AxonAsmBuilder;
-import com.nebula.cqrs.core.asm.Field;
+import com.nebula.tinyasm.util.Field;
 
 
 public class CQRSWebEntryBuilder extends AxonAsmBuilder {

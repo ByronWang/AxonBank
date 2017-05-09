@@ -1,7 +1,7 @@
 package com.nebula.cqrs.axonweb.asm.query;
 
-import static com.nebula.cqrs.core.asm.AsmBuilderHelper.visitGetProperty;
-import static com.nebula.cqrs.core.asm.AsmBuilderHelper.visitSetProperty;
+import static com.nebula.tinyasm.util.AsmBuilderHelper.visitGetProperty;
+import static com.nebula.tinyasm.util.AsmBuilderHelper.visitSetProperty;
 import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
 import static org.objectweb.asm.Opcodes.ACC_SUPER;
 import static org.objectweb.asm.Opcodes.ALOAD;
@@ -19,7 +19,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.TypePath;
 
 import com.nebula.cqrs.axon.pojo.Event;
-import com.nebula.cqrs.core.asm.AsmBuilderHelper;
+import com.nebula.tinyasm.util.AsmBuilderHelper;
 
 public class CQRSWebEventListnerBizLogicClassVisitor extends ClassVisitor {
 	class EventMethodVisitor extends MethodVisitor {

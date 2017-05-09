@@ -8,7 +8,7 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.util.ASMifier;
 import org.objectweb.asm.util.TraceClassVisitor;
 
-import com.nebula.cqrs.core.asm.MyBankAccount;
+import com.nebula.tinyasm.MyBankAccount;
 
 public class TodoTest {
 	public static void main(String[] args) throws IOException {

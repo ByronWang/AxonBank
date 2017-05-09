@@ -28,8 +28,8 @@ import com.nebula.cqrs.axonweb.asm.query.CQRSWebEntryBuilder;
 import com.nebula.cqrs.axonweb.asm.query.CQRSWebEventListenerBuilder;
 import com.nebula.cqrs.axonweb.asm.query.CQRSWebEventListnerBizLogicClassVisitor;
 import com.nebula.cqrs.axonweb.asm.web.CQRSWebControllerBuilder;
-import com.nebula.cqrs.core.asm.Field;
-import com.nebula.cqrs.core.asm.RenameClassVisitor;
+import com.nebula.tinyasm.util.Field;
+import com.nebula.tinyasm.util.RenameClassVisitor;
 
 public class CQRSWebSpringApplicationListener implements ApplicationListener<ApplicationPreparedEvent>, DomainListener {
 

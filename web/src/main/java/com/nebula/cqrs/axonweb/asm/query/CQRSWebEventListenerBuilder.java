@@ -14,8 +14,8 @@ import org.springframework.stereotype.Component;
 import com.nebula.cqrs.axon.pojo.AxonAsmBuilder;
 import com.nebula.cqrs.axon.pojo.DomainDefinition;
 import com.nebula.cqrs.axon.pojo.Event;
-import com.nebula.cqrs.core.asm.AsmBuilderHelper;
-import com.nebula.cqrs.core.asm.Field;
+import com.nebula.tinyasm.util.AsmBuilderHelper;
+import com.nebula.tinyasm.util.Field;
 
 public class CQRSWebEventListenerBuilder extends AxonAsmBuilder {
 

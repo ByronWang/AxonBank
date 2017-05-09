@@ -14,9 +14,9 @@ import org.objectweb.asm.Type;
 
 import com.nebula.cqrs.axon.pojo.DomainDefinition;
 import com.nebula.cqrs.axon.pojo.Event;
-import com.nebula.cqrs.core.asm.AsmBuilderHelper;
-import com.nebula.cqrs.core.asm.Field;
-import com.nebula.cqrs.core.asm.Method;
+import com.nebula.tinyasm.util.AsmBuilderHelper;
+import com.nebula.tinyasm.util.Field;
+import com.nebula.tinyasm.util.Method;
 
 public class AnalyzeEventsClassVisitor extends ClassVisitor {
 	private final DomainDefinition domainDefinition;

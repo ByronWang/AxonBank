@@ -23,9 +23,9 @@ import com.nebula.cqrs.axon.asm.RemoveCqrsAnnotationClassVisitor;
 import com.nebula.cqrs.axon.pojo.Command;
 import com.nebula.cqrs.axon.pojo.DomainDefinition;
 import com.nebula.cqrs.axon.pojo.Event;
-import com.nebula.cqrs.core.asm.AnalyzeMethodParamsClassVisitor;
-import com.nebula.cqrs.core.asm.Field;
-import com.nebula.cqrs.core.asm.RenameClassVisitor;
+import com.nebula.tinyasm.util.AnalyzeMethodParamsClassVisitor;
+import com.nebula.tinyasm.util.Field;
+import com.nebula.tinyasm.util.RenameClassVisitor;
 
 public class CQRSBuilder implements CQRSContext {
     public final static Logger LOGGER = LoggerFactory.getLogger(CQRSBuilder.class);

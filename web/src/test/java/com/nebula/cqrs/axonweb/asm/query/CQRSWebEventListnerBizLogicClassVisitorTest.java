@@ -19,7 +19,7 @@ import org.objectweb.asm.util.TraceClassVisitor;
 import com.nebula.cqrs.axonweb.asm.query.test.MyBankAccountCreatedEvent;
 import com.nebula.cqrs.axonweb.asm.query.test.MyBankAccountImpl;
 import com.nebula.cqrs.axonweb.asm.query.test.MyBankAccountImplEntry;
-import com.nebula.cqrs.core.asm.RenameClassVisitor;
+import com.nebula.tinyasm.util.RenameClassVisitor;
 
 public class CQRSWebEventListnerBizLogicClassVisitorTest {
 	MyClassLoader classLoader;

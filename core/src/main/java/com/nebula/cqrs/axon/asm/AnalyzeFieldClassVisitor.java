@@ -10,7 +10,7 @@ import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-import com.nebula.cqrs.core.asm.Field;
+import com.nebula.tinyasm.util.Field;
 
 public class AnalyzeFieldClassVisitor extends ClassVisitor {
 	private final List<Field> fields = new ArrayList<>();
