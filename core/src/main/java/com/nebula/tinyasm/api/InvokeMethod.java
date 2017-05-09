@@ -78,6 +78,9 @@ public interface InvokeMethod<M extends MethodUseCaller<M, C>, C extends MethodC
 	default void invokeSpecial(String methodName, Class<?>... paramClasses) {
 		invoke(INVOKESPECIAL, methodName, typesOf(paramClasses));
 	}
+	default void invokeSpecial(String methodName, Field... paramFields) {
+		invoke(INVOKESPECIAL, methodName, typesOf(paramFields));
+	}
 
 	default void invokeSpecial(String methodName, Type... params) {
 		invoke(INVOKESPECIAL, methodName, params);
@@ -107,12 +110,22 @@ public interface InvokeMethod<M extends MethodUseCaller<M, C>, C extends MethodC
 		invoke(INVOKEVIRTUAL, methodName, typesOf(paramClasses));
 	}
 
+	default void invokeVirtual(String methodName, Field... paramFields) {
+		invoke(INVOKEVIRTUAL, methodName, typesOf(paramFields));
+	}
 	default void invokeVirtual(String methodName, Type... params) {
 		invoke(INVOKEVIRTUAL, methodName, params);
 	}
 
+	default Instance<M, C> invokeVirtual(Type returnType, String methodName) {
+		return invoke(INVOKEVIRTUAL, returnType, methodName);
+	}
 	default Instance<M, C> invokeVirtual(Type returnType, String methodName, Class<?>... paramClasses) {
 		return invoke(INVOKEVIRTUAL, returnType, methodName, typesOf(paramClasses));
+	}
+
+	default Instance<M, C> invokeVirtual(Type returnType, String methodName, Field... paramFields) {
+		return invoke(INVOKEVIRTUAL, returnType, methodName, typesOf(paramFields));
 	}
 
 	default Instance<M, C> invokeVirtual(Type returnType, String methodName, Type... params) {
@@ -120,8 +133,7 @@ public interface InvokeMethod<M extends MethodUseCaller<M, C>, C extends MethodC
 	}
 
 	default Instance<M, C> getProperty(String fieldName, Type fieldType) {
-		return invoke(INVOKEVIRTUAL, fieldType, toPropertyGetName(fieldName,fieldType));
+		return invoke(INVOKEVIRTUAL, fieldType, toPropertyGetName(fieldName, fieldType));
 	}
-
 
 }

@@ -16,12 +16,13 @@ public interface MethodCode<M extends MethodUseCaller<M, C>, C extends MethodCod
 
 	C block(Consumer<C> invocation);
 
+	C checkCast(Type type);
+
 	C code();
 
 	default C def(Field field) {
 		return def(field.name, field.type);
 	}
-
 	default C def(String fieldName, Class<?> clz) {
 		return def(fieldName, typeOf(clz));
 	}

@@ -4,9 +4,12 @@ import java.util.List;
 
 import org.objectweb.asm.Type;
 
+import com.nebula.tinyasm.ClassField;
 import com.nebula.tinyasm.util.Field;
 
 public interface DefineParameter<CR> extends Types {
+	CR parameter(ClassField field);
+
 	CR parameter(String fieldName, Type fieldType);
 
 	CR parameter(String fieldName, Type fieldType, String signature);

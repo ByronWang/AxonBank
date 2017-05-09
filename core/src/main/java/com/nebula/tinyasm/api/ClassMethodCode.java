@@ -20,4 +20,5 @@ public interface ClassMethodCode extends MethodCode<ClassUseCaller, ClassMethodC
 	ClassUseCaller useTopThis();
 
 
+
 }

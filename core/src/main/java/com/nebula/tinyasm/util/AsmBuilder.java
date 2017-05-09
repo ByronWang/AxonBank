@@ -103,25 +103,43 @@ public class AsmBuilder {
 	}
 
 	public static void visitDefineField(ClassVisitor cw, String fieldName, Type fieldType) {
-		FieldVisitor fv = cw.visitField(ACC_PRIVATE, fieldName, fieldType.getDescriptor(), null, null);
-		fv.visitEnd();
+		visitDefineField(cw, ACC_PRIVATE, fieldName, fieldType);
+	}
+
+	public static FieldVisitor visitDefineField(ClassVisitor cw, String fieldName, Type fieldType, String signature) {
+		return visitDefineField(cw, ACC_PRIVATE, fieldName, fieldType, signature);
 	}
 
 	public static FieldVisitor visitDefineField(ClassVisitor cw, String fieldName, Type fieldType, String signature, Type annotationType, Object value) {
-		FieldVisitor fv = cw.visitField(ACC_PRIVATE, fieldName, fieldType.getDescriptor(), signature, null);
+		return visitDefineField(cw, ACC_PRIVATE, fieldName, fieldType, signature, annotationType, value);
+	}
+
+	public static FieldVisitor visitDefineField(ClassVisitor cw, String fieldName, Type fieldType, Type annotationType, Object value) {
+		return visitDefineField(cw, fieldName, fieldType, null, annotationType, value);
+	}
+
+	public static void visitDefineField(ClassVisitor cw, int access, String fieldName, Type fieldType) {
+		FieldVisitor fv = cw.visitField(access, fieldName, fieldType.getDescriptor(), null, null);
+		fv.visitEnd();
+	}
+
+	public static FieldVisitor visitDefineField(ClassVisitor cw, int access, String fieldName, Type fieldType, String signature) {
+		FieldVisitor fv = cw.visitField(access, fieldName, fieldType.getDescriptor(), signature, null);
+		fv.visitEnd();
+		return fv;
+	}
+
+	public static FieldVisitor visitDefineField(ClassVisitor cw, int access, String fieldName, Type fieldType, String signature, Type annotationType,
+	        Object value) {
+		FieldVisitor fv = cw.visitField(access, fieldName, fieldType.getDescriptor(), signature, null);
 		if (annotationType != null) visitAnnotation(fv, annotationType, value);
 		fv.visitEnd();
 		return fv;
 	}
 
-	public static FieldVisitor visitDefineField(ClassVisitor cw, String fieldName, Type fieldType, String signature) {
-		FieldVisitor fv = cw.visitField(ACC_PRIVATE, fieldName, fieldType.getDescriptor(), signature, null);
-		fv.visitEnd();
-		return fv;
-	}
-	
-	public static FieldVisitor visitDefineField(ClassVisitor cw, String fieldName, Type fieldType, Type annotationType, Object value) {
-		return visitDefineField(cw, fieldName, fieldType, null, annotationType, value);
+	public static FieldVisitor visitDefineField(ClassVisitor cw, int access, String fieldName, Type fieldType, Type annotationType, Object value) {
+
+		return visitDefineField(cw, access, fieldName, fieldType, null, annotationType, value);
 	}
 
 	public static MethodVisitor visitDefineMethod(ClassVisitor cw, int access, Type returnType, String methodName, Type[] paramTypes, String signature,

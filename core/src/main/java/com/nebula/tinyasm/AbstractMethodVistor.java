@@ -1,6 +1,6 @@
 package com.nebula.tinyasm;
 
-import static org.objectweb.asm.Opcodes.ASM5;
+import static org.objectweb.asm.Opcodes.*;
 import static org.objectweb.asm.Opcodes.IFGT;
 import static org.objectweb.asm.Opcodes.ILOAD;
 import static org.objectweb.asm.Opcodes.POP;
@@ -30,6 +30,12 @@ import com.nebula.tinyasm.util.Field;
 
 public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C extends MethodCode<M, C>> extends MethodVisitor
         implements MethodCode<M, C>, MethodHeader<C>, Types {
+
+	@Override
+	public C checkCast(Type type) {
+		mv.visitTypeInsn(CHECKCAST, type.getInternalName());
+		return code();
+	}
 
 	class Annotation {
 		int parameter;
@@ -141,7 +147,8 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		Label startFrom;
 
 		public Variable(ClassField field, Label startFrom) {
-			this(field.name, field.type, field.signature, startFrom);
+			super(field.access, field.name, field.type, field.signature);
+			this.startFrom = startFrom;
 		}
 
 		public Variable(String name, Type type) {
@@ -149,11 +156,11 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		}
 
 		public Variable(String name, Type type, String signature) {
-			super(name, type, signature);
+			super(0, name, type, signature);
 		}
 
 		public Variable(String name, Type type, String signature, Label startFrom) {
-			super(name, type, signature);
+			super(0, name, type, signature);
 			this.startFrom = startFrom;
 		}
 	}
@@ -390,7 +397,10 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		Label endLabel = this.labelWithoutLineNumber();
 		int i = 0;
 		for (Variable var : variablesStack) {
-			mv.visitLocalVariable(var.name, var.type.getDescriptor(), var.signature, var.startFrom, endLabel, variablesLocals[i++]);
+			if (!is(var.access, ACC_SYNTHETIC)) {
+				mv.visitLocalVariable(var.name, var.type.getDescriptor(), var.signature, var.startFrom, endLabel, variablesLocals[i]);
+			}
+			i++;
 		}
 		mv.visitMaxs(0, 0);
 		mv.visitEnd();
@@ -411,29 +421,36 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 	}
 
 	@Override
+	public MethodHeader<C> parameter(ClassField field) {
+		thisMethodParams.add(field);
+		thisMethodParameterAnnotations.add(null);
+		return this;
+	}
+
+	@Override
 	public MethodHeader<C> parameter(String fieldName, Type fieldType) {
-		thisMethodParams.add(new ClassField(fieldName, fieldType));
+		thisMethodParams.add(new Variable(fieldName, fieldType));
 		thisMethodParameterAnnotations.add(null);
 		return this;
 	}
 
 	@Override
 	public MethodHeader<C> parameter(String fieldName, Type fieldType, String signature) {
-		thisMethodParams.add(new ClassField(fieldName, fieldType, signature));
+		thisMethodParams.add(new Variable(fieldName, fieldType, signature));
 		thisMethodParameterAnnotations.add(null);
 		return this;
 	}
 
 	@Override
 	public MethodHeader<C> parameter(Type annotationType, Object value, String fieldName, Type fieldType) {
-		thisMethodParams.add(new ClassField(fieldName, fieldType));
+		thisMethodParams.add(new Variable(fieldName, fieldType));
 		thisMethodParameterAnnotations.set(thisMethodParams.size() - 1, new Annotation(value, annotationType));
 		return this;
 	}
 
 	@Override
 	public MethodHeader<C> parameter(Type annotationType, Object value, String fieldName, Type fieldType, String signature) {
-		thisMethodParams.add(new ClassField(fieldName, fieldType, signature));
+		thisMethodParams.add(new Variable(fieldName, fieldType, signature));
 		thisMethodParameterAnnotations.set(thisMethodParams.size() - 1, new Annotation(value, annotationType));
 		return this;
 	}

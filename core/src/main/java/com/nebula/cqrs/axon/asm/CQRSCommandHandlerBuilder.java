@@ -48,14 +48,12 @@ public class CQRSCommandHandlerBuilder {
 	}
 
 	private static void visitDefine_init(ClassBody cb, Type handleType, Type domainType) {
-		{
-			cb.publicMethod("<init>").parameter("repository", Repository.class, domainType).parameter("eventBus", EventBus.class).code(mb -> {
-				mb.line(15).initObject();
-				mb.loadThis().put("repository", "repository");
-				mb.loadThis().put("eventBus", "eventBus");
-				mb.returnVoid();
-			});
-		}
+		cb.publicMethod("<init>").parameter("repository", Repository.class, domainType).parameter("eventBus", EventBus.class).code(mb -> {
+			mb.line(15).initObject();
+			mb.loadThis().put("repository", "repository");
+			mb.loadThis().put("eventBus", "eventBus");
+			mb.returnVoid();
+		});
 	}
 
 	private static void visitDefine_handle_create(ClassBody cb, Type handleType, Type callerType, Type commandType) {

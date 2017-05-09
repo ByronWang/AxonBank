@@ -7,13 +7,10 @@ import org.objectweb.asm.Type;
 import com.nebula.tinyasm.util.Field;
 
 public class ClassField extends Field {
-	public ClassField(String name, Type type) {
-		this(name, type, null);
-	}
-
-	public ClassField(String name, Type type, String signature) {
+	public ClassField(int access, String name, Type type, String signature) {
 		super(name, type);
 		this.signature = signature;
+		this.access = access;
 	}
 
 	@Override
@@ -21,6 +18,7 @@ public class ClassField extends Field {
 		return "Field [name=" + name + ", type=" + type + "]";
 	}
 
+	final int access;
 	final String signature;
 	public boolean identifier;
 

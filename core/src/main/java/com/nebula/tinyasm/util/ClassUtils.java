@@ -1,4 +1,4 @@
-package com.nebula.cqrs.axon.asm;
+package com.nebula.tinyasm.util;
 
 public class ClassUtils {
 	public static String toSimpleName(String className){

@@ -1,18 +1,35 @@
 package com.nebula.tinyasm.api;
 
 import org.objectweb.asm.Type;
+import static org.objectweb.asm.Opcodes.*;
 
 import com.nebula.tinyasm.util.Field;
 
 public interface DefineField<CR> extends Types {
 
-	CR field(String fieldName, Type fieldType);
+	CR field(int access, String fieldName, Type fieldType);
 
-	CR field(String fieldName, Type fieldType, String signature);
+	CR field(int access, String fieldName, Type fieldType, String signature);
 
-	CR field(Type annotationType, Object value, String fieldName, Type fieldType);
+	CR field(int access, Type annotationType, Object value, String fieldName, Type fieldType);
 
-	CR field(Type annotationType, Object value, String fieldName, Type fieldType, String signature);
+	CR field(int access, Type annotationType, Object value, String fieldName, Type fieldType, String signature);
+
+	default CR field(String fieldName, Type fieldType) {
+		return field(ACC_PRIVATE, fieldName, fieldType);
+	}
+
+	default CR field(String fieldName, Type fieldType, String signature) {
+		return field(ACC_PRIVATE, fieldName, fieldType, signature);
+	}
+
+	default CR field(Type annotationType, Object value, String fieldName, Type fieldType) {
+		return field(ACC_PRIVATE, annotationType, value, fieldName, fieldType);
+	}
+
+	default CR field(Type annotationType, Object value, String fieldName, Type fieldType, String signature) {
+		return field(ACC_PRIVATE, annotationType, value, fieldName, fieldType, signature);
+	}
 
 	default CR field(String fieldName, Class<?> fieldClass) {
 		return field(fieldName, typeOf(fieldClass));
