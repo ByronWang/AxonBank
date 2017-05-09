@@ -64,12 +64,18 @@ public interface MethodCode<M extends MethodUseCaller<M, C>, C extends MethodCod
 
 	C jumpInsn(int ifgt, Label label);
 
+	void ldcInsn(Object cst);
+
 	C line(int line);
 
 	void load(int... index);
 
 	default void load(String... varNames) {
 		load(vars(varNames));
+	}
+
+	default Instance<M, C> newInstace(Class<?> clz) {
+		return newInstace(Type.getType(clz));
 	}
 
 	Instance<M, C> newInstace(Type type);
@@ -90,7 +96,6 @@ public interface MethodCode<M extends MethodUseCaller<M, C>, C extends MethodCod
 		returnTop(typeOf(returnClass));
 	}
 
-	@Deprecated
 	void returnTop(Type type);
 
 	void returnVoid();

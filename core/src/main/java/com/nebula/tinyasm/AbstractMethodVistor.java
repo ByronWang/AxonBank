@@ -450,6 +450,11 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 	}
 
 	@Override
+	public void ldcInsn(Object cst) {
+		mv.visitLdcInsn(cst);
+	}
+
+	@Override
 	public C putTopTo(Field field) {
 		AsmBuilder.visitPutField(mv, getTopType(), field.name, field.type);
 		return code();

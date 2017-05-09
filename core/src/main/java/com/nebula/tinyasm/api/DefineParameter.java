@@ -1,5 +1,7 @@
 package com.nebula.tinyasm.api;
 
+import java.util.List;
+
 import org.objectweb.asm.Type;
 
 import com.nebula.tinyasm.util.Field;
@@ -19,6 +21,22 @@ public interface DefineParameter<CR> extends Types {
 
 	default CR parameter(Field parameter) {
 		return parameter(parameter.name, parameter.type);
+	}
+
+	default CR parameter(Field... parameters) {
+		CR cr = null;
+		for (Field parameter : parameters) {
+			cr = parameter(parameter.name, parameter.type);
+		}
+		return cr;
+	}
+
+	default CR parameter(List<Field> params) {
+		CR cr = null;
+		for (Field parameter : params) {
+			cr = parameter(parameter.name, parameter.type);
+		}
+		return cr;
 	}
 
 	default CR parameter(String fieldName, Type fieldType, Type... signatureTypes) {

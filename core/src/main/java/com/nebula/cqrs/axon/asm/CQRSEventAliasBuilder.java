@@ -1,22 +1,13 @@
 package com.nebula.cqrs.axon.asm;
 
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.Type;
-
 import com.nebula.cqrs.axon.pojo.Event;
 import com.nebula.cqrs.axon.pojo.PojoBuilder;
+import com.nebula.tinyasm.ClassBuilder;
 
 public class CQRSEventAliasBuilder extends PojoBuilder {
 
 	public static byte[] dump(Event event) {
-		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
-		Type type = event.type;
-		Type typeSuper = event.getRealEvent().type;
 
-		cw.visit(52, ACC_PUBLIC + ACC_SUPER, type.getInternalName(), null, typeSuper.getInternalName(), null);
-
-		visitDefine_init_withAllFieldsToSuper(cw, type, typeSuper, event.fields);
-
-		return cw.toByteArray();
+		return ClassBuilder.make(event.type, event.getRealEvent().type).publicMethodInitWithAllFieldsToSuper(event.fields).toByteArray();
 	}
 }
