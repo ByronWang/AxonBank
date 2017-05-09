@@ -14,16 +14,12 @@ import com.nebula.cqrs.core.asm.Field;
 public class SimpleClassVisitor extends ClassVisitor implements Opcodes, ClassBody {
 	final static int THIS = 0;
 	final static String THIS_NAME = "this";
-	private final Type thisType;
-
 	private Map<String, Field> fields = new HashMap<>();
+
+	private final Type thisType;
 
 	public SimpleClassVisitor(ClassVisitor cv, Type thisType) {
 		this(cv, thisType, Type.getType(Object.class));
-	}
-
-	public Field fieldOf(String fieldName) {
-		return fields.get(fieldName);
 	}
 
 	public SimpleClassVisitor(ClassVisitor cv, Type thisType, Type superType) {
@@ -45,16 +41,6 @@ public class SimpleClassVisitor extends ClassVisitor implements Opcodes, ClassBo
 	@Override
 	public void end() {
 		cv.visitEnd();
-	}
-
-	@Override
-	public MethodHeader<ClassMethodCode> method(int access, Type returnType, String methodName, Class<?>... exceptionClasses) {
-		return new ClassMethodVisitor(this, thisType, access, returnType, methodName, exceptionClasses);
-	}
-
-	@Override
-	public ClassVisitor visitor() {
-		return cv;
 	}
 
 	@Override
@@ -83,6 +69,29 @@ public class SimpleClassVisitor extends ClassVisitor implements Opcodes, ClassBo
 		fields.put(fieldName, new ClassField(fieldName, fieldType, signature));
 		ASMBuilder.visitDefineField(cv, fieldName, fieldType, signature, annotationType, value);
 		return this;
+	}
+
+	public Field fieldOf(String fieldName) {
+		return fields.get(fieldName);
+	}
+
+	@Override
+	public Type referInnerClass(String name) {
+		String internalName = thisType.getInternalName() + "$" + name;
+
+		cv.visitInnerClass(internalName, thisType.getInternalName(), name, 0);
+
+		return Type.getType("L" + internalName+";");
+	}
+
+	@Override
+	public MethodHeader<ClassMethodCode> method(int access, Type returnType, String methodName, Class<?>... exceptionClasses) {
+		return new ClassMethodVisitor(this, thisType, access, returnType, methodName, exceptionClasses);
+	}
+
+	@Override
+	public ClassVisitor visitor() {
+		return cv;
 	}
 
 }

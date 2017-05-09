@@ -22,6 +22,8 @@ public interface InvokeMethod<M extends MethodUseCaller<M, C>, C extends MethodC
 
 	C putTo(Field field);
 
+	Instance<M, C>  get(Field field);
+	
 	default C putTo(String fieldName, Class<?> fieldClass) {
 		return putTo(new Field(fieldName, typeOf(fieldClass)));
 	}

@@ -110,7 +110,6 @@ public class MyBankAccount {
 
 	// BankAccountMoneySubtractedEvent
 	private void onMoneySubtracted(long amount) {
-		long newbalance = this.balance - amount;
-		this.balance = newbalance;
+		balance -= amount;
 	}
 }

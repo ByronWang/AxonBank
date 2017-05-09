@@ -20,6 +20,8 @@ public interface ClassBody extends Types, Opcodes, DefineField<ClassBody>, Defin
 		return annotation(annotationType, null);
 	}
 
+	Type referInnerClass(String innerClass);
+
 	void end();
 
 	ClassVisitor visitor();

@@ -11,6 +11,13 @@ abstract class AbstractInvokeMethod<M extends MethodUseCaller<M, C>, C extends M
 		this.mv = mv;
 	}
 
+	@Override
+	public Instance<M, C> get(Field field) {
+		ASMBuilder.visitGetField(mv, getType(), field.name, field.type);
+		code().type(field.type);
+		return topInstance();
+	}
+
 	MethodVisitor mv;
 
 	@Override

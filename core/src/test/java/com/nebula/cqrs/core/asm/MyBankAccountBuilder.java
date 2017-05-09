@@ -58,8 +58,8 @@ public class MyBankAccountBuilder extends AsmBuilderHelper {
 			cw.publicMethod(boolean.class, "withdraw").parameter("amount", long.class).code(mc -> {
 				mc.line(50).load("amount");
 
-				mc.This().get("balance");
-				mc.This().get("overdraftLimit");
+				mc.loadThis().get("balance");
+				mc.loadThis().get("overdraftLimit");
 				mc.insn(LADD);
 
 				mc.insn(LCMP);
@@ -77,9 +77,9 @@ public class MyBankAccountBuilder extends AsmBuilderHelper {
 
 	private static void visitDefine_onCreated(ClassBody cw) {
 		cw.privateMethod("onCreated").parameter("axonBankAccountId", String.class).parameter("overdraftLimit", long.class).code(mc -> {
-			mc.line(100).This().put("axonBankAccountId", "axonBankAccountId");
-			mc.line(101).This().put("overdraftLimit", "overdraftLimit");
-			mc.line(102).useThis().with(e -> e.insn(LCONST_0)).putTo("balance");
+			mc.line(100).loadThis().put("axonBankAccountId", "axonBankAccountId");
+			mc.line(101).loadThis().put("overdraftLimit", "overdraftLimit");
+			mc.line(102).use("this").with(e -> e.insn(LCONST_0)).putTo("balance");
 			mc.line(103).returnVoid();
 		});
 	}
@@ -87,26 +87,25 @@ public class MyBankAccountBuilder extends AsmBuilderHelper {
 	private static void visitDefine_onMoneyAdded(ClassBody cw) {
 		cw.privateMethod("onMoneyAdded").parameter("amount", long.class).code(mc -> {
 			mc.def("newbalance", mc.fieldOf("balance").type);
-			mc.line(107).This().get("balance");
+			mc.line(107).loadThis().get("balance");
 			mc.load("amount");
 			mc.insn(LADD);
 			mc.storeTop("newbalance");
-			mc.line(108).This().put("newbalance", "balance");
+			mc.line(108).loadThis().put("newbalance", "balance");
 			mc.line(109).returnVoid();
 		});
 	}
 
 	private static void visitDefine_onMoneySubtracted(ClassBody cw) {
 		cw.privateMethod("onMoneySubtracted").parameter("amount", long.class).code(mc -> {
-			mc.def("newbalance", mc.fieldOf("balance").type);
-			mc.line(113).This().get("balance");
+			mc.line(113).load("this");
+			mc.insn(DUP);
+			mc.useTopThis().get("balance");
 			mc.load("amount");
 			mc.insn(LSUB);
-			mc.storeTop("newbalance");
-			mc.line(114).This().put("newbalance", "balance");
-			mc.line(115).returnVoid();
+			mc.useTopThis().putTo("balance");
+			mc.line(114).returnVoid();
 		});
-
 	}
 
 	private static void visitDefine_init(ClassBody cw) {

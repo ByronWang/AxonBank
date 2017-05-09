@@ -59,22 +59,26 @@ public class ClassMethodVisitor extends AbstractMethodVistor<MethodHeader<ClassM
 	}
 
 	@Override
-	public ClassThisInstance This() {
+	public ClassThisInstance loadThis() {
 		object(THIS);
 		return thisInstance;
 	}
 
 	@Override
-	public Instance<ClassUseCaller, ClassMethodCode> thisType() {
-		return type(thisObjectType);
+	public Type thisType() {
+		return thisObjectType;
 	}
 
 	@Override
 	public ClassUseCaller useThis() {
-		This();
+		loadThis();
 		return new RealThisUseCaller(mv,thisObjectType);
 	}
 
+	@Override
+	public ClassUseCaller useTopThis() {
+		return new RealThisUseCaller(mv,thisObjectType);
+	}
 	@Override
 	public ClassUseCaller useTop(Type type) {
 		return new RealThisUseCaller(mv,type);

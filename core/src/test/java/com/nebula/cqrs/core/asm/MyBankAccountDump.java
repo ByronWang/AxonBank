@@ -1,11 +1,7 @@
 package com.nebula.cqrs.core.asm;
 
-import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.FieldVisitor;
-import org.objectweb.asm.Label;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
+import java.util.*;
+import org.objectweb.asm.*;
 
 public class MyBankAccountDump implements Opcodes {
 
@@ -217,26 +213,20 @@ public class MyBankAccountDump implements Opcodes {
 			mv.visitLabel(l0);
 			mv.visitLineNumber(113, l0);
 			mv.visitVarInsn(ALOAD, 0);
+			mv.visitInsn(DUP);
 			mv.visitFieldInsn(GETFIELD, "com/nebula/cqrs/core/asm/MyBankAccount", "balance", "J");
 			mv.visitVarInsn(LLOAD, 1);
 			mv.visitInsn(LSUB);
-			mv.visitVarInsn(LSTORE, 3);
+			mv.visitFieldInsn(PUTFIELD, "com/nebula/cqrs/core/asm/MyBankAccount", "balance", "J");
 			Label l1 = new Label();
 			mv.visitLabel(l1);
 			mv.visitLineNumber(114, l1);
-			mv.visitVarInsn(ALOAD, 0);
-			mv.visitVarInsn(LLOAD, 3);
-			mv.visitFieldInsn(PUTFIELD, "com/nebula/cqrs/core/asm/MyBankAccount", "balance", "J");
+			mv.visitInsn(RETURN);
 			Label l2 = new Label();
 			mv.visitLabel(l2);
-			mv.visitLineNumber(115, l2);
-			mv.visitInsn(RETURN);
-			Label l3 = new Label();
-			mv.visitLabel(l3);
-			mv.visitLocalVariable("this", "Lcom/nebula/cqrs/core/asm/MyBankAccount;", null, l0, l3, 0);
-			mv.visitLocalVariable("amount", "J", null, l0, l3, 1);
-			mv.visitLocalVariable("newbalance", "J", null, l1, l3, 3);
-			mv.visitMaxs(4, 5);
+			mv.visitLocalVariable("this", "Lcom/nebula/cqrs/core/asm/MyBankAccount;", null, l0, l2, 0);
+			mv.visitLocalVariable("amount", "J", null, l0, l2, 1);
+			mv.visitMaxs(5, 3);
 			mv.visitEnd();
 		}
 		cw.visitEnd();
