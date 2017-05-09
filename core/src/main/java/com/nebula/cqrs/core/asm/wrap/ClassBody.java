@@ -1,5 +1,6 @@
 package com.nebula.cqrs.core.asm.wrap;
 
+import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
@@ -18,6 +19,8 @@ public interface ClassBody extends Types, Opcodes {
 	default ClassBody annotation(Type annotationType) {
 		return annotation(annotationType, null);
 	}
+	
+	ClassVisitor visitor();
 
 	void end();
 		

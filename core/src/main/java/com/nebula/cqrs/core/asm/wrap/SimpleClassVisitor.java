@@ -72,4 +72,9 @@ public class SimpleClassVisitor extends ClassVisitor implements Opcodes, ClassBo
 	public MethodHeader<ClassMethodCode> method(int access, Type returnType, String methodName, Class<?>... exceptionClasses) {
 		return new ClassMethodVisitor(this, thisType, access, returnType, methodName, exceptionClasses);
 	}
+
+	@Override
+	public ClassVisitor visitor() {
+		return cv;
+	}
 }
