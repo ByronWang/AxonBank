@@ -51,6 +51,10 @@ public interface InvokeMethod<M extends MethodUseCaller<M, C>, C extends MethodC
 		return invoke(INVOKEINTERFACE, typeOf(returnClass), methodName, typesOf(paramClasses));
 	}
 
+	default Instance<M, C> invokeInterface(Class<?> returnClass, String methodName, Type... params) {
+		return invoke(INVOKEINTERFACE, typeOf(returnClass), methodName, params);
+	}
+	
 	default void invokeInterface(String methodName, Class<?>... paramClasses) {
 		invoke(INVOKEINTERFACE, methodName, typesOf(paramClasses));
 	}

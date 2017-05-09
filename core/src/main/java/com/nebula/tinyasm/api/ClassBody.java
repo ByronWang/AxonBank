@@ -25,5 +25,6 @@ public interface ClassBody extends Types, Opcodes, DefineField<ClassBody>, Defin
 	void end();
 
 	ClassVisitor visitor();
+	byte[] toByteArray();
 
 }

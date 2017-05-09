@@ -7,156 +7,86 @@ import org.axonframework.commandhandling.CommandHandler;
 import org.axonframework.commandhandling.model.Aggregate;
 import org.axonframework.commandhandling.model.Repository;
 import org.axonframework.eventhandling.EventBus;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.FieldVisitor;
-import org.objectweb.asm.Label;
-import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
-import com.nebula.cqrs.axon.pojo.AxonAsmBuilder;
 import com.nebula.cqrs.axon.pojo.Command;
 import com.nebula.cqrs.axon.pojo.DomainDefinition;
+import com.nebula.tinyasm.ClassBuilder;
+import com.nebula.tinyasm.api.ClassBody;
 import com.nebula.tinyasm.util.Field;
 
-public class CQRSCommandHandlerBuilder extends AxonAsmBuilder {
+public class CQRSCommandHandlerBuilder {
 
-    public static byte[] dump(Type handleType, Type domainType, DomainDefinition domainDefinition) throws Exception {
+	public static byte[] dump(Type handleType, Type domainType, DomainDefinition domainDefinition) throws Exception {
 
-        ClassWriter cw = new ClassWriter(0);
-        FieldVisitor fv;
+		Field identifierField = domainDefinition.identifierField;
 
-        String repositorySignature = "L" + Type.getInternalName(Repository.class) + "<" + domainType.getDescriptor() + ">;";
-        Field identifierField = domainDefinition.identifierField;
+		ClassBody cb = ClassBuilder.make(handleType);
 
-        cw.visit(52, ACC_PUBLIC + ACC_SUPER, handleType.getInternalName(), null, "java/lang/Object", null);
+		for (Command command : domainDefinition.commands.values()) {
+			cb.referInnerClass("Inner" + command.commandName);
+		}
 
-        for (Command command : domainDefinition.commands.values()) {
-            Type callerType = Type.getObjectType(handleType.getInternalName() + "$" + "Inner" + command.commandName);
-            cw.visitInnerClass(callerType.getInternalName(), handleType.getInternalName(), "Inner" + command.commandName, 0);
-        }
+		cb.field("repository", Repository.class, domainType);
 
-        {
-            fv = cw.visitField(ACC_PRIVATE, "repository", Type.getDescriptor(Repository.class), repositorySignature, null);
-            fv.visitEnd();
-        }
+		cb.field("eventBus", EventBus.class);
 
-        visitDefineField(cw, "eventBus", EventBus.class);
+		visitDefine_init(cb, handleType, domainType);
 
-        visitDefine_init(cw, handleType, repositorySignature);
+		for (Command command : domainDefinition.commands.values()) {
+			Type callerType = Type.getObjectType(handleType.getInternalName() + "$" + "Inner" + command.commandName);
+			Type commandType = command.type;
+			if (command.ctorMethod) {
+				visitDefine_handle_create(cb, handleType, callerType, commandType);
+			} else {
+				visitDefine_handle_execute(cb, handleType, callerType, commandType, domainType, identifierField);
+			}
+		}
+		cb.end();
 
-        for (Command command : domainDefinition.commands.values()) {
-            Type callerType = Type.getObjectType(handleType.getInternalName() + "$" + "Inner" + command.commandName);
-            Type commandType = command.type;
-            if (command.ctorMethod) {
-                visitDefine_handle_create(cw, handleType, callerType, commandType);
-            } else {
-                visitDefine_handle_execute(cw, handleType, callerType, commandType, domainType, identifierField);
-            }
-        }
-        cw.visitEnd();
+		return cb.toByteArray();
+	}
 
-        return cw.toByteArray();
-    }
+	private static void visitDefine_init(ClassBody cb, Type handleType, Type domainType) {
+		{
+			cb.publicMethod("<init>").parameter("repository", Repository.class, domainType).parameter("eventBus", EventBus.class).code(mb -> {
+				mb.line(15).initObject();
+				mb.loadThis().put("repository", "repository");
+				mb.loadThis().put("eventBus", "eventBus");
+				mb.returnVoid();
+			});
+		}
+	}
 
-    private static void visitDefine_init(ClassWriter cw, Type handleType, String repositorySignature) {
-        MethodVisitor mv;
-        {
-            mv = cw.visitMethod(ACC_PUBLIC, "<init>", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(Repository.class), Type.getType(EventBus.class)),
-                    "(" + repositorySignature + Type.getDescriptor(EventBus.class) + ")V", null);
-            mv.visitCode();
-            Label l0 = new Label();
-            mv.visitLabel(l0);
-            mv.visitLineNumber(15, l0);
-            {
-                visitInitObject(mv, 0);
+	private static void visitDefine_handle_create(ClassBody cb, Type handleType, Type callerType, Type commandType) {
+		cb.publicMethod("handle", Exception.class).annotation(CommandHandler.class).parameter("command", commandType).code(mc -> {
+			mc.line(22).loadThis().get("repository");
+			mc.newInstace(callerType);
+			mc.dup();
+			mc.load("this");
+			mc.load("command");
+			mc.type(callerType).invokeSpecial("<init>", handleType, commandType);
+			mc.type(Repository.class).invokeInterface(Aggregate.class, "newInstance", Callable.class);
+			mc.pop();
+			mc.returnVoid();
+		});
+	}
 
-                visitPutField(mv, 0, handleType, 1, "repository", Repository.class);
-                visitPutField(mv, 0, handleType, 2, "eventBus", EventBus.class);
+	private static void visitDefine_handle_execute(ClassBody cb, Type handleType, Type callerType, Type commandType, Type domainType, Field identifierField) {
+		cb.publicMethod("handle", Exception.class).annotation(CommandHandler.class).parameter("command", commandType).code(mc -> {
+			mc.def("aggregate", Aggregate.class, domainType);
+			mc.line(27).loadThis().get("repository");
+			mc.object("command").getProperty(identifierField);
+			mc.type(Repository.class).invokeInterface(Aggregate.class, "load", identifierField.type).store("aggregate");
+			mc.use("aggregate").with(m -> {
+			    mc.newInstace(callerType);
+			    mc.dup();
+			    mc.load("this");
+			    mc.load("command");
+			    mc.type(callerType).invokeSpecial("<init>", handleType, commandType);
+		    }).invokeInterface("execute", Consumer.class);
 
-                // visitLOGGER(mv, "init " + handleType.getClassName() + " {} ",
-                // 0);
-
-                mv.visitInsn(RETURN);
-            }
-            Label l4 = new Label();
-            mv.visitLabel(l4);
-            mv.visitLocalVariable("this", handleType.getDescriptor(), null, l0, l4, 0);
-            mv.visitLocalVariable("repository", Type.getDescriptor(Repository.class), repositorySignature, l0, l4, 1);
-            mv.visitLocalVariable("eventBus", Type.getDescriptor(EventBus.class), null, l0, l4, 2);
-            mv.visitMaxs(2, 3);
-            mv.visitEnd();
-        }
-    }
-
-    private static void visitDefine_handle_create(ClassWriter cw, Type handleType, Type callerType, Type commandType) {
-        MethodVisitor mv;
-        mv = cw.visitMethod(ACC_PUBLIC, "handle", Type.getMethodDescriptor(Type.VOID_TYPE, commandType), null, new String[] { "java/lang/Exception" });
-        visitAnnotation(mv, CommandHandler.class);
-        mv.visitCode();
-        Label l0 = new Label();
-        mv.visitLabel(l0);
-        mv.visitLineNumber(22, l0);
-        {
-            // visitLOGGER(mv, "handle command {}", 1);
-
-            visitGetField(mv, 0, handleType, "repository", Repository.class);// this.repository
-            {// new InnerCreate(command)
-                visitNewObject(mv, callerType);
-                mv.visitInsn(DUP);
-                mv.visitVarInsn(ALOAD, 0);
-                mv.visitVarInsn(ALOAD, 1);
-                visitInitTypeWithAllFields(mv, callerType, handleType, commandType);
-            }
-            visitInvokeInterface(mv, Repository.class, Aggregate.class, "newInstance", Callable.class);// this.repository.newInstance(new
-                                                                                                       // InnerCreate(command));
-            mv.visitInsn(POP);
-
-            visitReturn(mv);
-        }
-        Label l2 = new Label();
-        mv.visitLabel(l2);
-        mv.visitLocalVariable("this", handleType.getDescriptor(), null, l0, l2, 0);
-        mv.visitLocalVariable("command", commandType.getDescriptor(), null, l0, l2, 1);
-        mv.visitMaxs(5, 2);
-        mv.visitEnd();
-    }
-
-    private static void visitDefine_handle_execute(ClassWriter cw, Type handleType, Type callerType, Type commandType, Type domainType, Field identifierField) {
-        MethodVisitor mv;
-        mv = cw.visitMethod(ACC_PUBLIC, "handle", Type.getMethodDescriptor(Type.VOID_TYPE, commandType), null, null);
-        visitAnnotation(mv, CommandHandler.class);
-        mv.visitCode();
-        Label l0 = new Label();
-        mv.visitLabel(l0);
-        mv.visitLineNumber(27, l0);
-        {
-            // visitLOGGER(mv, "handle command {}", 1);
-
-            visitGetField(mv, 0, handleType, "repository", Repository.class);// this.repository
-            visitGetProperty(mv, 1, commandType, identifierField);// command.getAxonBankAccountId()
-            visitInvokeInterface(mv, Repository.class, Aggregate.class, "load", identifierField.type);// this.repository.load(command.getAxonBankAccountId());
-            mv.visitVarInsn(ASTORE, 2);
-
-            mv.visitVarInsn(ALOAD, 2);// bankAccountAggregate
-            {// new InnerWithdraw(command)
-                visitNewObject(mv, callerType);
-                mv.visitInsn(DUP);
-                mv.visitVarInsn(ALOAD, 0);
-                mv.visitVarInsn(ALOAD, 1);
-                visitInitTypeWithAllFields(mv, callerType, handleType, commandType);
-            }
-            visitInvokeInterface(mv, Aggregate.class, "execute", Consumer.class);// bankAccountAggregate.execute(new
-                                                                                 // InnerWithdraw(command));
-
-            visitReturn(mv);
-        }
-        Label l4 = new Label();
-        mv.visitLabel(l4);
-        mv.visitLocalVariable("this", handleType.getDescriptor(), null, l0, l4, 0);
-        mv.visitLocalVariable("command", commandType.getDescriptor(), null, l0, l4, 1);
-        String aggregateSignature = "L" + Type.getInternalName(Aggregate.class) + "<" + domainType.getDescriptor() + ">;";
-        mv.visitLocalVariable("aggregate", Type.getDescriptor(Aggregate.class), aggregateSignature, l0, l4, 2);
-        mv.visitMaxs(5, 3);
-        mv.visitEnd();
-    }
+			mc.returnVoid();
+		});
+	}
 }

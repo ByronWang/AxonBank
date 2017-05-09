@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
@@ -98,6 +99,23 @@ public class ClassBuilder extends ClassVisitor implements Opcodes, ClassBody {
 	}
 
 	static public ClassBody make(ClassVisitor cv, Type objectType) {
-		return new ClassBuilder(cv, objectType, Type.getType(Object.class));
+		return make(cv, objectType, Type.getType(Object.class));
+	}
+
+	static public ClassBody make(Type objectType, Type superType) {
+		ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
+		return new ClassBuilder(classWriter, objectType, superType);
+	}
+
+	static public ClassBody make(Type objectType) {
+		return make(objectType, Type.getType(Object.class));
+	}
+
+	@Override
+	public byte[] toByteArray() {
+		if(cv instanceof ClassWriter){
+			return ((ClassWriter) cv).toByteArray();
+		}
+		return null;
 	}
 }

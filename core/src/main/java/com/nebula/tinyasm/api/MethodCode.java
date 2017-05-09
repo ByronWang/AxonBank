@@ -58,6 +58,8 @@ public interface MethodCode<M extends MethodUseCaller<M, C>, C extends MethodCod
 
 	Label defineLabel();
 
+	void dup();
+
 	C insn(int d);
 
 	C jumpInsn(int ifgt, Label label);
@@ -77,6 +79,8 @@ public interface MethodCode<M extends MethodUseCaller<M, C>, C extends MethodCod
 	default Instance<M, C> object(String variableName) {
 		return object(varIndex(variableName));
 	}
+
+	void pop();
 
 	C putTopTo(Field field);
 

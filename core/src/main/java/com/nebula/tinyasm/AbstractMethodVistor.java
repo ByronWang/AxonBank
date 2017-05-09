@@ -3,7 +3,9 @@ package com.nebula.tinyasm;
 import static org.objectweb.asm.Opcodes.ASM5;
 import static org.objectweb.asm.Opcodes.IFGT;
 import static org.objectweb.asm.Opcodes.ILOAD;
+import static org.objectweb.asm.Opcodes.POP;
 import static org.objectweb.asm.Opcodes.ISTORE;
+import static org.objectweb.asm.Opcodes.DUP;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -190,6 +192,7 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 	List<Annotation> thisMethodParameterAnnotations = new ArrayList<>(10);
 
 	private List<ClassField> thisMethodParams = new ArrayList<>();
+
 	private final Type thisMethodReturnType;
 
 	Type thisObjectType;
@@ -197,7 +200,6 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 	Type topType;
 
 	int[] variablesLocals;
-
 	Map<String, Integer> variablesMap = new HashMap<>();
 
 	protected Stack<Variable> variablesStack = new Stack<>();
@@ -273,6 +275,11 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 	public Label defineLabel() {
 		Label label = new Label();
 		return label;
+	}
+
+	@Override
+	public void dup() {
+		mv.visitInsn(DUP);
 	}
 
 	protected Type getTopType() {
@@ -435,6 +442,11 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 	public MethodHeader<C> parameterAnnotation(Type type, Object value) {
 		thisMethodParameterAnnotations.set(thisMethodParams.size() - 1, new Annotation(value, type));
 		return this;
+	}
+
+	@Override
+	public void pop() {
+		mv.visitInsn(POP);
 	}
 
 	@Override
