@@ -1,5 +1,6 @@
 package com.nebula.tinyasm.api;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.objectweb.asm.Type;
@@ -9,6 +10,30 @@ import com.nebula.tinyasm.util.Field;
 public interface Types {
 	default boolean is(int access, int modified) {
 		return (access & modified) > 0;
+	}
+
+	default <T> T firstOf(T[] values) {
+		return values[0];
+	}
+
+	default <T> T firstOf(List<T> values) {
+		return values.get(0);
+	}
+
+	default <T> List<T> restOf(T[] values) {
+		List<T> newvalues = new ArrayList<>();
+		for (int i = 1; i < values.length; i++) {
+			newvalues.add(values[i]);
+		}
+		return newvalues;
+	}
+
+	default <T> List<T> restOf(List<T> values) {
+		List<T> newvalues = new ArrayList<>();
+		for (int i = 1; i < values.size(); i++) {
+			newvalues.add(values.get(i));
+		}
+		return newvalues;
 	}
 
 	default String signatureOf(Type type, Class<?>... signatureClasses) {
@@ -43,7 +68,7 @@ public interface Types {
 		return signature;
 	}
 
-	default String toPropertyGetName(String fieldName,Type FieldType) {
+	default String toPropertyGetName(String fieldName, Type FieldType) {
 		return "get" + toPropertyName(fieldName);
 	}
 
@@ -51,10 +76,10 @@ public interface Types {
 		return Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1);
 	}
 
-	default String toPropertySetName(String fieldName,Type FieldType) {
+	default String toPropertySetName(String fieldName, Type FieldType) {
 		return "set" + toPropertyName(fieldName);
 	}
-	
+
 	default String toSimpleName(String name) {
 		int index = name.lastIndexOf('.');
 		if (index < 0) index = name.lastIndexOf('/');
@@ -73,6 +98,7 @@ public interface Types {
 		}
 		return types;
 	}
+
 	default Type[] typesOf(Field... fields) {
 		Type[] types = new Type[fields.length];
 		for (int i = 0; i < fields.length; i++) {
