@@ -1,12 +1,16 @@
 package com.nebula.tinyasm.util;
 
 import java.util.Arrays;
+import java.util.List;
 
-public class Method {
+import com.nebula.tinyasm.Variable;
+
+public class MethodInfo {
 	public String name;
 	public Field[] params;
+	public List<Variable> locals;
 
-	public Method(String name) {
+	public MethodInfo(String name) {
 		super();
 		this.name = name;
 	}

@@ -1,15 +1,20 @@
 package com.nebula.tinyasm.util;
 
-import static org.objectweb.asm.Opcodes.ACC_STATIC;
+import static org.objectweb.asm.Opcodes.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.swing.tree.VariableHeightLayoutCache;
 
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+
+import com.nebula.tinyasm.Variable;
 
 public class AnalyzeMethodParamsClassVisitor extends ClassVisitor {
 	public AnalyzeMethodParamsClassVisitor(int api, ClassVisitor cv) {
@@ -24,9 +29,9 @@ public class AnalyzeMethodParamsClassVisitor extends ClassVisitor {
 		super(Opcodes.ASM5, cv);
 	}
 
-	Map<String, Method> methods = new HashMap<>();
+	Map<String, MethodInfo> methods = new HashMap<>();
 
-	public Map<String, Method> getMethods() {
+	public Map<String, MethodInfo> getMethods() {
 		return methods;
 	}
 
@@ -36,25 +41,38 @@ public class AnalyzeMethodParamsClassVisitor extends ClassVisitor {
 	}
 
 	class FillParamsMethodVisitor extends MethodVisitor {
-		Method method;
+		MethodInfo method;
+		boolean staticMethod = false;
 
-		public FillParamsMethodVisitor(int api, MethodVisitor mv, String name, String desc) {
-			super(api, mv);
-			this.method = new Method(name);
+		public FillParamsMethodVisitor(int access, MethodVisitor mv, String name, String desc) {
+			super(ASM5, mv);
+			this.method = new MethodInfo(name);
 			AnalyzeMethodParamsClassVisitor.this.methods.put(name, method);
+
+			if (is(access, ACC_STATIC)) {
+				staticMethod = true;
+			}
 
 			Type[] types = Type.getArgumentTypes(desc);
 			this.method.params = new Field[types.length];
+			this.method.locals  = new ArrayList<>();
 			for (int i = 0; i < types.length; i++) {
-				this.method.params[i] = new Field(name, types[i]);
+				this.method.params[i] = new Field("", types[i]);
 			}
 		}
 
 		@Override
 		public void visitLocalVariable(String name, String desc, String signature, Label start, Label end, int index) {
-			if (0 < index && index <= this.method.params.length) {
-				this.method.params[index - 1].name = name;
+			if (!staticMethod) {
+				if (0 < index && index <= this.method.params.length) {
+					this.method.params[index - 1].name = name;
+				}
+			} else {
+				if (0 <= index && index < this.method.params.length) {
+					this.method.params[index].name = name;
+				}
 			}
+			this.method.locals.add(new Variable(name, Type.getType(desc), signature));
 			super.visitLocalVariable(name, desc, signature, start, end, index);
 		}
 	}
@@ -65,13 +83,8 @@ public class AnalyzeMethodParamsClassVisitor extends ClassVisitor {
 
 	@Override
 	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-		if (!is(access, ACC_STATIC)) {
-			MethodVisitor methodVisitor = super.visitMethod(access, name, desc, signature, exceptions);
-			return new FillParamsMethodVisitor(api, methodVisitor, name, desc);
-		} else {
-			return super.visitMethod(access, name, desc, signature, exceptions);
-		}
-
+		MethodVisitor methodVisitor = super.visitMethod(access, name, desc, signature, exceptions);
+		return new FillParamsMethodVisitor(access, methodVisitor, name, desc);
 	}
 
 	static String toBeanProperties(String name) {

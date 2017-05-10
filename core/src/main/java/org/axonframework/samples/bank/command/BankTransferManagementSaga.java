@@ -40,69 +40,64 @@ import static org.axonframework.commandhandling.GenericCommandMessage.asCommandM
 @Saga
 public class BankTransferManagementSaga {
 
-    private transient CommandBus commandBus;
+	private transient CommandBus commandBus;
 
-    @Inject
-    public void setCommandBus(CommandBus commandBus) {
-        this.commandBus = commandBus;
-    }
+	@Inject
+	public void setCommandBus(CommandBus commandBus) {
+		this.commandBus = commandBus;
+	}
 
-    private String sourceBankAccountId;
-    private String destinationBankAccountId;
-    private long amount;
+	private String sourceBankAccountId;
+	private String destinationBankAccountId;
+	private long amount;
 
-    @StartSaga
-    @SagaEventHandler(associationProperty = "bankTransferId")
-    public void on(BankTransferCreatedEvent event) {
-        this.sourceBankAccountId = event.getSourceBankAccountId();
-        this.destinationBankAccountId = event.getDestinationBankAccountId();
-        this.amount = event.getAmount();
+	@StartSaga
+	@SagaEventHandler(associationProperty = "bankTransferId")
+	public void on(BankTransferCreatedEvent event) {
+		this.sourceBankAccountId = event.getSourceBankAccountId();
+		this.destinationBankAccountId = event.getDestinationBankAccountId();
+		this.amount = event.getAmount();
 
-        BankTransferSourceDebitCommand command = new BankTransferSourceDebitCommand(event.getSourceBankAccountId(),
-                                                                                  event.getBankTransferId(),
-                                                                                  event.getAmount());
-        commandBus.dispatch(asCommandMessage(command));
-    }
+		BankTransferSourceDebitCommand command = new BankTransferSourceDebitCommand(event.getSourceBankAccountId(), event.getBankTransferId(),
+		        event.getAmount());
+		commandBus.dispatch(asCommandMessage(command));
+	}
 
-    @SagaEventHandler(associationProperty = "bankTransferId")
-    @EndSaga
-    public void on(BankTransferSourceNotFoundEvent event) {
-        BankTransferMarkFailedCommand markFailedCommand = new BankTransferMarkFailedCommand(event.getBankTransferId());
-        commandBus.dispatch(asCommandMessage(markFailedCommand));
-    }
+	@SagaEventHandler(associationProperty = "bankTransferId")
+	@EndSaga
+	public void on(BankTransferSourceNotFoundEvent event) {
+		BankTransferMarkFailedCommand markFailedCommand = new BankTransferMarkFailedCommand(event.getBankTransferId());
+		commandBus.dispatch(asCommandMessage(markFailedCommand));
+	}
 
-    @SagaEventHandler(associationProperty = "bankTransferId")
-    @EndSaga
-    public void on(BankTransferSourceDebitRejectedEvent event) {
-        BankTransferMarkFailedCommand markFailedCommand = new BankTransferMarkFailedCommand(event.getBankTransferId());
-        commandBus.dispatch(asCommandMessage(markFailedCommand));
-    }
+	@SagaEventHandler(associationProperty = "bankTransferId")
+	@EndSaga
+	public void on(BankTransferSourceDebitRejectedEvent event) {
+		BankTransferMarkFailedCommand markFailedCommand = new BankTransferMarkFailedCommand(event.getBankTransferId());
+		commandBus.dispatch(asCommandMessage(markFailedCommand));
+	}
 
-    @SagaEventHandler(associationProperty = "bankTransferId")
-    public void on(BankTransferSourceDebitedEvent event) {
-        BankTransferDestinationCreditCommand command = new BankTransferDestinationCreditCommand(destinationBankAccountId,
-                                                                                              event.getBankTransferId(),
-                                                                                              event.getAmount());
-        commandBus.dispatch(asCommandMessage(command));
-    }
+	@SagaEventHandler(associationProperty = "bankTransferId")
+	public void on(BankTransferSourceDebitedEvent event) {
+		BankTransferDestinationCreditCommand command = new BankTransferDestinationCreditCommand(destinationBankAccountId, event.getBankTransferId(),
+		        event.getAmount());
+		commandBus.dispatch(asCommandMessage(command));
+	}
 
-    @SagaEventHandler(associationProperty = "bankTransferId")
-    @EndSaga
-    public void on(BankTransferDestinationNotFoundEvent event) {
-        BankTransferSourceReturnMoneyCommand returnMoneyCommand = new BankTransferSourceReturnMoneyCommand(
-                sourceBankAccountId,
-                amount);
-        commandBus.dispatch(asCommandMessage(returnMoneyCommand));
+	@SagaEventHandler(associationProperty = "bankTransferId")
+	@EndSaga
+	public void on(BankTransferDestinationNotFoundEvent event) {
+		BankTransferSourceReturnMoneyCommand returnMoneyCommand = new BankTransferSourceReturnMoneyCommand(sourceBankAccountId, amount);
+		commandBus.dispatch(asCommandMessage(returnMoneyCommand));
 
-        BankTransferMarkFailedCommand markFailedCommand = new BankTransferMarkFailedCommand(
-                event.getBankTransferId());
-        commandBus.dispatch(asCommandMessage(markFailedCommand));
-    }
+		BankTransferMarkFailedCommand markFailedCommand = new BankTransferMarkFailedCommand(event.getBankTransferId());
+		commandBus.dispatch(asCommandMessage(markFailedCommand));
+	}
 
-    @EndSaga
-    @SagaEventHandler(associationProperty = "bankTransferId")
-    public void on(BankTransferDestinationCreditedEvent event) {
-        BankTransferMarkCompletedCommand command = new BankTransferMarkCompletedCommand(event.getBankTransferId());
-        commandBus.dispatch(asCommandMessage(command));
-    }
+	@EndSaga
+	@SagaEventHandler(associationProperty = "bankTransferId")
+	public void on(BankTransferDestinationCreditedEvent event) {
+		BankTransferMarkCompletedCommand command = new BankTransferMarkCompletedCommand(event.getBankTransferId());
+		commandBus.dispatch(asCommandMessage(command));
+	}
 }

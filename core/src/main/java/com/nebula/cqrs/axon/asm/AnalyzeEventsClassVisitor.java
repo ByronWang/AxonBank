@@ -16,7 +16,7 @@ import com.nebula.cqrs.axon.pojo.DomainDefinition;
 import com.nebula.cqrs.axon.pojo.Event;
 import com.nebula.tinyasm.util.AsmBuilderHelper;
 import com.nebula.tinyasm.util.Field;
-import com.nebula.tinyasm.util.Method;
+import com.nebula.tinyasm.util.MethodInfo;
 
 public class AnalyzeEventsClassVisitor extends ClassVisitor {
 	private final DomainDefinition domainDefinition;
@@ -44,7 +44,7 @@ public class AnalyzeEventsClassVisitor extends ClassVisitor {
 			Type eventType = domainDefinition.typeOf(eventName + "Event");
 			Event event = new Event(eventName, originMethodName, newMethodName, innerEvent, eventType);
 
-			Method method = domainDefinition.menthods.get(originMethodName);
+			MethodInfo method = domainDefinition.menthods.get(originMethodName);
 			event.methodParams = method.params;
 
 			List<Field> fields = new ArrayList<>();

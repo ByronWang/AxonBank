@@ -5,7 +5,7 @@ import java.util.Map;
 import org.objectweb.asm.Type;
 
 import com.nebula.tinyasm.util.Field;
-import com.nebula.tinyasm.util.Method;
+import com.nebula.tinyasm.util.MethodInfo;
 
 public class DomainDefinition {
     private final String defineName;
@@ -55,5 +55,5 @@ public class DomainDefinition {
     public Map<String, Command> commands;
     public Map<String, Event> realEvents;
     public Map<String, Event> virtualEvents;
-    public Map<String, Method> menthods;
+    public Map<String, MethodInfo> menthods;
 }

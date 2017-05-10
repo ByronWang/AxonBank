@@ -29,7 +29,7 @@ import com.nebula.cqrs.axon.pojo.Event;
 import com.nebula.tinyasm.util.AsmBuilderHelper;
 import com.nebula.tinyasm.util.ConvertFromParamsToClassMethodVisitor;
 import com.nebula.tinyasm.util.Field;
-import com.nebula.tinyasm.util.Method;
+import com.nebula.tinyasm.util.MethodInfo;
 
 public class CQRSMakeDomainImplClassVisitor extends ClassVisitor {
 	private final Type implDomainType;
@@ -200,13 +200,13 @@ public class CQRSMakeDomainImplClassVisitor extends ClassVisitor {
 			Type type = domainDefinition.typeOf(simpleClassName);
 			this.succeedEvent = new Event(eventName, originMethodName, newMethodName, innerEvent, type);
 
-			Method method = domainDefinition.menthods.get(command.methodName);
+			MethodInfo method = domainDefinition.menthods.get(command.methodName);
 			command.methodParams = method.params;
 		}
 
 		@Override
 		public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-			Method method = domainDefinition.menthods.get(name);
+			MethodInfo method = domainDefinition.menthods.get(name);
 			succeedEvent.methodParams = method.params;
 
 			if (owner.equals(implDomainType.getInternalName()) && name.startsWith("on")) {
