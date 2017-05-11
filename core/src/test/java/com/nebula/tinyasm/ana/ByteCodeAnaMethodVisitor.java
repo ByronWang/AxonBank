@@ -22,6 +22,7 @@ import org.axonframework.commandhandling.CommandBus;
 import org.axonframework.commandhandling.TargetAggregateIdentifier;
 import org.axonframework.commandhandling.model.AggregateIdentifier;
 import org.axonframework.commandhandling.model.AggregateLifecycle;
+import org.axonframework.eventhandling.saga.StartSaga;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
@@ -35,6 +36,7 @@ import com.nebula.tinyasm.ClassBuilder;
 import com.nebula.tinyasm.Variable;
 import com.nebula.tinyasm.ana.Block.BlockType;
 import com.nebula.tinyasm.api.ClassBody;
+import com.nebula.tinyasm.api.ClassMethodCode;
 import com.nebula.tinyasm.api.Types;
 import com.nebula.tinyasm.util.AnalyzeMethodParamsClassVisitor;
 import com.nebula.tinyasm.util.AsmBuilder;
@@ -102,9 +104,10 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 
 	ClassBody sagaObjectClassBody;
 	Type sagaObjectType;
-
 	Type sagaType;
+	ClassMethodCode sageStartEventHandle;
 	Stack<Variable> stack = new Stack<>();
+
 	List<Variable> variablesList;
 	public ByteCodeAnaMethodVisitor(DomainDefinition domainDefinition, MethodVisitor mv, MethodInfo methodInfo, int access, String name, String desc,
 	        String signature) {
@@ -116,7 +119,7 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 		// ClassBuilder.make(domainType)
 
 		sagaObjectType = domainDefinition.typeOf(methodName);
-		sagaType = domainDefinition.typeOf(methodName+"Saga");
+		sagaType = domainDefinition.typeOf(methodName + "Saga");
 
 		List<Field> datasFields = new ArrayList<>();
 
@@ -171,6 +174,29 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 
 		blockStack.push(new Block("on" + AsmBuilder.toSimpleName(sagaObjectType.getClassName()) + blockIndex++, 0));
 
+
+		sageStartEventHandle =  sagaClassBody.publicMethod("on").annotation(StartSaga.class).parameter("event",createdEvent).begin();
+		for (Field field : datasFields) {
+			sageStartEventHandle.loadThis();
+			sageStartEventHandle.object("event").get(field);
+			sageStartEventHandle.type(sageStartEventHandle.thisType()).putTo(field);
+		}
+		//
+		// @StartSaga
+		// @SagaEventHandler(associationProperty = "bankTransferId")
+		// public void on(BankTransferCreatedEvent event) {
+		// this.sourceBankAccountId = event.getSourceBankAccountId();
+		// this.destinationBankAccountId = event.getDestinationBankAccountId();
+		// this.amount = event.getAmount();
+		//
+		// BankTransferSourceDebitCommand command = new
+		// BankTransferSourceDebitCommand(event.getSourceBankAccountId(),
+		// event.getBankTransferId(),
+		// event.getAmount());
+		// commandBus.dispatch(asCommandMessage(command));
+		// }
+		
+		
 		System.out.print("[" + blockStack.peek().name + "] ");
 		System.out.println(" make " + createdEvent + " ");
 
@@ -265,7 +291,7 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 	public void visitEnd() {
 		closeCurrent();
 		super.visitEnd();
-
+		sageStartEventHandle.end();
 		byte[] sageObjectCode = sagaObjectClassBody.end().toByteArray();
 		classLoader.define(sagaObjectType.getClassName(), sageObjectCode);
 
@@ -399,6 +425,7 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 		}
 		super.visitMethodInsn(opcode, owner, name, desc, itf);
 		printStack();
+
 	}
 
 	@Override

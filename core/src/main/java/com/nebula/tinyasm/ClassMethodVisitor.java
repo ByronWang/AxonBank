@@ -37,9 +37,9 @@ public class ClassMethodVisitor extends AbstractMethodVistor<MethodHeader<ClassM
 	}
 
 	@Override
-	protected ClassMethodCode methodBegin() {
+	protected ClassMethodCode doMethodBegin() {
 		thisInstance = new ThisInstance(mv);
-		return super.methodBegin();
+		return super.doMethodBegin();
 	}
 
 	ClassBuilder cv;

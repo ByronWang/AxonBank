@@ -16,7 +16,7 @@ public interface MethodHeader<C> extends Types, DefineParameter<MethodHeader<C>>
 
 	MethodHeader<C> annotation(Type type, String value);
 
-	C code(Consumer<C> invocation);
+	void code(Consumer<C> invocation);
 
 	default MethodHeader<C> parameterAnnotation(Class<?> annotationClass) {
 		return parameterAnnotation(typeOf(annotationClass), null);
@@ -27,4 +27,6 @@ public interface MethodHeader<C> extends Types, DefineParameter<MethodHeader<C>>
 	}
 
 	MethodHeader<C> parameterAnnotation(Type type, Object value);
+
+	C begin();
 }

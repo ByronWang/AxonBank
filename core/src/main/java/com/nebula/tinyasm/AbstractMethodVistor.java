@@ -1,11 +1,13 @@
 package com.nebula.tinyasm;
 
-import static org.objectweb.asm.Opcodes.*;
+import static org.objectweb.asm.Opcodes.ACC_SYNTHETIC;
+import static org.objectweb.asm.Opcodes.ASM5;
+import static org.objectweb.asm.Opcodes.CHECKCAST;
+import static org.objectweb.asm.Opcodes.DUP;
 import static org.objectweb.asm.Opcodes.IFGT;
 import static org.objectweb.asm.Opcodes.ILOAD;
-import static org.objectweb.asm.Opcodes.POP;
 import static org.objectweb.asm.Opcodes.ISTORE;
-import static org.objectweb.asm.Opcodes.DUP;
+import static org.objectweb.asm.Opcodes.POP;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -147,7 +149,6 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 
 	final static String THIS_NAME = "this";
 
-
 	MyInstance currentInstance;
 
 	private final ClassVisitor cv;
@@ -232,12 +233,21 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 	}
 
 	@Override
-	public C code(Consumer<C> invocation) {
-		methodDefine();
-		methodBegin();
-		invocation.accept(code());
-		methodEnd();
+	public C begin() {
+		doMethodDefine();
+		doMethodBegin();
 		return code();
+	}
+
+	@Override
+	public void end() {
+		doMethodEnd();
+	}
+
+	@Override
+	public void code(Consumer<C> invocation) {
+		invocation.accept(this.begin());
+		this.end();
 	}
 
 	@Override
@@ -302,7 +312,7 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		accessVar(indexes);
 	}
 
-	protected C methodBegin() {
+	protected C doMethodBegin() {
 		currentInstance = new MyInstance(mv);
 		mv.visitCode();
 
@@ -317,7 +327,7 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		return code();
 	}
 
-	protected void methodDefine() {
+	protected void doMethodDefine() {
 		String signature = null;
 		boolean definedSignature = false;
 		{
@@ -362,7 +372,7 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		}
 	}
 
-	public void methodEnd() {
+	public void doMethodEnd() {
 		Label endLabel = this.labelWithoutLineNumber();
 		int i = 0;
 		for (Variable var : variablesStack) {

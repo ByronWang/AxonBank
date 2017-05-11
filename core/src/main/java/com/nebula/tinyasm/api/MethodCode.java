@@ -62,6 +62,8 @@ public interface MethodCode<M extends MethodUseCaller<M, C>, C extends MethodCod
 
 	void dup();
 
+	void end();
+
 	C insn(int d);
 
 	C jumpInsn(int ifgt, Label label);
