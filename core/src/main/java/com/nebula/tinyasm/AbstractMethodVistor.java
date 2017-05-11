@@ -147,15 +147,6 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 
 	final static String THIS_NAME = "this";
 
-	static int[] computerLocalss(List<Variable> fields) {
-		int[] locals = new int[fields.size()];
-		int cntLocal = 0;
-		for (int i = 0; i < fields.size(); i++) {
-			locals[i] = cntLocal;
-			cntLocal += fields.get(i).type.getSize();
-		}
-		return locals;
-	}
 
 	MyInstance currentInstance;
 
@@ -456,7 +447,7 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 	}
 
 	void recomputerLocals() {
-		this.variablesLocals = computerLocalss(variablesStack);
+		this.variablesLocals = Types.computerVariableLocals(variablesStack);
 		for (int i = 0; i < variablesStack.size(); i++) {
 			variablesMap.put(variablesStack.get(i).name, i);
 		}
