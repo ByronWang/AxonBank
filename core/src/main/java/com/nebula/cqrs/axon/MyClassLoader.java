@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class MyClassLoader extends ClassLoader {
+public class MyClassLoader extends ClassLoader {
 	private final static Logger LOGGER = LoggerFactory.getLogger(MyClassLoader.class);
 
 	File root = new File("target/classes/");

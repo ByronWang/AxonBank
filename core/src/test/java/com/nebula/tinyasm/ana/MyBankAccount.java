@@ -56,10 +56,12 @@ public class MyBankAccount {
 	}
 
 	public static boolean bankTransfer(MyBankAccount source, MyBankAccount destination, long amount) {// BankTransferCreatedEvent
-		boolean sourceDebitSucceed = source.debit(amount);// BankTransferSourceDebitCommand
-		if (sourceDebitSucceed) {// BankTransferSourceDebitedEvent
-			boolean destinationCreditSucceed = destination.credit(amount);// BankTransferDestinationCreditCommand
-			if (destinationCreditSucceed) {// BankTransferDestinationCreditedEvent
+		// boolean sourceDebit = source.debit(amount);//
+		// BankTransferSourceDebitCommand
+		if (source.debit(amount)) {// BankTransferSourceDebitedEvent
+			// boolean destinationCredit = destination.credit(amount);//
+			// BankTransferDestinationCreditCommand
+			if (destination.credit(amount)) {// BankTransferDestinationCreditedEvent
 				return true;// BankTransferMarkCompletedCommand
 			} else {// BankTransferDestinationCreditedRejectedEvent
 				source.returnMoney(amount);// BankTransferSourceReturnMoneyCommand
