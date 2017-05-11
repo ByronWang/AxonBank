@@ -42,23 +42,6 @@ import com.nebula.tinyasm.util.Field;
 import com.nebula.tinyasm.util.MethodInfo;
 
 class ByteCodeAnaMethodVisitor extends MethodVisitor {
-	MyClassLoader classLoader = new MyClassLoader();
-
-	public static void main(String[] args) throws IOException {
-		Type domainType = Type.getType(MyBankAccount.class);
-
-		ClassReader cr = new ClassReader(MyBankAccount.class.getName());
-
-		String srcDomainName = AsmBuilder.toSimpleName(domainType.getClassName());
-
-		DomainDefinition domainDefinition = analyzeDomain(srcDomainName, domainType);
-
-		AnalyzeMethodParamsClassVisitor analyzeMethodParamsClassVisitor = new AnalyzeMethodParamsClassVisitor();
-		cr.accept(analyzeMethodParamsClassVisitor, ClassReader.SKIP_FRAMES);
-		ByteCodeAnaClassVisitor anaClassVisitor = new ByteCodeAnaClassVisitor(domainDefinition);
-		cr.accept(anaClassVisitor, ClassReader.EXPAND_FRAMES);
-	}
-
 	static private DomainDefinition analyzeDomain(String srcDomainName, Type srcDomainType) throws IOException {
 		final DomainDefinition domainDefinition;
 		domainDefinition = new DomainDefinition(srcDomainName, srcDomainType);
@@ -86,23 +69,43 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 		return domainDefinition;
 	}
 
+	public static void main(String[] args) throws IOException {
+		Type domainType = Type.getType(MyBankAccount.class);
+
+		ClassReader cr = new ClassReader(MyBankAccount.class.getName());
+
+		String srcDomainName = AsmBuilder.toSimpleName(domainType.getClassName());
+
+		DomainDefinition domainDefinition = analyzeDomain(srcDomainName, domainType);
+
+		AnalyzeMethodParamsClassVisitor analyzeMethodParamsClassVisitor = new AnalyzeMethodParamsClassVisitor();
+		cr.accept(analyzeMethodParamsClassVisitor, ClassReader.SKIP_FRAMES);
+		ByteCodeAnaClassVisitor anaClassVisitor = new ByteCodeAnaClassVisitor(domainDefinition);
+		cr.accept(anaClassVisitor, ClassReader.EXPAND_FRAMES);
+	}
+
 	int blockIndex = 0;
 
 	Stack<Block> blockStack = new Stack<>();
-	Stack<Variable> stack = new Stack<>();
 
+	MyClassLoader classLoader = new MyClassLoader();
 	int[] localsOfVar;
+
 	Variable NA = new Variable("NA", Type.VOID_TYPE);
+	ClassBody sagaClassBody;
 
 	String sagaName = null;
 
-	String sagaObjectName = null;
+	ClassBody sagaObjectClassBody;
 
-	List<Variable> variablesList;
+	String sagaObjectName = null;
 
 	Type sagaObjectType;
 	Type sagaType;
 
+	Stack<Variable> stack = new Stack<>();
+
+	List<Variable> variablesList;
 	public ByteCodeAnaMethodVisitor(DomainDefinition domainDefinition, MethodVisitor mv, MethodInfo methodInfo, int access, String name, String desc,
 	        String signature) {
 		super(ASM5, mv);
@@ -176,21 +179,6 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 		System.out.println(sagaName + " -> on(" + createdEvent + ") {");
 	}
 
-	ClassBody sagaObjectClassBody;
-	ClassBody sagaClassBody;
-
-	void makeEvent(Type type, Field idField, List<Field> fields) {
-		byte[] createdEventCode = ClassBuilder.make(type).field(TargetAggregateIdentifier.class, idField).field(fields).publicInitAllFields()
-		        .defineAllPropetyGet().publicToStringWithAllFields().toByteArray();
-		classLoader.define(type.getClassName(), createdEventCode);
-	}
-
-	void makeCommand(Type type, Field idField, List<Field> fields) {
-		byte[] createdEventCode = ClassBuilder.make(type).field(idField).field(fields).publicInitAllFields().defineAllPropetyGet().publicToStringWithAllFields()
-		        .toByteArray();
-		classLoader.define(type.getClassName(), createdEventCode);
-	}
-
 	void closeCurrent() {
 		Block block = blockStack.pop();
 		pop(stack.size() - block.startStackIndex);
@@ -223,6 +211,18 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 			break;
 		}
 		printStack();
+	}
+
+	void makeCommand(Type type, Field idField, List<Field> fields) {
+		byte[] createdEventCode = ClassBuilder.make(type).field(idField).field(fields).publicInitAllFields().defineAllPropetyGet().publicToStringWithAllFields()
+		        .toByteArray();
+		classLoader.define(type.getClassName(), createdEventCode);
+	}
+
+	void makeEvent(Type type, Field idField, List<Field> fields) {
+		byte[] createdEventCode = ClassBuilder.make(type).field(TargetAggregateIdentifier.class, idField).field(fields).publicInitAllFields()
+		        .defineAllPropetyGet().publicToStringWithAllFields().toByteArray();
+		classLoader.define(type.getClassName(), createdEventCode);
 	}
 
 	private Variable pop(int size) {
