@@ -8,11 +8,11 @@ import org.objectweb.asm.Type;
 
 public interface DefineMethod extends Types {
 
-	MethodHeader<ClassMethodCode> method(int access, Type returnType, String methodName, Class<?>... exceptionClasses);
-
 	default MethodHeader<ClassMethodCode> method(int access, Class<?> returnClass, String methodName, Class<?>... exceptionClasses) {
 		return method(access, Type.getType(returnClass), methodName, exceptionClasses);
 	}
+
+	MethodHeader<ClassMethodCode> method(int access, Type returnType, String methodName, Class<?>... exceptionClasses);
 
 	default MethodHeader<ClassMethodCode> privateMethod(Class<?> returnClass, String methodName) {
 		return method(ACC_PRIVATE, typeOf(returnClass), methodName);

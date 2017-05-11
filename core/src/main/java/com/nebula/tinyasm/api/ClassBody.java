@@ -64,14 +64,14 @@ public interface ClassBody extends Types, ToType, Opcodes, DefineField<ClassBody
 
 	ClassBody end();
 
-	default ClassBody fields(Field... fields) {
+	default ClassBody field(List<Field> fields) {
 		for (Field field : fields) {
 			field(field);
 		}
 		return this;
 	}
 
-	default ClassBody field(List<Field> fields) {
+	default ClassBody fields(Field... fields) {
 		for (Field field : fields) {
 			field(field);
 		}

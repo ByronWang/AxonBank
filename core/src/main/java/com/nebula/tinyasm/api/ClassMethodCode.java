@@ -5,20 +5,18 @@ import org.objectweb.asm.Type;
 import com.nebula.tinyasm.util.Field;
 
 public interface ClassMethodCode extends MethodCode<ClassUseCaller, ClassMethodCode> {
+	final int _THIS = 0;
+
+	Field fieldOf(String fieldName);
+
+	ClassMethodCode initObject();
+
 	ClassThisInstance loadThis();
 
 	Type thisType();
 
-	ClassMethodCode initObject();
-
 	ClassUseCaller useThis();
 
-	Field fieldOf(String fieldName);
-
-	final int _THIS = 0;
-
 	ClassUseCaller useTopThis();
-
-
 
 }

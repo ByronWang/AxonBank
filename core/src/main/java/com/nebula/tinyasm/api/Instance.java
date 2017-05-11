@@ -7,6 +7,8 @@ import com.nebula.tinyasm.util.Field;
 
 public interface Instance<M extends MethodUseCaller<M, C>, C extends MethodCode<M, C>> extends InvokeMethod<M, C>, ToType, Types, Opcodes {
 
+	C code();
+
 	Instance<M, C> get(Field field);
 
 	default Instance<M, C> get(String fieldName, Class<?> fieldClass) {
@@ -31,14 +33,12 @@ public interface Instance<M extends MethodUseCaller<M, C>, C extends MethodCode<
 		return put(code().varIndex(varName), field);
 	}
 
-	C code();
+	default void store(int varIndex) {
+		code().storeTop(varIndex);
+	}
 
 	default void store(String varName) {
 		code().storeTop(varName);
-	}
-
-	default void store(int varIndex) {
-		code().storeTop(varIndex);
 	}
 
 	M use();

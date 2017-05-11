@@ -23,6 +23,7 @@ public interface MethodCode<M extends MethodUseCaller<M, C>, C extends MethodCod
 	default C def(Field field) {
 		return def(field.name, field.type);
 	}
+
 	default C def(String fieldName, Class<?> clz) {
 		return def(fieldName, typeOf(clz));
 	}

@@ -92,50 +92,6 @@ public interface InvokeMethod<M extends MethodUseCaller<M, C>, C extends MethodC
 		return invoke(INVOKESPECIAL, returnType, methodName, params);
 	}
 
-	default Instance<M, C> invokeVirtual(Class<?> returnClass, String methodName) {
-		return invoke(INVOKEVIRTUAL, typeOf(returnClass), methodName);
-	}
-
-	default Instance<M, C> invokeVirtual(Class<?> returnClass, String methodName, Class<?>... paramClasses) {
-		return invoke(INVOKEVIRTUAL, typeOf(returnClass), methodName, typesOf(paramClasses));
-	}
-
-	default Instance<M, C> invokeVirtual(Class<?> returnClass, String methodName, Type... params) {
-		return invoke(INVOKEVIRTUAL, typeOf(returnClass), methodName, params);
-	}
-
-	default void invokeVirtual(String methodName, Class<?>... paramClasses) {
-		invoke(INVOKEVIRTUAL, methodName, typesOf(paramClasses));
-	}
-
-	default void invokeVirtual(String methodName, Field... paramFields) {
-		invoke(INVOKEVIRTUAL, methodName, typesOf(paramFields));
-	}
-
-	default void invokeVirtual(String methodName, List<Field> paramFields) {
-		invoke(INVOKEVIRTUAL, methodName, typesOf(paramFields));
-	}
-
-	default void invokeVirtual(String methodName, Type... params) {
-		invoke(INVOKEVIRTUAL, methodName, params);
-	}
-
-	default Instance<M, C> invokeVirtual(Type returnType, String methodName) {
-		return invoke(INVOKEVIRTUAL, returnType, methodName);
-	}
-
-	default Instance<M, C> invokeVirtual(Type returnType, String methodName, Class<?>... paramClasses) {
-		return invoke(INVOKEVIRTUAL, returnType, methodName, typesOf(paramClasses));
-	}
-
-	default Instance<M, C> invokeVirtual(Type returnType, String methodName, Field... paramFields) {
-		return invoke(INVOKEVIRTUAL, returnType, methodName, typesOf(paramFields));
-	}
-
-	default Instance<M, C> invokeVirtual(Type returnType, String methodName, Type... params) {
-		return invoke(INVOKEVIRTUAL, returnType, methodName, params);
-	}
-
 	default Instance<M, C> invokeStatic(Class<?> returnClass, String methodName) {
 		return invoke(INVOKESTATIC, typeOf(returnClass), methodName);
 	}
@@ -178,6 +134,50 @@ public interface InvokeMethod<M extends MethodUseCaller<M, C>, C extends MethodC
 
 	default Instance<M, C> invokeStatic(Type returnType, String methodName, Type... params) {
 		return invoke(INVOKESTATIC, returnType, methodName, params);
+	}
+
+	default Instance<M, C> invokeVirtual(Class<?> returnClass, String methodName) {
+		return invoke(INVOKEVIRTUAL, typeOf(returnClass), methodName);
+	}
+
+	default Instance<M, C> invokeVirtual(Class<?> returnClass, String methodName, Class<?>... paramClasses) {
+		return invoke(INVOKEVIRTUAL, typeOf(returnClass), methodName, typesOf(paramClasses));
+	}
+
+	default Instance<M, C> invokeVirtual(Class<?> returnClass, String methodName, Type... params) {
+		return invoke(INVOKEVIRTUAL, typeOf(returnClass), methodName, params);
+	}
+
+	default void invokeVirtual(String methodName, Class<?>... paramClasses) {
+		invoke(INVOKEVIRTUAL, methodName, typesOf(paramClasses));
+	}
+
+	default void invokeVirtual(String methodName, Field... paramFields) {
+		invoke(INVOKEVIRTUAL, methodName, typesOf(paramFields));
+	}
+
+	default void invokeVirtual(String methodName, List<Field> paramFields) {
+		invoke(INVOKEVIRTUAL, methodName, typesOf(paramFields));
+	}
+
+	default void invokeVirtual(String methodName, Type... params) {
+		invoke(INVOKEVIRTUAL, methodName, params);
+	}
+
+	default Instance<M, C> invokeVirtual(Type returnType, String methodName) {
+		return invoke(INVOKEVIRTUAL, returnType, methodName);
+	}
+
+	default Instance<M, C> invokeVirtual(Type returnType, String methodName, Class<?>... paramClasses) {
+		return invoke(INVOKEVIRTUAL, returnType, methodName, typesOf(paramClasses));
+	}
+
+	default Instance<M, C> invokeVirtual(Type returnType, String methodName, Field... paramFields) {
+		return invoke(INVOKEVIRTUAL, returnType, methodName, typesOf(paramFields));
+	}
+
+	default Instance<M, C> invokeVirtual(Type returnType, String methodName, Type... params) {
+		return invoke(INVOKEVIRTUAL, returnType, methodName, params);
 	}
 
 	C putTo(Field field);

@@ -6,8 +6,6 @@ import org.objectweb.asm.Type;
 
 public interface MethodHeader<C> extends Types, DefineParameter<MethodHeader<C>> {
 
-	MethodHeader<C> annotation(Type type, String value);
-
 	default MethodHeader<C> annotation(Class<?> annotationClass) {
 		return annotation(typeOf(annotationClass), null);
 	}
@@ -15,6 +13,8 @@ public interface MethodHeader<C> extends Types, DefineParameter<MethodHeader<C>>
 	default MethodHeader<C> annotation(Type type) {
 		return annotation(type, null);
 	}
+
+	MethodHeader<C> annotation(Type type, String value);
 
 	C code(Consumer<C> invocation);
 

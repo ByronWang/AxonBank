@@ -9,7 +9,7 @@ public interface MethodUseCaller<M extends MethodUseCaller<M, C>, C extends Meth
 		return add(code().varIndex(varName));
 	}
 
-	M with(Consumer<C> invocation);
-
 	void returnMe();
+
+	M with(Consumer<C> invocation);
 }
