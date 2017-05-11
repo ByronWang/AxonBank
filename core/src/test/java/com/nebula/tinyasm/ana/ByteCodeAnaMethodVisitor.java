@@ -100,6 +100,9 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 
 	List<Variable> variablesList;
 
+	Type sagaObjectType;
+	Type sagaType;
+
 	public ByteCodeAnaMethodVisitor(DomainDefinition domainDefinition, MethodVisitor mv, MethodInfo methodInfo, int access, String name, String desc,
 	        String signature) {
 		super(ASM5, mv);
@@ -110,8 +113,8 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 
 		// ClassBuilder.make(domainType)
 
-		Type sagaObjectType = domainDefinition.typeOf(name);
-		Type sagaType = domainDefinition.typeOf("Saga");
+		sagaObjectType = domainDefinition.typeOf(name);
+		sagaType = domainDefinition.typeOf(name+"Saga");
 
 		List<Field> datasFields = new ArrayList<>();
 
@@ -133,7 +136,7 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 		// realFields.addAll(datasFields);
 
 		sagaObjectClassBody = ClassBuilder.make(sagaObjectType).field(AggregateIdentifier.class, idField).field(datasFields);
-		sagaTypeClassBody = ClassBuilder.make(sagaType).field("commandBus", CommandBus.class).field(datasFields);
+		sagaClassBody = ClassBuilder.make(sagaType).field("commandBus", CommandBus.class).field(datasFields);
 
 		Type createdCommand = domainDefinition.typeOf(name + "CreateCommand");
 		makeEvent(createdCommand, idField, datasFields);
@@ -151,8 +154,7 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 			for (Field field : datasFieldsWithID) {
 				mc.object("command").get(field);
 			}
-			mc.type(createdEvent).invokeVirtual("<init>", datasFieldsWithID);
-
+			mc.type(createdEvent).invokeSpecial("<init>", datasFieldsWithID);
 			mc.type(AggregateLifecycle.class).invokeStatic("apply", createdEvent);
 
 		});
@@ -175,16 +177,17 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 	}
 
 	ClassBody sagaObjectClassBody;
-	ClassBody sagaTypeClassBody;
+	ClassBody sagaClassBody;
 
 	void makeEvent(Type type, Field idField, List<Field> fields) {
-		byte[] createdEventCode = ClassBuilder.make(type).field(TargetAggregateIdentifier.class, idField).field(fields).publicInitAllFields().defineAllPropetyGet()
-		        .publicToStringWithAllFields().toByteArray();
+		byte[] createdEventCode = ClassBuilder.make(type).field(TargetAggregateIdentifier.class, idField).field(fields).publicInitAllFields()
+		        .defineAllPropetyGet().publicToStringWithAllFields().toByteArray();
 		classLoader.define(type.getClassName(), createdEventCode);
 	}
 
 	void makeCommand(Type type, Field idField, List<Field> fields) {
-		byte[] createdEventCode = ClassBuilder.make(type).field(idField).field(fields).publicInitAllFields().defineAllPropetyGet().publicToStringWithAllFields().toByteArray();
+		byte[] createdEventCode = ClassBuilder.make(type).field(idField).field(fields).publicInitAllFields().defineAllPropetyGet().publicToStringWithAllFields()
+		        .toByteArray();
 		classLoader.define(type.getClassName(), createdEventCode);
 	}
 
@@ -263,6 +266,12 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 	public void visitEnd() {
 		closeCurrent();
 		super.visitEnd();
+
+		byte[] sageObjectCode = sagaObjectClassBody.end().toByteArray();
+		classLoader.define(sagaObjectType.getClassName(), sageObjectCode);
+
+		byte[] sageCode = sagaClassBody.end().toByteArray();
+		classLoader.define(sagaType.getClassName(), sageCode);
 	}
 
 	@Override
