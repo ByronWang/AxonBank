@@ -14,7 +14,7 @@ public class CQRSCommandBuilder extends PojoBuilder {
 		Field[] objectFields = command.fields;
 
 		ClassBody cb = ClassBuilder.make(command.type);
-		cb.field(objectFields[0], TargetAggregateIdentifier.class);
+		cb.field(TargetAggregateIdentifier.class,objectFields[0]);
 		for (int i = 1; i < objectFields.length; i++) {
 			cb.field(objectFields[i]);
 		}
