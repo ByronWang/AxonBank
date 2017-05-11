@@ -91,33 +91,32 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 	MyClassLoader classLoader = new MyClassLoader();
 	int[] localsOfVar;
 
+	String methodName = null;
 	Variable NA = new Variable("NA", Type.VOID_TYPE);
+
 	ClassBody sagaClassBody;
+
+	Field sagaIdField;
 
 	String sagaName = null;
 
 	ClassBody sagaObjectClassBody;
-
-	String sagaObjectName = null;
-
 	Type sagaObjectType;
+
 	Type sagaType;
-
 	Stack<Variable> stack = new Stack<>();
-
 	List<Variable> variablesList;
 	public ByteCodeAnaMethodVisitor(DomainDefinition domainDefinition, MethodVisitor mv, MethodInfo methodInfo, int access, String name, String desc,
 	        String signature) {
 		super(ASM5, mv);
-		this.sagaName = name + "ManagementSaga";
-		this.sagaObjectName = name;
+		this.methodName = name;
 		this.variablesList = methodInfo.locals;
 		this.localsOfVar = Types.computerLocalsVariable(this.variablesList);
 
 		// ClassBuilder.make(domainType)
 
-		sagaObjectType = domainDefinition.typeOf(name);
-		sagaType = domainDefinition.typeOf(name+"Saga");
+		sagaObjectType = domainDefinition.typeOf(methodName);
+		sagaType = domainDefinition.typeOf(methodName+"Saga");
 
 		List<Field> datasFields = new ArrayList<>();
 
@@ -130,22 +129,22 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 			}
 		}
 
-		Field idField = new Field(name + "Id", Type.getType(String.class));
+		sagaIdField = new Field(methodName + "Id", Type.getType(String.class));
 		List<Field> datasFieldsWithID = new ArrayList<>();
-		datasFieldsWithID.add(idField);
+		datasFieldsWithID.add(sagaIdField);
 		datasFieldsWithID.addAll(datasFields);
 
 		// List<Field> realFields = new ArrayList<>();
 		// realFields.addAll(datasFields);
 
-		sagaObjectClassBody = ClassBuilder.make(sagaObjectType).field(AggregateIdentifier.class, idField).field(datasFields);
+		sagaObjectClassBody = ClassBuilder.make(sagaObjectType).field(AggregateIdentifier.class, sagaIdField).field(datasFields);
 		sagaClassBody = ClassBuilder.make(sagaType).field("commandBus", CommandBus.class).field(datasFields);
 
-		Type createdCommand = domainDefinition.typeOf(name + "CreateCommand");
-		makeEvent(createdCommand, idField, datasFields);
+		Type createdCommand = domainDefinition.typeOf(methodName + "CreateCommand");
+		makeEvent(createdCommand, sagaIdField, datasFields);
 
-		Type createdEvent = domainDefinition.typeOf(name + "CreatedEvent");
-		makeEvent(createdEvent, idField, datasFields);
+		Type createdEvent = domainDefinition.typeOf(methodName + "CreatedEvent");
+		makeEvent(createdEvent, sagaIdField, datasFields);
 
 		sagaObjectClassBody.publicMethod("<init>").code(mc -> {
 			mc.initObject();
