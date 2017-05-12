@@ -135,6 +135,9 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 	Stack<Variable> stack = new Stack<>();
 	// Block topBlock;
 	List<Variable> variablesList;
+	Type returnType;
+	List<Field> datasFieldsWithID;
+	List<Field> datasFields;
 
 	public ByteCodeAnaMethodVisitor(DomainDefinition domainDefinition, MethodVisitor mv, MethodInfo methodInfo, int access, String name, String desc,
 	        String signature) {
@@ -147,7 +150,7 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 		sagaObjectType = domainDefinition.typeOf(methodName);
 		sagaType = domainDefinition.typeOf(methodName + "Saga");
 
-		List<Field> datasFields = new ArrayList<>();
+		datasFields = new ArrayList<>();
 
 		for (Field field : methodInfo.params) {
 			if (field.type.getClassName().startsWith("java/") || field.type.getDescriptor().length() == 1) {
@@ -159,53 +162,14 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 		}
 
 		sagaIdField = new Field(methodName + "Id", Type.getType(String.class));
-		List<Field> datasFieldsWithID = new ArrayList<>();
+		datasFieldsWithID = new ArrayList<>();
 		datasFieldsWithID.add(sagaIdField);
 		datasFieldsWithID.addAll(datasFields);
 
 		// List<Field> realFields = new ArrayList<>();
 		// realFields.addAll(datasFields);
-		Type returnType = Type.getReturnType(desc);
+		returnType = Type.getReturnType(desc);
 
-		sagaObjectClassBody = ClassBuilder.make(sagaObjectType).field(AggregateIdentifier.class, sagaIdField).fields(datasFields).field("status", returnType);
-		sagaClassBody = ClassBuilder.make(sagaType).field("commandBus", CommandBus.class).fields(datasFields);
-		Type createdCommand = domainDefinition.typeOf(methodName + "CreateCommand");
-		Type createdEvent = domainDefinition.typeOf(methodName + "CreatedEvent");
-		{
-			makeEvent(createdCommand, sagaIdField, datasFields);
-
-			makeEvent(createdEvent, sagaIdField, datasFields);
-
-			sagaObjectClassBody.publicMethod("<init>").code(mc -> {
-				mc.initObject();
-			});
-			sagaObjectClassBody.publicMethod("<init>").annotation(CommandHandler.class).parameter("command", createdCommand).code(mc -> {
-				mc.initObject();
-				mc.newInstace(createdEvent);
-				mc.dup();
-				for (Field field : datasFieldsWithID) {
-					mc.object("command").get(field);
-				}
-				mc.type(createdEvent).invokeSpecial("<init>", datasFieldsWithID);
-				mc.type(AggregateLifecycle.class).invokeStatic("apply", createdEvent);
-
-			});
-
-			sagaObjectClassBody.publicMethod("on").annotation(EventHandler.class).parameter("event", createdEvent).code(mc -> {
-				for (Field field : datasFieldsWithID) {
-					mc.loadThis();
-					mc.object("event").get(field);
-					mc.type(mc.thisType()).putTo(field);
-				}
-			});
-		}
-
-		blockStartOfRoot("on" + AsmBuilder.toSimpleName(sagaObjectType.getClassName()) + blockIndex++, datasFields, createdEvent);
-
-		if (Type.getType(boolean.class).getDescriptor().equals(returnType.getDescriptor())) {
-			makeEndSaga(domainDefinition, datasFieldsWithID, "Completed", 1);
-			makeEndSaga(domainDefinition, datasFieldsWithID, "Fail", 0);
-		}
 		//
 		// @StartSaga
 		// @SagaEventHandler(associationProperty = "bankTransferId")
@@ -229,8 +193,8 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 	}
 
 	private void makeEndSaga(DomainDefinition domainDefinition, List<Field> datasFieldsWithID, String resultString, int resultValue) {
-		Type commandType = domainDefinition.typeOf(this.methodName, "Mark",resultString, "Command");
-		Type eventType = domainDefinition.typeOf(this.methodName,  "Mark",resultString, "Event");
+		Type commandType = domainDefinition.typeOf(this.methodName, "Mark", resultString, "Command");
+		Type eventType = domainDefinition.typeOf(this.methodName, "Mark", resultString, "Event");
 
 		byte[] commandCode = ClassBuilder.make(commandType).field(sagaIdField).readonlyPojo().toByteArray();
 		defineClass(commandType.getClassName(), commandCode);
@@ -334,17 +298,64 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 		byte[] eventCode = ClassBuilder.make(eventType).fields(parentBlock.eventFields).readonlyPojo().toByteArray();
 		defineClass(eventType.getClassName(), eventCode);
 		makeBlockEnd();
-		block.code = sagaClassBody.publicMethod("on").annotation(SagaEventHandler.class,"associationProperty",sagaIdField.name).parameter("event", eventType).begin();
+		block.code = sagaClassBody.publicMethod("on").annotation(SagaEventHandler.class, "associationProperty", sagaIdField.name).parameter("event", eventType)
+		        .begin();
 	}
 
 	private void makeBlockBeginOfRoot(Block block, List<Field> datasFields, Type createdEvent) {
-		block.code = sagaClassBody.publicMethod("on").annotation(StartSaga.class).annotation(SagaEventHandler.class,"associationProperty",sagaIdField.name).parameter("event", createdEvent).begin().block(mc -> {
-			for (Field field : datasFields) {
-				mc.loadThis();
-				mc.object("event").getProperty(field);
-				mc.type(mc.thisType()).putTo(field);
-			}
-		});
+		block.code = sagaClassBody.publicMethod("on").annotation(StartSaga.class).annotation(SagaEventHandler.class, "associationProperty", sagaIdField.name)
+		        .parameter("event", createdEvent).begin().block(mc -> {
+			        for (Field field : datasFields) {
+				        mc.loadThis();
+				        mc.object("event").getProperty(field);
+				        mc.type(mc.thisType()).putTo(field);
+			        }
+		        });
+	}
+
+	@Override
+	public void visitCode() {
+
+		sagaObjectClassBody = ClassBuilder.make(sagaObjectType).field(AggregateIdentifier.class, sagaIdField).fields(datasFields).field("status", returnType);
+		sagaClassBody = ClassBuilder.make(sagaType).field("commandBus", CommandBus.class).fields(datasFields);
+		Type createdCommand = domainDefinition.typeOf(methodName + "CreateCommand");
+		Type createdEvent = domainDefinition.typeOf(methodName + "CreatedEvent");
+		{
+			makeEvent(createdCommand, sagaIdField, datasFields);
+
+			makeEvent(createdEvent, sagaIdField, datasFields);
+
+			sagaObjectClassBody.publicMethod("<init>").code(mc -> {
+				mc.initObject();
+			});
+			sagaObjectClassBody.publicMethod("<init>").annotation(CommandHandler.class).parameter("command", createdCommand).code(mc -> {
+				mc.initObject();
+				mc.newInstace(createdEvent);
+				mc.dup();
+				for (Field field : datasFieldsWithID) {
+					mc.object("command").get(field);
+				}
+				mc.type(createdEvent).invokeSpecial("<init>", datasFieldsWithID);
+				mc.type(AggregateLifecycle.class).invokeStatic("apply", createdEvent);
+
+			});
+
+			sagaObjectClassBody.publicMethod("on").annotation(EventHandler.class).parameter("event", createdEvent).code(mc -> {
+				for (Field field : datasFieldsWithID) {
+					mc.loadThis();
+					mc.object("event").get(field);
+					mc.type(mc.thisType()).putTo(field);
+				}
+			});
+		}
+
+		blockStartOfRoot("on" + AsmBuilder.toSimpleName(sagaObjectType.getClassName()) + blockIndex++, datasFields, createdEvent);
+
+		if (Type.getType(boolean.class).getDescriptor().equals(returnType.getDescriptor())) {
+			makeEndSaga(domainDefinition, datasFieldsWithID, "Completed", 1);
+			makeEndSaga(domainDefinition, datasFieldsWithID, "Fail", 0);
+		}
+		super.visitCode();
 	}
 
 	private void makeFinished(int value) {
