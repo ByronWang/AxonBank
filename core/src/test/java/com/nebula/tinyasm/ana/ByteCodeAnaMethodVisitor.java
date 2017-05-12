@@ -1,10 +1,14 @@
 package com.nebula.tinyasm.ana;
 
 import static com.nebula.tinyasm.util.AsmBuilder.toCamelUpper;
+import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
+import static org.objectweb.asm.Opcodes.ACC_TRANSIENT;
 import static org.objectweb.asm.Opcodes.ASM5;
 import static org.objectweb.asm.Opcodes.GETFIELD;
 import static org.objectweb.asm.Opcodes.GETSTATIC;
-import static org.objectweb.asm.Opcodes.*;
+import static org.objectweb.asm.Opcodes.GOTO;
+import static org.objectweb.asm.Opcodes.ICONST_0;
+import static org.objectweb.asm.Opcodes.ICONST_5;
 import static org.objectweb.asm.Opcodes.ILOAD;
 import static org.objectweb.asm.Opcodes.INVOKESTATIC;
 import static org.objectweb.asm.Opcodes.IRETURN;
@@ -23,6 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
+import javax.inject.Inject;
+
 import org.axonframework.commandhandling.CommandBus;
 import org.axonframework.commandhandling.CommandHandler;
 import org.axonframework.commandhandling.CommandMessage;
@@ -31,10 +37,8 @@ import org.axonframework.commandhandling.TargetAggregateIdentifier;
 import org.axonframework.commandhandling.model.AggregateIdentifier;
 import org.axonframework.commandhandling.model.AggregateLifecycle;
 import org.axonframework.eventhandling.EventHandler;
-import org.axonframework.eventhandling.saga.EndSaga;
 import org.axonframework.eventhandling.saga.SagaEventHandler;
 import org.axonframework.eventhandling.saga.StartSaga;
-import org.axonframework.samples.bank.api.banktransfer.BankTransferMarkCompletedCommand;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
@@ -317,7 +321,7 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 	public void visitCode() {
 
 		sagaObjectClassBody = ClassBuilder.make(sagaObjectType).field(AggregateIdentifier.class, sagaIdField).fields(datasFields).field("status", returnType);
-		sagaClassBody = ClassBuilder.make(sagaType).field("commandBus", CommandBus.class).fields(datasFields);
+		sagaClassBody = ClassBuilder.make(sagaType).field(ACC_PRIVATE + ACC_TRANSIENT, "commandBus", CommandBus.class).definePropertySet(Inject.class, "commandBus", CommandBus.class).fields(datasFields);
 		Type createdCommand = domainDefinition.typeOf(methodName + "CreateCommand");
 		Type createdEvent = domainDefinition.typeOf(methodName + "CreatedEvent");
 		{

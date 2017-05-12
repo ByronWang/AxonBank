@@ -54,6 +54,10 @@ public interface ClassBody extends Types, ToType, Opcodes, DefineField<ClassBody
 		return definePropertySet(field.name, field.type);
 	}
 
+	default ClassBody definePropertySet(final String fieldName, final Class<?> fieldClass) {
+		return definePropertySet(fieldName, typeOf(fieldClass));
+	}
+
 	default ClassBody definePropertySet(final String fieldName, final Type fieldType) {
 		publicMethod(toPropertySetName(fieldName, fieldType)).parameter(fieldName, fieldType).code(mc -> {
 			mc.loadThis().put(fieldName, fieldName);
@@ -62,6 +66,30 @@ public interface ClassBody extends Types, ToType, Opcodes, DefineField<ClassBody
 		return this;
 	}
 
+	default ClassBody definePropertySet(final Type annotationType, final String fieldName, final Type fieldType) {
+		publicMethod(toPropertySetName(fieldName, fieldType)).annotation(annotationType).parameter(fieldName, fieldType).code(mc -> {
+			mc.loadThis().put(fieldName, fieldName);
+			mc.returnVoid();
+		});
+		return this;
+	}
+
+	default ClassBody definePropertySet(final Type annotationType, String name, Object value, final String fieldName, final Type fieldType) {
+		publicMethod(toPropertySetName(fieldName, fieldType)).annotation(annotationType, name, value).parameter(fieldName, fieldType).code(mc -> {
+			mc.loadThis().put(fieldName, fieldName);
+			mc.returnVoid();
+		});
+		return this;
+	}
+
+	default ClassBody definePropertySet(final Class<?> annotationClass, final String fieldName, final Type fieldType) {
+		return definePropertySet(typeOf(annotationClass), fieldName, fieldType);
+	}
+
+	default ClassBody definePropertySet(final Class<?> annotationClass, final String fieldName, final Class<?> fieldClass) {
+		return definePropertySet(typeOf(annotationClass), fieldName, typeOf(fieldClass));
+	}
+	
 	ClassBody end();
 
 	default ClassBody fields(List<Field> fields) {
@@ -82,14 +110,14 @@ public interface ClassBody extends Types, ToType, Opcodes, DefineField<ClassBody
 
 	Type getSuperType();
 
-	default ClassBody readonlyPojo(){
+	default ClassBody readonlyPojo() {
 		return publicInitAllFields().defineAllPropetyGet().publicToStringWithAllFields();
 	}
 
-	default ClassBody pojo(){
+	default ClassBody pojo() {
 		return publicInitAllFields().defineAllPropetyGet().defineAllPropetySet().publicToStringWithAllFields();
 	}
-	
+
 	default ClassBody publicInitAllFields() {
 		final List<Field> fields = getFields();
 		publicMethod("<init>").parameter(fields).code(mc -> {
@@ -193,4 +221,5 @@ public interface ClassBody extends Types, ToType, Opcodes, DefineField<ClassBody
 	}
 
 	ClassVisitor visitor();
+
 }
