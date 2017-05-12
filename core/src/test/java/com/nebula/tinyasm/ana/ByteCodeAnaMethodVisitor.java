@@ -32,6 +32,7 @@ import org.axonframework.commandhandling.model.AggregateIdentifier;
 import org.axonframework.commandhandling.model.AggregateLifecycle;
 import org.axonframework.eventhandling.EventHandler;
 import org.axonframework.eventhandling.saga.EndSaga;
+import org.axonframework.eventhandling.saga.SagaEventHandler;
 import org.axonframework.eventhandling.saga.StartSaga;
 import org.axonframework.samples.bank.api.banktransfer.BankTransferMarkCompletedCommand;
 import org.objectweb.asm.ClassReader;
@@ -333,11 +334,11 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 		byte[] eventCode = ClassBuilder.make(eventType).fields(parentBlock.eventFields).readonlyPojo().toByteArray();
 		defineClass(eventType.getClassName(), eventCode);
 		makeBlockEnd();
-		block.code = sagaClassBody.publicMethod("on").parameter("event", eventType).begin();
+		block.code = sagaClassBody.publicMethod("on").annotation(SagaEventHandler.class,"associationProperty",sagaIdField.name).parameter("event", eventType).begin();
 	}
 
 	private void makeBlockBeginOfRoot(Block block, List<Field> datasFields, Type createdEvent) {
-		block.code = sagaClassBody.publicMethod("on").annotation(StartSaga.class).parameter("event", createdEvent).begin().block(mc -> {
+		block.code = sagaClassBody.publicMethod("on").annotation(StartSaga.class).annotation(SagaEventHandler.class,"associationProperty",sagaIdField.name).parameter("event", createdEvent).begin().block(mc -> {
 			for (Field field : datasFields) {
 				mc.loadThis();
 				mc.object("event").getProperty(field);

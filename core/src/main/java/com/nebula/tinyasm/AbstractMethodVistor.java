@@ -33,29 +33,24 @@ import com.nebula.tinyasm.util.Field;
 public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C extends MethodCode<M, C>> extends MethodVisitor
         implements MethodCode<M, C>, MethodHeader<C>, Types {
 
-	@Override
-	public C checkCast(Type type) {
-		mv.visitTypeInsn(CHECKCAST, type.getInternalName());
-		return code();
-	}
-
 	class Annotation {
 		int parameter;
 
-		public Type type;
+		final public Type type;
 
-		public Object value;
+		final public String name;
 
-		public Annotation(Object value, Type type) {
+		final public Object value;
+
+		public Annotation(Type type, String name, Object value) {
 			super();
 			this.value = value;
 			this.type = type;
+			this.name = name;
 		}
 
-		public Annotation(Object value, Type type, int parameter) {
-			super();
-			this.value = value;
-			this.type = type;
+		public Annotation(Type type, String name, Object value, int parameter) {
+			this(type, name, value);
 			this.parameter = parameter;
 		}
 	}
@@ -153,6 +148,8 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 
 	private final ClassVisitor cv;
 
+	boolean hasEnded = false;
+
 	private Label labelCurrent;
 
 	boolean labelHasDefineBegin = false;
@@ -177,6 +174,7 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 	Type topType;
 
 	int[] variablesLocals;
+
 	Map<String, Integer> variablesMap = new HashMap<>();
 
 	protected Stack<Variable> variablesStack = new Stack<>();
@@ -216,20 +214,20 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 	}
 
 	public C annotation(Class<?> annotation, String value) {
-		thisMethodAnnotations.add(new Annotation(value, AsmBuilderHelper.typeOf(annotation)));
+		thisMethodAnnotations.add(new Annotation(AsmBuilderHelper.typeOf(annotation), null, value));
 		return code();
 	}
 
 	@Override
-	public MethodHeader<C> annotation(Type type, String value) {
-		this.thisMethodAnnotations.add(new Annotation(value, type));
+	public MethodHeader<C> annotation(Type type, Object value) {
+		this.thisMethodAnnotations.add(new Annotation(type, null, value));
 		return this;
 	}
 
 	@Override
-	public C block(Consumer<C> invocation) {
-		invocation.accept(code());
-		return code();
+	public MethodHeader<C> annotation(Type type, String name, Object value) {
+		this.thisMethodAnnotations.add(new Annotation(type, name, value));
+		return this;
 	}
 
 	@Override
@@ -240,8 +238,15 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 	}
 
 	@Override
-	public void end() {
-		doMethodEnd();
+	public C block(Consumer<C> invocation) {
+		invocation.accept(code());
+		return code();
+	}
+
+	@Override
+	public C checkCast(Type type) {
+		mv.visitTypeInsn(CHECKCAST, type.getInternalName());
+		return code();
 	}
 
 	@Override
@@ -261,55 +266,6 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 	public Label defineLabel() {
 		Label label = new Label();
 		return label;
-	}
-
-	@Override
-	public void dup() {
-		mv.visitInsn(DUP);
-	}
-
-	protected Type getTopType() {
-		return topType;
-	}
-
-	@Override
-	public C insn(int opcode) {
-		mv.visitInsn(opcode);
-		return code();
-	}
-
-	@Override
-	public C jumpInsn(int ifgt, Label label) {
-		mv.visitJumpInsn(IFGT, label);
-		return code();
-	}
-
-	private Label labelWithoutLineNumber() {
-		Label label = new Label();
-		labelCurrent = label;
-		mv.visitLabel(label);
-		return label;
-	}
-
-	public C line(int line) {
-		Label label;
-		if (!labelHasDefineBegin) {
-			label = new Label();
-			labelCurrent = label;
-			mv.visitLabel(label);
-		} else {
-			label = labelCurrent;
-		}
-		mv.visitLineNumber(line, label);
-		return code();
-	}
-
-	@Override
-	public void load(int... indexes) {
-		for (int index : indexes) {
-			mv.visitVarInsn(variablesStack.get(index).type.getOpcode(ILOAD), variablesLocals[index]);
-		}
-		accessVar(indexes);
 	}
 
 	protected C doMethodBegin() {
@@ -363,7 +319,7 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		this.mv = AsmBuilder.visitDefineMethod(cv, thisMethodAccess, thisMethodReturnType, thisMethodName, ClassField.typesOf(thisMethodParams), signature,
 		        excptions);
 		for (Annotation annotation : thisMethodAnnotations) {
-			AsmBuilder.visitAnnotation(mv, annotation.type, annotation.value);
+			AsmBuilder.visitAnnotation(mv, annotation.type, annotation.name, annotation.value);
 		}
 		for (Annotation annotation : thisMethodParameterAnnotations) {
 			if (annotation != null) {
@@ -372,9 +328,8 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		}
 	}
 
-	boolean hasEnded = false;
 	public void doMethodEnd() {
-		if(hasEnded)return;
+		if (hasEnded) return;
 		Label endLabel = this.labelWithoutLineNumber();
 		int i = 0;
 		for (Variable var : variablesStack) {
@@ -386,6 +341,65 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		mv.visitMaxs(0, 0);
 		mv.visitEnd();
 		hasEnded = true;
+	}
+
+	@Override
+	public void dup() {
+		mv.visitInsn(DUP);
+	}
+
+	@Override
+	public void end() {
+		doMethodEnd();
+	}
+
+	protected Type getTopType() {
+		return topType;
+	}
+
+	@Override
+	public C insn(int opcode) {
+		mv.visitInsn(opcode);
+		return code();
+	}
+
+	@Override
+	public C jumpInsn(int ifgt, Label label) {
+		mv.visitJumpInsn(IFGT, label);
+		return code();
+	}
+
+	private Label labelWithoutLineNumber() {
+		Label label = new Label();
+		labelCurrent = label;
+		mv.visitLabel(label);
+		return label;
+	}
+
+	@Override
+	public void ldcInsn(Object cst) {
+		mv.visitLdcInsn(cst);
+	}
+
+	public C line(int line) {
+		Label label;
+		if (!labelHasDefineBegin) {
+			label = new Label();
+			labelCurrent = label;
+			mv.visitLabel(label);
+		} else {
+			label = labelCurrent;
+		}
+		mv.visitLineNumber(line, label);
+		return code();
+	}
+
+	@Override
+	public void load(int... indexes) {
+		for (int index : indexes) {
+			mv.visitVarInsn(variablesStack.get(index).type.getOpcode(ILOAD), variablesLocals[index]);
+		}
+		accessVar(indexes);
 	}
 
 	@Override
@@ -426,31 +440,26 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 	@Override
 	public MethodHeader<C> parameter(Type annotationType, Object value, String fieldName, Type fieldType) {
 		thisMethodParams.add(new Variable(fieldName, fieldType));
-		thisMethodParameterAnnotations.set(thisMethodParams.size() - 1, new Annotation(value, annotationType));
+		thisMethodParameterAnnotations.set(thisMethodParams.size() - 1, new Annotation(annotationType, null, value));
 		return this;
 	}
 
 	@Override
 	public MethodHeader<C> parameter(Type annotationType, Object value, String fieldName, Type fieldType, String signature) {
 		thisMethodParams.add(new Variable(fieldName, fieldType, signature));
-		thisMethodParameterAnnotations.set(thisMethodParams.size() - 1, new Annotation(value, annotationType));
+		thisMethodParameterAnnotations.set(thisMethodParams.size() - 1, new Annotation(annotationType, null, value));
 		return this;
 	}
 
 	@Override
-	public MethodHeader<C> parameterAnnotation(Type type, Object value) {
-		thisMethodParameterAnnotations.set(thisMethodParams.size() - 1, new Annotation(value, type));
+	public MethodHeader<C> parameterAnnotation(Type annotationType, Object value) {
+		thisMethodParameterAnnotations.set(thisMethodParams.size() - 1, new Annotation(annotationType, null, value));
 		return this;
 	}
 
 	@Override
 	public void pop() {
 		mv.visitInsn(POP);
-	}
-
-	@Override
-	public void ldcInsn(Object cst) {
-		mv.visitLdcInsn(cst);
 	}
 
 	@Override

@@ -85,6 +85,18 @@ public class AsmBuilder {
 		av0.visitEnd();
 	}
 
+	public static void visitAnnotation(MethodVisitor mv, Type annotationType, String name, Object value) {
+		AnnotationVisitor av0 = mv.visitAnnotation(annotationType.getDescriptor(), true);
+		if (value != null) {
+			if (name != null) {
+				av0.visit(name, value);
+			} else {
+				av0.visit("value", value);
+			}
+		}
+		av0.visitEnd();
+	}
+
 	public static void visitDefine_init_withNothing(ClassVisitor cw, Type objectType) {
 		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
 		mv.visitCode();
