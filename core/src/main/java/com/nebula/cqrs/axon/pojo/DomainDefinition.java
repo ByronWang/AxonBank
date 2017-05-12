@@ -42,8 +42,12 @@ public class DomainDefinition {
 		return this.defineType.getClassName() + name1 + name2 + item;
 	}
 
-	public Type typeOf(String name) {
-		return Type.getObjectType(fullnameOf(name).replace('.', '/'));
+	public Type typeOf(String... names) {
+		String retName = names[0];
+		for (int i = 1; i < names.length; i++) {
+			retName += toCamelUpper(names[i]);
+		}
+		return Type.getObjectType(fullnameOf(retName).replace('.', '/'));
 	}
 
 	public String fullnameOf(String name) {

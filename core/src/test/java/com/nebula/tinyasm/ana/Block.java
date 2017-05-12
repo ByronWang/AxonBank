@@ -1,6 +1,9 @@
 package com.nebula.tinyasm.ana;
 
 import org.objectweb.asm.Label;
+import org.objectweb.asm.Type;
+
+import com.nebula.tinyasm.api.ClassMethodCode;
 
 class Block {
 	enum BlockType {
@@ -38,4 +41,10 @@ class Block {
 		this.blockType = BlockType.IFBLOCK;
 		this.startStackIndex = startStackIndex;
 	}
+	
+	ClassMethodCode code;
+
+	public String eventNameHint;
+
+	public Type eventType;
 }

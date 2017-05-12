@@ -110,8 +110,8 @@ public interface MethodCode<M extends MethodUseCaller<M, C>, C extends MethodCod
 		return storeTop(varIndex(varName));
 	}
 
-	default Instance<M, C> type(Class<?> returnClass) {
-		return type(typeOf(returnClass));
+	default Instance<M, C> type(Class<?> objectClass) {
+		return type(typeOf(objectClass));
 	}
 
 	Instance<M, C> type(Type objectType);
