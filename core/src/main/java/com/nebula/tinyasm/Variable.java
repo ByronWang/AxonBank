@@ -23,4 +23,5 @@ public class Variable extends ClassField {
 		super(0, name, type, signature);
 		this.startFrom = startFrom;
 	}
+	public Object value;
 }

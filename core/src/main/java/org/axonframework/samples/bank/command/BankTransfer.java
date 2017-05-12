@@ -32,57 +32,53 @@ import static org.axonframework.commandhandling.model.AggregateLifecycle.apply;
 @Aggregate
 public class BankTransfer {
 
-    @AggregateIdentifier
-    private String BankTransferId;
-    private String sourceBankAccountId;
-    private String destinationBankAccountId;
-    private long amount;
-    private Status status;
+	@AggregateIdentifier
+	private String BankTransferId;
+	private String sourceBankAccountId;
+	private String destinationBankAccountId;
+	private long amount;
+	private Status status;
 
-    @SuppressWarnings("unused")
-    protected BankTransfer() {
-    }
+	@SuppressWarnings("unused")
+	protected BankTransfer() {
+	}
 
-    @CommandHandler
-    public BankTransfer(BankTransferCreateCommand command) {
-        apply(new BankTransferCreatedEvent(command.getBankTransferId(),
-                                           command.getSourceBankAccountId(),
-                                           command.getDestinationBankAccountId(),
-                                           command.getAmount()));
-    }
+	@CommandHandler
+	public BankTransfer(BankTransferCreateCommand command) {
+		apply(new BankTransferCreatedEvent(command.getBankTransferId(), command.getSourceBankAccountId(), command.getDestinationBankAccountId(),
+		        command.getAmount()));
+	}
 
-    @CommandHandler
-    public void handle(BankTransferMarkCompletedCommand command) {
-        apply(new BankTransferCompletedEvent(command.getBankTransferId()));
-    }
+	@EventHandler
+	public void on(BankTransferCreatedEvent event) throws Exception {
+		this.BankTransferId = event.getBankTransferId();
+		this.sourceBankAccountId = event.getSourceBankAccountId();
+		this.destinationBankAccountId = event.getDestinationBankAccountId();
+		this.amount = event.getAmount();
+		this.status = Status.STARTED;
+	}
 
-    @CommandHandler
-    public void handle(BankTransferMarkFailedCommand command) {
-        apply(new BankTransferFailedEvent(command.getBankTransferId()));
-    }
+	@CommandHandler
+	public void handle(BankTransferMarkCompletedCommand command) {
+		apply(new BankTransferCompletedEvent(command.getBankTransferId()));
+	}
 
-    @EventHandler
-    public void on(BankTransferCreatedEvent event) throws Exception {
-        this.BankTransferId = event.getBankTransferId();
-        this.sourceBankAccountId = event.getSourceBankAccountId();
-        this.destinationBankAccountId = event.getDestinationBankAccountId();
-        this.amount = event.getAmount();
-        this.status = Status.STARTED;
-    }
+	@EventHandler
+	public void on(BankTransferCompletedEvent event) {
+		this.status = Status.COMPLETED;
+	}
 
-    @EventHandler
-    public void on(BankTransferCompletedEvent event) {
-        this.status = Status.COMPLETED;
-    }
+	@CommandHandler
+	public void handle(BankTransferMarkFailedCommand command) {
+		apply(new BankTransferFailedEvent(command.getBankTransferId()));
+	}
 
-    @EventHandler
-    public void on(BankTransferFailedEvent event) {
-        this.status = Status.FAILED;
-    }
+	@EventHandler
+	public void on(BankTransferFailedEvent event) {
+		this.status = Status.FAILED;
+	}
 
-    private enum Status {
-        STARTED,
-        FAILED,
-        COMPLETED
-    }
+	private enum Status {
+		STARTED, FAILED, COMPLETED
+	}
 }

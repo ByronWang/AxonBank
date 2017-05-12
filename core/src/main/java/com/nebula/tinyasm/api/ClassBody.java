@@ -64,7 +64,7 @@ public interface ClassBody extends Types, ToType, Opcodes, DefineField<ClassBody
 
 	ClassBody end();
 
-	default ClassBody field(List<Field> fields) {
+	default ClassBody fields(List<Field> fields) {
 		for (Field field : fields) {
 			field(field);
 		}
@@ -82,6 +82,14 @@ public interface ClassBody extends Types, ToType, Opcodes, DefineField<ClassBody
 
 	Type getSuperType();
 
+	default ClassBody readonlyPojo(){
+		return publicInitAllFields().defineAllPropetyGet().publicToStringWithAllFields();
+	}
+
+	default ClassBody pojo(){
+		return publicInitAllFields().defineAllPropetyGet().defineAllPropetySet().publicToStringWithAllFields();
+	}
+	
 	default ClassBody publicInitAllFields() {
 		final List<Field> fields = getFields();
 		publicMethod("<init>").parameter(fields).code(mc -> {

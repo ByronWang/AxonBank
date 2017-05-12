@@ -372,7 +372,9 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		}
 	}
 
+	boolean hasEnded = false;
 	public void doMethodEnd() {
+		if(hasEnded)return;
 		Label endLabel = this.labelWithoutLineNumber();
 		int i = 0;
 		for (Variable var : variablesStack) {
@@ -383,6 +385,7 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		}
 		mv.visitMaxs(0, 0);
 		mv.visitEnd();
+		hasEnded = true;
 	}
 
 	@Override

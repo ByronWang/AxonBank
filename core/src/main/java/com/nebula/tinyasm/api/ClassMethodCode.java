@@ -19,4 +19,7 @@ public interface ClassMethodCode extends MethodCode<ClassUseCaller, ClassMethodC
 
 	ClassUseCaller useTopThis();
 
+	default ClassMethodCode putTopTo(String fieldName) {
+		return putTopTo(fieldOf(fieldName));
+	};
 }

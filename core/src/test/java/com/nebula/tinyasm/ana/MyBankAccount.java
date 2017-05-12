@@ -55,20 +55,28 @@ public class MyBankAccount {
 		}
 	}
 
-	public static boolean bankTransfer(MyBankAccount source, MyBankAccount destination, long amount) {// BankTransferCreatedEvent
-		// boolean sourceDebit = source.debit(amount);//
-		// BankTransferSourceDebitCommand
-		if (source.debit(amount)) {// BankTransferSourceDebitedEvent
-			// boolean destinationCredit = destination.credit(amount);//
-			// BankTransferDestinationCreditCommand
-			if (destination.credit(amount)) {// BankTransferDestinationCreditedEvent
-				return true;// BankTransferMarkCompletedCommand
-			} else {// BankTransferDestinationCreditedRejectedEvent
-				source.returnMoney(amount);// BankTransferSourceReturnMoneyCommand
-				return false;// BankTransferMarkFailedCommand
+	public static boolean bankTransfer(MyBankAccount source, MyBankAccount destination, long amount) {
+		/* On BankTransferCreatedEvent */ {
+
+			/* BankTransferSourceDebitCommand */if (source.debit(amount)) {
+				/* On BankTransferSourceDebitedEvent */ {
+					// BankTransferDestinationCreditCommand
+					if (destination.credit(amount)) {
+						/* On destination.credit succeed */ {
+							return true;// BankTransferMarkCompletedCommand
+						}
+					} else {
+						/* On destination.credit fail */ {
+							/* BankTransferSourceReturnMoneyCommand */source.returnMoney(amount);
+							/* On source.returnMoney finished */ {
+								return false;// BankTransferMarkFailedCommand
+							}
+						}
+					}
+				}
+			} else {// BankTransferSourceDebitRejectedEvent
+				return false;
 			}
-		} else {// BankTransferSourceDebitRejectedEvent
-			return false;
 		}
 	}
 
