@@ -8,7 +8,7 @@ import org.objectweb.asm.Type;
 
 import com.nebula.tinyasm.util.Field;
 
-public interface ClassBody extends Types, ToType, Opcodes, DefineField<ClassBody>, DefineMethod {
+public interface ClassBody extends Types, ToType, Opcodes, DefineField<ClassBody>,DefineStaticMethod<StaticMethodCode>,  DefineInstanceMethod<ClassMethodCode> {
 
 	default ClassBody annotation(Class<?> annotationClass) {
 		return annotation(typeOf(annotationClass));

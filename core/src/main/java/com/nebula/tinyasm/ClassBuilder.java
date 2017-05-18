@@ -14,6 +14,7 @@ import org.objectweb.asm.Type;
 import com.nebula.tinyasm.api.ClassBody;
 import com.nebula.tinyasm.api.ClassMethodCode;
 import com.nebula.tinyasm.api.MethodHeader;
+import com.nebula.tinyasm.api.StaticMethodCode;
 import com.nebula.tinyasm.api.Types;
 import com.nebula.tinyasm.util.AsmBuilder;
 import com.nebula.tinyasm.util.ClassUtils;
@@ -234,5 +235,10 @@ public class ClassBuilder extends ClassVisitor implements Opcodes, Types, ClassB
 	@Override
 	public ClassVisitor visitor() {
 		return cv;
+	}
+
+	@Override
+	public MethodHeader<StaticMethodCode> staticMethod(int access, Type returnType, String methodName, Class<?>... exceptionClasses) {
+		return new StaticMethodVisitor(this, thisType, access, returnType, methodName, exceptionClasses);
 	}
 }

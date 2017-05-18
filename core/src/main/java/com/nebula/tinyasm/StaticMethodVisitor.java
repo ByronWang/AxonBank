@@ -5,18 +5,9 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-import com.nebula.tinyasm.api.MethodCode;
 import com.nebula.tinyasm.api.MethodHeader;
-import com.nebula.tinyasm.api.MethodUseCaller;
-import com.nebula.tinyasm.api.Types;
-
-interface StaticMethodCode extends Types, MethodCode<StaticUseCaller, StaticMethodCode> {
-
-}
-
-interface StaticUseCaller extends MethodUseCaller<StaticUseCaller, StaticMethodCode> {
-
-}
+import com.nebula.tinyasm.api.StaticMethodCode;
+import com.nebula.tinyasm.api.StaticUseCaller;
 
 public class StaticMethodVisitor extends AbstractMethodVistor<MethodHeader<StaticMethodCode>, StaticUseCaller, StaticMethodCode>
         implements StaticMethodCode, MethodHeader<StaticMethodCode>, Opcodes {
@@ -37,12 +28,8 @@ public class StaticMethodVisitor extends AbstractMethodVistor<MethodHeader<Stati
 		}
 	}
 
-	public StaticMethodVisitor(ClassVisitor cv, Type thisType, int access, String methodName) {
-		this(cv, thisType, access, Type.VOID_TYPE, methodName);
-	}
-
-	public StaticMethodVisitor(ClassVisitor cv, Type thisType, int access, Type returnType, String methodName) {
-		super(cv, thisType, access, returnType, methodName);
+	public StaticMethodVisitor(ClassVisitor cv, Type thisType, int access, Type returnType, String methodName, Class<?>... exceptionClasses) {
+		super(cv, thisType, access, returnType, methodName, exceptionClasses);
 	}
 
 	@Override
