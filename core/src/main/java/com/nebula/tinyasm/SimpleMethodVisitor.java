@@ -5,21 +5,16 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-import com.nebula.tinyasm.api.Instance;
-import com.nebula.tinyasm.api.MethodCode;
+import com.nebula.tinyasm.api.InstanceMethodCode;
 import com.nebula.tinyasm.api.MethodHeader;
 import com.nebula.tinyasm.api.MethodUseCaller;
 import com.nebula.tinyasm.api.Types;
 
-interface SimpleMethodCode extends Types, MethodCode<SimpleUseCaller, SimpleMethodCode> {
+interface SimpleMethodCode extends Types, InstanceMethodCode<SimpleUseCaller, SimpleMethodCode> {
 
 }
 
-interface SimpleUseCaller extends MethodUseCaller<SimpleUseCaller, SimpleMethodCode> {
-
-}
-
-public class SimpleMethodVisitor extends AbstractMethodVistor<MethodHeader<SimpleMethodCode>, SimpleUseCaller, SimpleMethodCode>
+public class SimpleMethodVisitor extends AbstractInstanceMethodVisitor<MethodHeader<SimpleMethodCode>, SimpleUseCaller, SimpleMethodCode>
         implements SimpleMethodCode, MethodHeader<SimpleMethodCode>, Opcodes {
 
 	class RealSimpleUseCaller extends RealUseCaller implements SimpleUseCaller {
@@ -52,13 +47,27 @@ public class SimpleMethodVisitor extends AbstractMethodVistor<MethodHeader<Simpl
 	}
 
 	@Override
-	public SimpleUseCaller useTop(Type type) {
-		return new RealSimpleUseCaller(mv,type);
+	public Type thisType() {
+		return thisObjectType;
 	}
 
 	@Override
-	public Instance<SimpleUseCaller, SimpleMethodCode> type(Type objectType) {
-		// TODO Auto-generated method stub
-		return null;
+	public SimpleUseCaller useThis() {
+		load(THIS);
+		return new RealSimpleUseCaller(mv, thisObjectType);
 	}
+
+	@Override
+	public SimpleUseCaller useTop(Type type) {
+		return new RealSimpleUseCaller(mv, type);
+	}
+
+	@Override
+	public SimpleUseCaller useTopThis() {
+		return new RealSimpleUseCaller(mv, thisObjectType);
+	}
+}
+
+interface SimpleUseCaller extends MethodUseCaller<SimpleUseCaller, SimpleMethodCode> {
+
 }

@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
@@ -30,16 +31,16 @@ public class ClassBuilder extends ClassVisitor implements Opcodes, Types, ClassB
 		return new ClassBuilder(ACC_PUBLIC + ACC_SUPER, cv, objectType, superType);
 	}
 
-	static public ClassBody make(ClassVisitor cv, Type objectType, Type interfaceType, Type interfaceSignature) {
-		return new ClassBuilder(ACC_PUBLIC + ACC_SUPER, cv, objectType, Type.getType(Object.class), interfaceType, interfaceSignature);
+	static public ClassBody make(ClassVisitor cv, Type objectType, Type superType, Class<?> interfaceClass, Type... interfaceSignature) {
+		return make(cv, objectType, superType, Type.getType(interfaceClass), interfaceSignature);
 	}
 
-	static public ClassBody make(ClassVisitor cv, Type objectType, Class<?> interfaceClass, Type interfaceSignature) {
-		return new ClassBuilder(ACC_PUBLIC + ACC_SUPER, cv, objectType, Type.getType(Object.class), Type.getType(interfaceClass), interfaceSignature);
-	}
-
-	static public ClassBody make(ClassVisitor cv, Type objectType, Type superType, Type interfaceType, Type interfaceSignature) {
+	static public ClassBody make(ClassVisitor cv, Type objectType, Type superType, Type interfaceType, Type... interfaceSignature) {
 		return new ClassBuilder(ACC_PUBLIC + ACC_SUPER, cv, objectType, superType, interfaceType, interfaceSignature);
+	}
+
+	static public ClassBody make(ClassVisitor cv, Type objectType, Type superType, Type[] superTypeSignature) {
+		return new ClassBuilder(ACC_PUBLIC + ACC_SUPER, cv, objectType, superType, superTypeSignature);
 	}
 
 	static public ClassBody make(final int access, ClassVisitor cv, Type objectType) {
@@ -50,30 +51,30 @@ public class ClassBuilder extends ClassVisitor implements Opcodes, Types, ClassB
 		return new ClassBuilder(access, cv, objectType, superType);
 	}
 
-	static public ClassBody make(final int access, ClassVisitor cv, Type objectType, Type superType, Type interfaceType, Type interfaceSignature) {
+	static public ClassBody make(final int access, ClassVisitor cv, Type objectType, Type superType, Type interfaceType, Type... interfaceSignature) {
 		return new ClassBuilder(access, cv, objectType, superType, interfaceType, interfaceSignature);
-	}
-
-	static public ClassBody make(final int access, Type objectType, Class<?> superClass, Type interfaceType, Type interfaceSignature) {
-		return make(access, objectType, Type.getType(superClass), interfaceType, interfaceSignature);
-	}
-
-	static public ClassBody make(final int access, Type objectType, Class<?> superClass, Class<?> interfaceClass, Type interfaceSignature) {
-		return make(access, objectType, Type.getType(superClass), Type.getType(interfaceClass), interfaceSignature);
-	}
-
-	static public ClassBody make(final int access, Type objectType, Type superType, Type interfaceType, Type interfaceSignature) {
-		ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
-		return new ClassBuilder(access, classWriter, objectType, superType, interfaceType, interfaceSignature);
 	}
 
 	static public ClassBody make(final int access, Type objectType) {
 		return make(access, objectType, Type.getType(Object.class));
 	}
 
+	static public ClassBody make(final int access, Type objectType, Class<?> superClass, Class<?> interfaceClass, Type interfaceSignature) {
+		return make(access, objectType, Type.getType(superClass), Type.getType(interfaceClass), interfaceSignature);
+	}
+
+	static public ClassBody make(final int access, Type objectType, Class<?> superClass, Type interfaceType, Type interfaceSignature) {
+		return make(access, objectType, Type.getType(superClass), interfaceType, interfaceSignature);
+	}
+
 	static public ClassBody make(final int access, Type objectType, Type superType) {
 		ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
 		return new ClassBuilder(access, classWriter, objectType, superType);
+	}
+
+	static public ClassBody make(final int access, Type objectType, Type superType, Type interfaceType, Type... interfaceSignature) {
+		ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
+		return new ClassBuilder(access, classWriter, objectType, superType, interfaceType, interfaceSignature);
 	}
 
 	static public ClassBody make(Type objectType) {
@@ -106,7 +107,18 @@ public class ClassBuilder extends ClassVisitor implements Opcodes, Types, ClassB
 		cv.visitSource(simpleName + ".java", null);
 	}
 
-	ClassBuilder(final int access, ClassVisitor cv, Type thisType, Type superType, Type interfaceType, Type interfaceSignatures) {
+	ClassBuilder(final int access, ClassVisitor cv, Type thisType, Type superType, Type... superTypeSignatures) {
+		super(Opcodes.ASM5);
+		this.cv = cv;
+		this.thisType = thisType;
+		this.superType = superType;
+
+		cv.visit(52, access, thisType.getInternalName(), signatureOf(superType, superTypeSignatures), superType.getInternalName(), null);
+		String simpleName = ClassUtils.toSimpleName(this.thisType.getClassName());
+		cv.visitSource(simpleName + ".java", null);
+	}
+
+	ClassBuilder(final int access, ClassVisitor cv, Type thisType, Type superType, Type interfaceType, Type... interfaceSignatures) {
 		super(Opcodes.ASM5);
 		this.cv = cv;
 		this.thisType = thisType;
@@ -141,6 +153,17 @@ public class ClassBuilder extends ClassVisitor implements Opcodes, Types, ClassB
 		addField(new Field(fieldName, fieldType));
 		AsmBuilder.visitDefineField(cv, access, fieldName, fieldType);
 		return this;
+	}
+
+	@Override
+	public ClassBody field(int access, String fieldName, Type fieldType, boolean array) {
+		if (array) {
+			FieldVisitor fv = cv.visitField(access, fieldName, fieldType.getDescriptor(), "[" + fieldType.getDescriptor(), null);
+			fv.visitEnd();
+			return this;
+		} else {
+			return field(access, fieldName, fieldType);
+		}
 	}
 
 	@Override

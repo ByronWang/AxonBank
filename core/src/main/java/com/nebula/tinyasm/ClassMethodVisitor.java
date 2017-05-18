@@ -11,7 +11,7 @@ import com.nebula.tinyasm.api.MethodHeader;
 import com.nebula.tinyasm.util.AsmBuilder;
 import com.nebula.tinyasm.util.Field;
 
-public class ClassMethodVisitor extends AbstractMethodVistor<MethodHeader<ClassMethodCode>, ClassUseCaller, ClassMethodCode>
+public class ClassMethodVisitor extends AbstractInstanceMethodVisitor<MethodHeader<ClassMethodCode>, ClassUseCaller, ClassMethodCode>
         implements MethodHeader<ClassMethodCode>, ClassMethodCode, Opcodes {
 	class RealThisUseCaller extends RealUseCaller implements ClassUseCaller {
 
@@ -36,12 +36,6 @@ public class ClassMethodVisitor extends AbstractMethodVistor<MethodHeader<ClassM
 		}
 	}
 
-	@Override
-	protected ClassMethodCode doMethodBegin() {
-		thisInstance = new ThisInstance(mv);
-		return super.doMethodBegin();
-	}
-
 	ClassBuilder cv;
 
 	ThisInstance thisInstance;
@@ -57,6 +51,17 @@ public class ClassMethodVisitor extends AbstractMethodVistor<MethodHeader<ClassM
 	}
 
 	@Override
+	protected ClassMethodCode doMethodBegin() {
+		thisInstance = new ThisInstance(mv);
+		return super.doMethodBegin();
+	}
+
+	@Override
+	public Field fieldOf(String fieldName) {
+		return cv.fieldOf(fieldName);
+	}
+
+	@Override
 	public ClassMethodCode initObject() {
 		AsmBuilder.visitInitObject(mv, THIS);
 		return code();
@@ -68,19 +73,10 @@ public class ClassMethodVisitor extends AbstractMethodVistor<MethodHeader<ClassM
 		return thisInstance;
 	}
 
-	@Override
-	public Type thisType() {
-		return thisObjectType;
-	}
 
 	@Override
 	public ClassUseCaller useThis() {
 		loadThis();
-		return new RealThisUseCaller(mv,thisObjectType);
-	}
-
-	@Override
-	public ClassUseCaller useTopThis() {
 		return new RealThisUseCaller(mv,thisObjectType);
 	}
 	@Override
@@ -89,7 +85,7 @@ public class ClassMethodVisitor extends AbstractMethodVistor<MethodHeader<ClassM
 	}
 
 	@Override
-	public Field fieldOf(String fieldName) {
-		return cv.fieldOf(fieldName);
+	public ClassUseCaller useTopThis() {
+		return new RealThisUseCaller(mv,thisObjectType);
 	}
 }

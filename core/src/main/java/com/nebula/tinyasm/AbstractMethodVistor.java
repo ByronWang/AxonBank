@@ -140,17 +140,13 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		}
 	}
 
-	final static int THIS = 0;
-
-	final static String THIS_NAME = "this";
-
 	MyInstance currentInstance;
 
 	private final ClassVisitor cv;
 
 	boolean hasEnded = false;
 
-	private Label labelCurrent;
+	protected Label labelCurrent;
 
 	boolean labelHasDefineBegin = false;
 
@@ -165,7 +161,7 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 
 	List<Annotation> thisMethodParameterAnnotations = new ArrayList<>(10);
 
-	private List<ClassField> thisMethodParams = new ArrayList<>();
+	protected List<ClassField> thisMethodParams = new ArrayList<>();
 
 	private final Type thisMethodReturnType;
 
@@ -274,7 +270,6 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 
 		labelCurrent = labelWithoutLineNumber();
 		// TODO add class sign
-		variablesStack.push(new Variable(THIS_NAME, thisObjectType, null, labelCurrent));
 		for (ClassField field : thisMethodParams) {
 			variablesStack.push(new Variable(field, labelCurrent));
 		}
@@ -369,7 +364,7 @@ public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C
 		return code();
 	}
 
-	private Label labelWithoutLineNumber() {
+	protected Label labelWithoutLineNumber() {
 		Label label = new Label();
 		labelCurrent = label;
 		mv.visitLabel(label);
