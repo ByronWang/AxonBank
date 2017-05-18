@@ -8,7 +8,7 @@ import org.objectweb.asm.Type;
 
 import com.nebula.tinyasm.util.Field;
 
-public interface MethodCode<M extends MethodUseCaller<M, C>, C extends MethodCode<M, C>> extends Types {
+public interface MethodCode<M, C extends MethodCode<M, C>> extends Types {
 
 	C accessLabel(Label label);
 

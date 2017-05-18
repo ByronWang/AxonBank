@@ -5,7 +5,7 @@ import org.objectweb.asm.Type;
 
 import com.nebula.tinyasm.util.Field;
 
-public interface Instance<M extends MethodUseCaller<M, C>, C extends MethodCode<M, C>> extends InvokeMethod<M, C>, ToType, Types, Opcodes {
+public interface Instance<M, C extends MethodCode<M, C>> extends InvokeMethod<M, C>, ToType, Types, Opcodes {
 
 	C code();
 

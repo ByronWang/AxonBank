@@ -10,7 +10,7 @@ import com.nebula.tinyasm.api.MethodUseCaller;
 import com.nebula.tinyasm.util.AsmBuilder;
 import com.nebula.tinyasm.util.Field;
 
-abstract class AbstractInvokeMethod<M extends MethodUseCaller<M, C>, C extends MethodCode<M, C>> implements InvokeMethod<M, C> {
+abstract class AbstractInvokeMethod<M, C extends MethodCode<M, C>> implements InvokeMethod<M, C> {
 	AbstractInvokeMethod(MethodVisitor mv) {
 		this.mv = mv;
 	}

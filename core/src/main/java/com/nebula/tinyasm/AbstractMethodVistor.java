@@ -30,7 +30,7 @@ import com.nebula.tinyasm.util.AsmBuilder;
 import com.nebula.tinyasm.util.AsmBuilderHelper;
 import com.nebula.tinyasm.util.Field;
 
-public abstract class AbstractMethodVistor<H, M extends MethodUseCaller<M, C>, C extends MethodCode<M, C>> extends MethodVisitor
+public abstract class AbstractMethodVistor<H, M, C extends MethodCode<M, C>> extends MethodVisitor
         implements MethodCode<M, C>, MethodHeader<C>, Types {
 
 	class Annotation {
