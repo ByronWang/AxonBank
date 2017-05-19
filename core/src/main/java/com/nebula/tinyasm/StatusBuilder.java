@@ -8,58 +8,38 @@ import com.nebula.tinyasm.api.ClassBody;
 
 public class StatusBuilder implements Opcodes {
 
-	public static byte[] dump() throws Exception {
-		Type objectType = Type.getObjectType("com/nebula/dropwizard/core/Status");
+	public static byte[] dump(Type objectType, String... names) {
 		Type superType = Type.getObjectType("java/lang/Enum");
 
 		ClassBody cb = ClassBuilder.make(ACC_FINAL + ACC_SUPER + ACC_ENUM, objectType, superType, new Type[] { objectType });
 
-		cb.field(ACC_PUBLIC + ACC_FINAL + ACC_STATIC + ACC_ENUM, "STARTED", objectType);
-		cb.field(ACC_PUBLIC + ACC_FINAL + ACC_STATIC + ACC_ENUM, "FAILED", objectType);
-		cb.field(ACC_PUBLIC + ACC_FINAL + ACC_STATIC + ACC_ENUM, "COMPLETED", objectType);
+		for (String name : names) {
+			cb.field(ACC_PUBLIC + ACC_FINAL + ACC_STATIC + ACC_ENUM, name, objectType);
+		}
 		cb.field(ACC_PRIVATE + ACC_FINAL + ACC_STATIC + ACC_SYNTHETIC, "ENUM$VALUES", objectType, true);
 
 		cb.staticMethod("<clinit>").code(mc -> {
 			{
 				mc.line(4);
-				mc.newInstace(objectType);
-				mc.dup();
-				mc.ldcInsn("STARTED");
-				mc.insn(ICONST_0);
-				mc.typeThis().invokeSpecial("<init>", String.class, int.class);
-				mc.typeThis().putStaticTo("STARTED", objectType);
 
-				mc.newInstace(objectType);
-				mc.dup();
-				mc.ldcInsn("FAILED");
-				mc.insn(ICONST_1);
-				mc.typeThis().invokeSpecial("<init>", String.class, int.class);
-				mc.typeThis().putStaticTo("FAILED", objectType);
+				for (int i = 0; i < names.length; i++) {
+					mc.newInstace(objectType);
+					mc.dup();
+					mc.ldcInsn(names[i]);
+					mc.intInsn(BIPUSH, i);
+					mc.typeThis().invokeSpecial("<init>", String.class, int.class);
+					mc.typeThis().putStaticTo(names[i], objectType);
+				}
 
-				mc.newInstace(objectType);
-				mc.dup();
-				mc.ldcInsn("COMPLETED");
-				mc.insn(ICONST_2);
-				mc.typeThis().invokeSpecial("<init>", String.class, int.class);
-				mc.typeThis().putStaticTo("COMPLETED", objectType);
-
-				mc.line(3).insn(ICONST_3);
+				mc.line(3).intInsn(BIPUSH, names.length);
 				mc.typeInsn(ANEWARRAY, mc.thisType());
-				mc.dup();
-				mc.insn(ICONST_0);
-				mc.typeThis().getStatic("STARTED", mc.thisType());
-				mc.insn(AASTORE);
 
-				mc.dup();
-				mc.insn(ICONST_1);
-				mc.typeThis().getStatic("FAILED", mc.thisType());
-				mc.insn(AASTORE);
-
-				mc.dup();
-				mc.insn(ICONST_2);
-				mc.typeThis().getStatic("COMPLETED", mc.thisType());
-				mc.insn(AASTORE);
-
+				for (int i = 0; i < names.length; i++) {
+					mc.dup();
+					mc.intInsn(BIPUSH, i);
+					mc.typeThis().getStatic(names[i], mc.thisType());
+					mc.insn(AASTORE);
+				}
 				mc.typeThis().putStaticTo("ENUM$VALUES", mc.thisType(), true);
 				mc.returnVoid();
 			}
@@ -95,7 +75,7 @@ public class StatusBuilder implements Opcodes {
 			mc.insn(ICONST_0);
 			mc.load("length");
 
-			mc.type(System.class).invokeStatic("arraycopy", Object.class, int.class, Object.class, int.class,int.class);
+			mc.type(System.class).invokeStatic("arraycopy", Object.class, int.class, Object.class, int.class, int.class);
 			mc.load("newvs");
 			mc.returnObject();
 		});

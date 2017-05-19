@@ -15,6 +15,8 @@ public interface MethodCode<M, C extends MethodCode<M, C>> extends Types {
 	C accessLabel(Label label, int line);
 
 	C block(Consumer<C> invocation);
+	
+	C intInsn(int bipush, int i);
 
 	C checkCast(Type type);
 

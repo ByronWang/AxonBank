@@ -11,6 +11,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.util.ASMifier;
 import org.objectweb.asm.util.TraceClassVisitor;
 
@@ -46,7 +47,9 @@ public class AsmBuilderHelperTest {
 
 	@Test
 	public void testStatusBuilder() throws Exception {
-		byte[] code = StatusBuilder.dump();
+		Type type = Type.getObjectType("com/nebula/dropwizard/core/Status");
+		
+		byte[] code = StatusBuilder.dump(type,"STARTED","FAILED","COMPLETED");
 		byte[] codeExpected = StatusDump.dump();
 
 		String strCode = toString(code);

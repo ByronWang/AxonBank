@@ -52,8 +52,10 @@ import com.nebula.cqrs.axon.asm.AnalyzeEventsClassVisitor;
 import com.nebula.cqrs.axon.asm.AnalyzeFieldClassVisitor;
 import com.nebula.cqrs.axon.pojo.DomainDefinition;
 import com.nebula.tinyasm.ClassBuilder;
+import com.nebula.tinyasm.StatusBuilder;
 import com.nebula.tinyasm.Variable;
 import com.nebula.tinyasm.ana.Block.BlockType;
+import com.nebula.tinyasm.ana.ByteCodeAnaMethodVisitor.Status;
 import com.nebula.tinyasm.api.ClassBody;
 import com.nebula.tinyasm.api.ClassMethodCode;
 import com.nebula.tinyasm.api.Types;
@@ -216,8 +218,8 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 
 		sagaObjectClassBody.publicMethod("on").annotation(EventHandler.class).parameter("event", eventType).code(mc -> {
 			mc.loadThis();
-			mc.insn(ICONST_0 + resultValue);
-			mc.type(mc.thisType()).putTo("status", boolean.class);
+			mc.type(statusType).getStatic(resultString, statusType);
+			mc.type(mc.thisType()).putTo("status", statusType);
 		});
 	}
 
@@ -320,8 +322,14 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 	@Override
 	public void visitCode() {
 
-		sagaObjectClassBody = ClassBuilder.make(sagaObjectType).field(AggregateIdentifier.class, sagaIdField).fields(datasFields).field("status", returnType);
-		sagaClassBody = ClassBuilder.make(sagaType).field(ACC_PRIVATE + ACC_TRANSIENT, "commandBus", CommandBus.class).definePropertySet(Inject.class, "commandBus", CommandBus.class).fields(datasFields);
+		statusType = domainDefinition.typeOf(this.methodName, "Status");
+		{
+			byte[] code = StatusBuilder.dump(statusType, Status.STARTED.name(), Status.FAILED.name(), Status.COMPLETED.name());
+			defineClass(statusType.getClassName(), code);
+		}
+		sagaObjectClassBody = ClassBuilder.make(sagaObjectType).field(AggregateIdentifier.class, sagaIdField).fields(datasFields).field("status", statusType);
+		sagaClassBody = ClassBuilder.make(sagaType).field(ACC_PRIVATE + ACC_TRANSIENT, "commandBus", CommandBus.class)
+		        .definePropertySet(Inject.class, "commandBus", CommandBus.class).fields(datasFields);
 		Type createdCommand = domainDefinition.typeOf(methodName + "CreateCommand");
 		Type createdEvent = domainDefinition.typeOf(methodName + "CreatedEvent");
 		{
@@ -350,17 +358,26 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 					mc.object("event").get(field);
 					mc.type(mc.thisType()).putTo(field);
 				}
+				mc.loadThis();
+				mc.type(statusType).getStatic(Status.STARTED.name(), statusType);
+				mc.type(mc.thisType()).putTo("status", statusType);
 			});
 		}
 
 		blockStartOfRoot("on" + AsmBuilder.toSimpleName(sagaObjectType.getClassName()) + blockIndex++, datasFields, createdEvent);
 
 		if (Type.getType(boolean.class).getDescriptor().equals(returnType.getDescriptor())) {
-			makeEndSaga(domainDefinition, datasFieldsWithID, "Completed", 1);
-			makeEndSaga(domainDefinition, datasFieldsWithID, "Fail", 0);
+			makeEndSaga(domainDefinition, datasFieldsWithID, Status.COMPLETED.name(), 1);
+			makeEndSaga(domainDefinition, datasFieldsWithID, Status.FAILED.name(), 0);
 		}
 		super.visitCode();
 	}
+
+	enum Status {
+		STARTED, FAILED, COMPLETED
+	}
+
+	Type statusType;
 
 	private void makeFinished(int value) {
 

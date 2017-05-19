@@ -1,6 +1,6 @@
 package com.nebula.tinyasm;
 
-import static org.objectweb.asm.Opcodes.ACC_SYNTHETIC;
+import static org.objectweb.asm.Opcodes.*;
 import static org.objectweb.asm.Opcodes.ASM5;
 import static org.objectweb.asm.Opcodes.CHECKCAST;
 import static org.objectweb.asm.Opcodes.DUP;
@@ -163,6 +163,16 @@ public abstract class AbstractMethodVistor<H, M, C extends MethodCode<M, C>> ext
 	Type topType;
 
 	int[] variablesLocals;
+
+	@Override
+	public C intInsn(int opcode, int operand) {
+		if (opcode == BIPUSH && 0 <= operand && operand <= 5) {
+			mv.visitInsn(ICONST_0 + operand);
+		} else {
+			mv.visitIntInsn(opcode, operand);
+		}
+		return code();
+	}
 
 	Map<String, Integer> variablesMap = new HashMap<>();
 
