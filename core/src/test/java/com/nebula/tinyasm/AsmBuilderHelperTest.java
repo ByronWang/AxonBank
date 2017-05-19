@@ -25,7 +25,7 @@ public class AsmBuilderHelperTest {
 	}
 
 	@Test
-	public void testVisitDefineMethodClassVisitorTypeStringTypeArray() throws Exception {
+	public void testMyBankAccountBuilder() throws Exception {
 		byte[] code = MyBankAccountBuilder.dump();
 		byte[] codeExpected = MyBankAccountDump.dump();
 
@@ -35,9 +35,19 @@ public class AsmBuilderHelperTest {
 	}
 
 	@Test
-	public void testVisitDefineMethodClassVisitorTypeStringTypeArray_2() throws Exception {
+	public void testMyBankAccountCommandHandlerBuilder_2() throws Exception {
 		byte[] code = MyBankAccountCommandHandlerBuilder.dump();
 		byte[] codeExpected = MyBankAccountCommandHandlerDump.dump();
+
+		String strCode = toString(code);
+		String strCodeExpected = toString(codeExpected);
+		assertEquals("Code", strCodeExpected, strCode);
+	}
+
+	@Test
+	public void testStatusBuilder() throws Exception {
+		byte[] code = StatusBuilder.dump();
+		byte[] codeExpected = StatusDump.dump();
 
 		String strCode = toString(code);
 		String strCodeExpected = toString(codeExpected);

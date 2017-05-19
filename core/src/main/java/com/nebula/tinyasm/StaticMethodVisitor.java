@@ -33,6 +33,11 @@ public class StaticMethodVisitor extends AbstractMethodVistor<MethodHeader<Stati
 	}
 
 	@Override
+	public Type thisType() {
+		return thisObjectType;
+	}
+
+	@Override
 	public StaticMethodCode code() {
 		return this;
 	}

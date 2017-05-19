@@ -30,8 +30,7 @@ import com.nebula.tinyasm.util.AsmBuilder;
 import com.nebula.tinyasm.util.AsmBuilderHelper;
 import com.nebula.tinyasm.util.Field;
 
-public abstract class AbstractMethodVistor<H, M, C extends MethodCode<M, C>> extends MethodVisitor
-        implements MethodCode<M, C>, MethodHeader<C>, Types {
+public abstract class AbstractMethodVistor<H, M, C extends MethodCode<M, C>> extends MethodVisitor implements MethodCode<M, C>, MethodHeader<C>, Types {
 
 	class Annotation {
 		int parameter;
@@ -65,12 +64,6 @@ public abstract class AbstractMethodVistor<H, M, C extends MethodCode<M, C>> ext
 		@Override
 		public C code() {
 			return AbstractMethodVistor.this.code();
-		}
-
-		@Override
-		public Instance<M, C> get(Field field) {
-			AsmBuilder.visitGetField(mv, getType(), field.name, field.type);
-			return AbstractMethodVistor.this.type(field.type);
 		}
 
 		public int getIndex() {
@@ -183,6 +176,11 @@ public abstract class AbstractMethodVistor<H, M, C extends MethodCode<M, C>> ext
 		this.thisMethodReturnType = returnType;
 		this.thisMethodExceptionClasses = exceptionClasses;
 		this.thisObjectType = thisType;
+	}
+
+	@Override
+	public void typeInsn(int opcode, Type type) {
+		AsmBuilder.visitTypeInsn(mv, opcode, type.getInternalName());
 	}
 
 	@Override

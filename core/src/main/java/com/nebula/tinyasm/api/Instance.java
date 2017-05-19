@@ -9,16 +9,6 @@ public interface Instance<M, C extends MethodCode<M, C>> extends InvokeMethod<M,
 
 	C code();
 
-	Instance<M, C> get(Field field);
-
-	default Instance<M, C> get(String fieldName, Class<?> fieldClass) {
-		return get(new Field(fieldName, typeOf(fieldClass)));
-	}
-
-	default Instance<M, C> get(String fieldName, Type fieldType) {
-		return get(new Field(fieldName, fieldType));
-	}
-
 	default Instance<M, C> getProperty(Field field) {
 		return getProperty(field.name, field.type);
 	}

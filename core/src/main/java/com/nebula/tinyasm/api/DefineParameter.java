@@ -156,6 +156,10 @@ public interface DefineParameter<CR> extends Types {
 
 	CR parameter(String fieldName, Type fieldType);
 
+	default CR parameter(String fieldName, Type fieldType, boolean array) {
+		return parameter(fieldName, arrayOf(fieldType, false));
+	}
+
 	default CR parameter(String fieldName, Type fieldType, Class<?>... signatureClasses) {
 		return parameter(fieldName, fieldType, signatureOf(fieldType, signatureClasses));
 	}

@@ -296,6 +296,26 @@ public interface Types {
 		return newvalues;
 	}
 
+	default Type arrayOf(Class<?> clz, boolean array) {
+		return arrayOf(typeOf(clz), array);
+	}
+
+	default Type arrayOf(Class<?> clz) {
+		return arrayOf(typeOf(clz), true);
+	}
+
+	default Type arrayOf(Type type) {
+		return arrayOf(type, true);
+	}
+
+	default Type arrayOf(Type type, boolean array) {
+		if (array) {
+			return Type.getType("[" + type.getDescriptor());
+		} else {
+			return type;
+		}
+	};
+
 	default String signatureOf(Type type, Class<?>... signatureClasses) {
 		String signature = null;
 		if (signatureClasses != null && signatureClasses.length > 0) {

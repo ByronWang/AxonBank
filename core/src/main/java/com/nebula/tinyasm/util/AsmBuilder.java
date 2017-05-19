@@ -222,6 +222,10 @@ public class AsmBuilder {
 		mv.visitMethodInsn(INVOKEVIRTUAL, objectType.getInternalName(), toPropertyGetName(fieldName), Type.getMethodDescriptor(fieldType), false);
 	}
 
+	public static void visitGetStaticField(MethodVisitor mv, Type objectType, String fieldName, Type fieldType) {
+		mv.visitFieldInsn(GETSTATIC, objectType.getInternalName(), fieldName, fieldType.getDescriptor());
+	}
+
 	public static void visitInitObject(MethodVisitor mv, int index) {
 		mv.visitVarInsn(ALOAD, index);
 		mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
@@ -335,6 +339,10 @@ public class AsmBuilder {
 		mv.visitFieldInsn(PUTFIELD, objectType.getInternalName(), fieldName, fieldType.getDescriptor());
 	}
 
+	public static void visitPutStaticField(MethodVisitor mv, Type objectType, String fieldName, Type fieldType) {
+		mv.visitFieldInsn(PUTSTATIC, objectType.getInternalName(), fieldName, fieldType.getDescriptor());
+	}
+
 	public static void visitReturn(MethodVisitor mv) {
 		mv.visitInsn(RETURN);
 	}
@@ -354,6 +362,10 @@ public class AsmBuilder {
 	public static void visitSetProperty(MethodVisitor mv, Type objectType, String fieldName, Type fieldType) {
 		mv.visitMethodInsn(INVOKEVIRTUAL, objectType.getInternalName(), toPropertySetName(fieldName), Type.getMethodDescriptor(Type.VOID_TYPE, fieldType),
 		        false);
+	}
+
+	public static void visitTypeInsn(MethodVisitor mv, int opcode, String type) {
+		mv.visitTypeInsn(opcode, type);
 	}
 
 	// public static void visitSetProperty(MethodVisitor mv, int objectIndex,

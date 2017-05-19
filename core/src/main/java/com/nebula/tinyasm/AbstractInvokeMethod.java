@@ -6,9 +6,7 @@ import org.objectweb.asm.Type;
 import com.nebula.tinyasm.api.Instance;
 import com.nebula.tinyasm.api.InvokeMethod;
 import com.nebula.tinyasm.api.MethodCode;
-import com.nebula.tinyasm.api.MethodUseCaller;
 import com.nebula.tinyasm.util.AsmBuilder;
-import com.nebula.tinyasm.util.Field;
 
 abstract class AbstractInvokeMethod<M, C extends MethodCode<M, C>> implements InvokeMethod<M, C> {
 	AbstractInvokeMethod(MethodVisitor mv) {
@@ -16,19 +14,30 @@ abstract class AbstractInvokeMethod<M, C extends MethodCode<M, C>> implements In
 	}
 
 	@Override
-	public Instance<M, C> get(Field field) {
-		AsmBuilder.visitGetField(mv, getType(), field.name, field.type);
-		code().type(field.type);
-		return topInstance();
+	public Instance<M, C> get(String fieldName, Type fieldType) {
+		AsmBuilder.visitGetField(mv, getType(), fieldName, fieldType);
+		return code().type(fieldType);
+	}
+
+	@Override
+	public Instance<M, C> getStatic(String fieldName, Type fieldType) {
+		AsmBuilder.visitGetStaticField(mv, getType(), fieldName, fieldType);
+		return code().type(fieldType);
+	}
+
+	@Override
+	public C putStaticTo(String fieldName, Type fieldType) {
+		AsmBuilder.visitPutStaticField(mv, getType(), fieldName, fieldType);
+		return code();
+	}
+
+	@Override
+	public C putTo(String fieldName, Type fieldType) {
+		AsmBuilder.visitPutField(mv, getType(), fieldName, fieldType);
+		return code();
 	}
 
 	MethodVisitor mv;
-
-	@Override
-	public C putTo(Field field) {
-		AsmBuilder.visitPutField(mv, getType(), field.name, field.type);
-		return code();
-	}
 
 	@Override
 	public void invoke(Type objectType, int invoketype, Type returnType, String methodName, Type... params) {

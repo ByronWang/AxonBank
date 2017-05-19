@@ -15,10 +15,36 @@ public interface InvokeMethod<M, C extends MethodCode<M, C>> extends Types, ToTy
 
 	C code();
 
-	Instance<M, C> get(Field field);
+	default Instance<M, C> get(Field field) {
+		return get(field.name, field.type);
+	}
+
+	default Instance<M, C> get(String fieldName, Class<?> fieldClass) {
+		return get(new Field(fieldName, typeOf(fieldClass)));
+	}
+
+	Instance<M, C> get(String fieldName, Type fieldType);
+
+	default Instance<M, C> get(String fieldName, Type fieldType, boolean array) {
+		return get(fieldName, arrayOf(fieldType, array));
+	}
 
 	default Instance<M, C> getProperty(String fieldName, Type fieldType) {
 		return invoke(INVOKEVIRTUAL, fieldType, toPropertyGetName(fieldName, fieldType));
+	}
+
+	default Instance<M, C> getStatic(Field field) {
+		return getStatic(field.name, field.type);
+	}
+
+	default Instance<M, C> getStatic(String fieldName, Class<?> fieldClass) {
+		return getStatic(new Field(fieldName, typeOf(fieldClass)));
+	}
+
+	Instance<M, C> getStatic(String fieldName, Type fieldType);
+
+	default Instance<M, C> getStatic(String fieldName, Type fieldType, boolean array) {
+		return getStatic(fieldName, arrayOf(fieldType, array));
 	}
 
 	default void invoke(Class<?> returnClass, String methodName, Class<?>... paramClasses) {
@@ -180,14 +206,32 @@ public interface InvokeMethod<M, C extends MethodCode<M, C>> extends Types, ToTy
 		return invoke(INVOKEVIRTUAL, returnType, methodName, params);
 	}
 
-	C putTo(Field field);
+	default C putStaticTo(Field field) {
+		return putStaticTo(field.name, field.type);
+	}
+
+	default C putStaticTo(String fieldName, Class<?> fieldClass) {
+		return putStaticTo(new Field(fieldName, typeOf(fieldClass)));
+	}
+
+	C putStaticTo(String fieldName, Type fieldType);
+
+	default C putStaticTo(String fieldName, Type fieldType, boolean array){
+		return putStaticTo(fieldName, arrayOf(fieldType, array));
+	}
+
+	default C putTo(Field field) {
+		return putTo(field.name, field.type);
+	}
 
 	default C putTo(String fieldName, Class<?> fieldClass) {
 		return putTo(new Field(fieldName, typeOf(fieldClass)));
 	}
 
-	default C putTo(String fieldName, Type fieldType) {
-		return putTo(new Field(fieldName, fieldType));
+	C putTo(String fieldName, Type fieldType);
+
+	default C putTo(String fieldName, Type fieldType, boolean array){
+		return putTo(fieldName, arrayOf(fieldType, array));
 	}
 
 	default Instance<M, C> topInstance() {

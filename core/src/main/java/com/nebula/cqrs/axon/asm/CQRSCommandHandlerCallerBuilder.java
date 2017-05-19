@@ -14,7 +14,7 @@ public class CQRSCommandHandlerCallerBuilder extends AxonAsmBuilder {
 
 	public static byte[] dump(Type handleType, Type objectType, Type domainType, Type commandType, Command command, DomainDefinition domainDefinition)
 	        throws Exception {
-		ClassBody cw = ClassBuilder.make(ACC_SUPER, objectType, Object.class, Consumer.class, domainType);
+		ClassBody cw = ClassBuilder.make(ACC_SUPER, objectType, Object.class, Consumer.class, new Type[] { domainType });
 		cw.visitor().visitInnerClass(objectType.getInternalName(), handleType.getInternalName(), "Inner" + command.commandName, 0);
 		cw.field("command", command.type);
 		cw.field(ACC_FINAL + ACC_SYNTHETIC, "this$0", handleType);

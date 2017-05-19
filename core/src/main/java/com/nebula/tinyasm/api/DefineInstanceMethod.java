@@ -14,6 +14,33 @@ public interface DefineInstanceMethod<C> extends Types {
 
 	MethodHeader<C> method(int access, Type returnType, String methodName, Class<?>... exceptionClasses);
 
+	
+	
+
+	default MethodHeader<C> method(Class<?> returnClass, String methodName) {
+		return method(0, typeOf(returnClass), methodName);
+	}
+
+	default MethodHeader<C> method(Class<?> returnClass, String methodName, Class<?>... exceptionClasses) {
+		return method(0, typeOf(returnClass), methodName, exceptionClasses);
+	}
+
+	default MethodHeader<C> method(String methodName) {
+		return method(0, Type.VOID_TYPE, methodName);
+	}
+
+	default MethodHeader<C> method(String methodName, Class<?>... exceptionClasses) {
+		return method(0, Type.VOID_TYPE, methodName, exceptionClasses);
+	}
+
+	default MethodHeader<C> method(Type returnType, String methodName) {
+		return method(0, returnType, methodName);
+	}
+
+	default MethodHeader<C> method(Type returnType, String methodName, Class<?>... exceptionClasses) {
+		return method(0, returnType, methodName, exceptionClasses);
+	}
+	
 	default MethodHeader<C> privateMethod(Class<?> returnClass, String methodName) {
 		return method(ACC_PRIVATE, typeOf(returnClass), methodName);
 	}
@@ -38,6 +65,13 @@ public interface DefineInstanceMethod<C> extends Types {
 		return method(ACC_PRIVATE, returnType, methodName, exceptionClasses);
 	}
 
+
+
+	
+	
+	
+	
+	
 	default MethodHeader<C> protectdMethod(Class<?> returnClass, String methodName) {
 		return method(ACC_PROTECTED, typeOf(returnClass), methodName);
 	}

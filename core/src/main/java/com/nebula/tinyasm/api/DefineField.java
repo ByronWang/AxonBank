@@ -122,7 +122,9 @@ public interface DefineField<CR> extends Types {
 
 	CR field(int access, String fieldName, Type fieldType);
 	
-	CR field(int access, String fieldName, Type fieldType,boolean array);
+	default CR field(int access, String fieldName, Type fieldType,boolean array){
+		return field(access, fieldName, arrayOf(fieldType, array));
+	}
 
 	default CR field(int access, String fieldName, Class<?> fieldClass) {
 		return field(access, fieldName, typeOf(fieldClass));

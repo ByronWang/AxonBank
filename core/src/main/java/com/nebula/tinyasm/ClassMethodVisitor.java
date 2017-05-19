@@ -73,19 +73,19 @@ public class ClassMethodVisitor extends AbstractInstanceMethodVisitor<MethodHead
 		return thisInstance;
 	}
 
-
 	@Override
 	public ClassUseCaller useThis() {
 		loadThis();
-		return new RealThisUseCaller(mv,thisObjectType);
+		return new RealThisUseCaller(mv, thisObjectType);
 	}
+
 	@Override
 	public ClassUseCaller useTop(Type type) {
-		return new RealThisUseCaller(mv,type);
+		return new RealThisUseCaller(mv, type);
 	}
 
 	@Override
 	public ClassUseCaller useTopThis() {
-		return new RealThisUseCaller(mv,thisObjectType);
+		return new RealThisUseCaller(mv, thisObjectType);
 	}
 }

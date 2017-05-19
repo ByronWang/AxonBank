@@ -20,6 +20,8 @@ public interface MethodCode<M, C extends MethodCode<M, C>> extends Types {
 
 	C code();
 
+	Type thisType();
+
 	default C def(Field field) {
 		return def(field.name, field.type);
 	}
@@ -41,6 +43,10 @@ public interface MethodCode<M, C extends MethodCode<M, C>> extends Types {
 	}
 
 	C def(String fieldName, Type fieldType, String signature);
+
+	default C def(String fieldName, Type fieldType, boolean array) {
+		return def(fieldName, arrayOf(fieldType, array));
+	}
 
 	default C def(String fieldName, Type fieldType, Type... signatureTypes) {
 		String signature = null;
@@ -70,6 +76,12 @@ public interface MethodCode<M, C extends MethodCode<M, C>> extends Types {
 
 	void ldcInsn(Object cst);
 
+	void typeInsn(int opcode, Type type);
+
+	default void typeInsn(int opcode, Class<?> clz) {
+		typeInsn(opcode, typeOf(clz));
+	}
+
 	C line(int line);
 
 	void load(int... index);
@@ -79,7 +91,7 @@ public interface MethodCode<M, C extends MethodCode<M, C>> extends Types {
 	}
 
 	default Instance<M, C> newInstace(Class<?> clz) {
-		return newInstace(Type.getType(clz));
+		return newInstace(typeOf(clz));
 	}
 
 	Instance<M, C> newInstace(Type type);
@@ -115,6 +127,10 @@ public interface MethodCode<M, C extends MethodCode<M, C>> extends Types {
 	}
 
 	Instance<M, C> type(Type objectType);
+
+	default Instance<M, C> typeThis() {
+		return type(thisType());
+	}
 
 	default M use(Function<C, ToType> func) {
 		ToType toType = func.apply(code());
