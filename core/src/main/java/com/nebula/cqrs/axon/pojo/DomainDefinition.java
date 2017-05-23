@@ -47,7 +47,17 @@ public class DomainDefinition {
 		for (int i = 1; i < names.length; i++) {
 			retName += toCamelUpper(names[i]);
 		}
-		return Type.getObjectType(fullnameOf(retName).replace('.', '/'));
+		String name = packageName + ".generatedsources." + defineName + "." + toCamelUpper(retName);
+		return Type.getObjectType(name.replace('.', '/'));
+	}
+
+	public Type apitypeOf(String... names) {
+		String retName = names[0];
+		for (int i = 1; i < names.length; i++) {
+			retName += toCamelUpper(names[i]);
+		}
+		String name = packageName + ".generatedsources." + defineName + ".api." + toCamelUpper(retName);
+		return Type.getObjectType(name.replace('.', '/'));
 	}
 
 	public String fullnameOf(String name) {

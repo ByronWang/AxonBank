@@ -11,7 +11,7 @@ public class StatusBuilder implements Opcodes {
 	public static byte[] dump(Type objectType, String... names) {
 		Type superType = Type.getObjectType("java/lang/Enum");
 
-		ClassBody cb = ClassBuilder.make(ACC_FINAL + ACC_SUPER + ACC_ENUM, objectType, superType, new Type[] { objectType });
+		ClassBody cb = ClassBuilder.make(ACC_PUBLIC + ACC_FINAL + ACC_SUPER + ACC_ENUM, objectType, superType, new Type[] { objectType });
 
 		for (String name : names) {
 			cb.field(ACC_PUBLIC + ACC_FINAL + ACC_STATIC + ACC_ENUM, name, objectType);

@@ -23,7 +23,7 @@ import com.nebula.cqrs.core.CqrsEntity;
 
 @CqrsEntity
 @Aggregate
-public class MyBankAccount {
+public class BankAccount {
 
 	@AggregateIdentifier
 	private String axonBankAccountId;
@@ -31,11 +31,11 @@ public class MyBankAccount {
 	private long balance;
 
 	@SuppressWarnings("unused")
-	private MyBankAccount() {
+	private BankAccount() {
 	}
 
 	// BankAccountCreateCommand
-	public MyBankAccount(String axonBankAccountId, long overdraftLimit) {
+	public BankAccount(String axonBankAccountId, long overdraftLimit) {
 		onCreated(axonBankAccountId, overdraftLimit);// BankAccountCreatedEvent
 	}
 
@@ -55,7 +55,7 @@ public class MyBankAccount {
 		}
 	}
 
-	public static boolean bankTransfer(MyBankAccount source, MyBankAccount destination, long amount) {
+	public static boolean bankTransfer(BankAccount source, BankAccount destination, long amount) {
 		/* On BankTransferCreatedEvent */ {
 
 			/* BankTransferSourceDebitCommand */if (source.debit(amount)) {
