@@ -9,6 +9,9 @@ import com.nebula.tinyasm.api.ClassBody;
 public class StatusBuilder implements Opcodes {
 
 	public static byte[] dump(Type objectType, String... names) {
+		return build(objectType, names).toByteArray();
+	}
+	public static ClassBody build(Type objectType, String... names) {
 		Type superType = Type.getObjectType("java/lang/Enum");
 
 		ClassBody cb = ClassBuilder.make(ACC_PUBLIC + ACC_FINAL + ACC_SUPER + ACC_ENUM, objectType, superType, new Type[] { objectType });
@@ -88,7 +91,6 @@ public class StatusBuilder implements Opcodes {
 			mc.checkCast(objectType);
 			mc.returnObject();
 		});
-
-		return cb.toByteArray();
+		return cb;
 	}
 }

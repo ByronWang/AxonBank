@@ -22,9 +22,7 @@ import static org.objectweb.asm.Opcodes.SASTORE;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Stack;
 
 import javax.inject.Inject;
@@ -36,6 +34,8 @@ import org.axonframework.commandhandling.GenericCommandMessage;
 import org.axonframework.commandhandling.TargetAggregateIdentifier;
 import org.axonframework.commandhandling.model.AggregateIdentifier;
 import org.axonframework.commandhandling.model.AggregateLifecycle;
+import org.axonframework.commandhandling.model.Repository;
+import org.axonframework.eventhandling.EventBus;
 import org.axonframework.eventhandling.EventHandler;
 import org.axonframework.eventhandling.saga.SagaEventHandler;
 import org.axonframework.eventhandling.saga.StartSaga;
@@ -46,8 +46,6 @@ import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.nebula.cqrs.axon.ClassLoaderDebuger;
-import com.nebula.cqrs.axon.MyClassLoader;
 import com.nebula.cqrs.axon.asm.AnalyzeEventsClassVisitor;
 import com.nebula.cqrs.axon.asm.AnalyzeFieldClassVisitor;
 import com.nebula.cqrs.axon.pojo.DomainDefinition;
@@ -55,46 +53,22 @@ import com.nebula.tinyasm.ClassBuilder;
 import com.nebula.tinyasm.StatusBuilder;
 import com.nebula.tinyasm.Variable;
 import com.nebula.tinyasm.ana.Block.BlockType;
-import com.nebula.tinyasm.ana.BankAccount;
 import com.nebula.tinyasm.api.ClassBody;
 import com.nebula.tinyasm.api.ClassMethodCode;
 import com.nebula.tinyasm.api.Types;
+import com.nebula.tinyasm.builder.Context;
+import com.nebula.tinyasm.builder.DomainBuilder;
 import com.nebula.tinyasm.util.AnalyzeMethodParamsClassVisitor;
 import com.nebula.tinyasm.util.AsmBuilder;
 import com.nebula.tinyasm.util.Field;
 import com.nebula.tinyasm.util.MethodInfo;
 
 class ByteCodeAnaMethodVisitor extends MethodVisitor {
-	private final static Logger LOGGER = LoggerFactory.getLogger(ByteCodeAnaMethodVisitor.class);
-
-	Map<String, Class<?>> definedTypes = new HashMap<>();
-
-	static private DomainDefinition analyzeDomain(String srcDomainName, Type srcDomainType) throws IOException {
-		final DomainDefinition domainDefinition;
-		domainDefinition = new DomainDefinition(srcDomainName, srcDomainType);
-		ClassReader cr = new ClassReader(srcDomainType.getClassName());
-
-		{
-			AnalyzeMethodParamsClassVisitor analyzeMethodParamsClassVisitor = new AnalyzeMethodParamsClassVisitor();
-			AnalyzeFieldClassVisitor analyzeFieldClassVisitor = new AnalyzeFieldClassVisitor(analyzeMethodParamsClassVisitor);
-			cr.accept(analyzeFieldClassVisitor, 0);
-			domainDefinition.menthods = analyzeMethodParamsClassVisitor.getMethods();
-			domainDefinition.fields = analyzeFieldClassVisitor.finished().toArray(new Field[0]);
-			for (Field field : domainDefinition.fields) {
-				if (field.identifier) {
-					domainDefinition.identifierField = field;
-				}
-			}
-		}
-
-		{
-			AnalyzeEventsClassVisitor analyzeEventsClassVisitor = new AnalyzeEventsClassVisitor(domainDefinition);
-			cr.accept(analyzeEventsClassVisitor, 0);
-			domainDefinition.realEvents = analyzeEventsClassVisitor.finished();
-		}
-
-		return domainDefinition;
+	enum Status {
+		Completed, Failed, Started
 	}
+
+	private final static Logger LOGGER = LoggerFactory.getLogger(ByteCodeAnaMethodVisitor.class);
 
 	public static void main(String[] args) throws IOException {
 		Type domainType = Type.getType(BankAccount.class);
@@ -103,59 +77,75 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 
 		String srcDomainName = AsmBuilder.toSimpleName(domainType.getClassName());
 
-		DomainDefinition domainDefinition = analyzeDomain(srcDomainName, domainType);
+		DomainBuilder domainBuilder = new DomainBuilder(srcDomainName, domainType, cr);
 
-		AnalyzeMethodParamsClassVisitor analyzeMethodParamsClassVisitor = new AnalyzeMethodParamsClassVisitor();
-		cr.accept(analyzeMethodParamsClassVisitor, ClassReader.SKIP_FRAMES);
-		ByteCodeAnaClassVisitor anaClassVisitor = new ByteCodeAnaClassVisitor(domainDefinition);
-		cr.accept(anaClassVisitor, ClassReader.EXPAND_FRAMES);
+		// AnalyzeMethodParamsClassVisitor analyzeMethodParamsClassVisitor = new
+		// AnalyzeMethodParamsClassVisitor();
+		// cr.accept(analyzeMethodParamsClassVisitor, ClassReader.SKIP_FRAMES);
+		
+		SagaClassListener anaClassVisitor = new SagaClassListener();
+		domainBuilder.visit(anaClassVisitor);
+
+		domainBuilder.finished();
+	}
+
+	static String repeat(String str, int times) {
+		StringBuffer sb = new StringBuffer();
+		for (int i = 0; i < times; i++) {
+			sb.append(str);
+		}
+		return sb.toString();
 	}
 
 	int blockIndex = 0;
 
 	Stack<Block> blockStack = new Stack<>();
+	ClassBody commandHandlerBody;
 
-	MyClassLoader classLoader111 = new ClassLoaderDebuger();
-	// Block currentBlock;
-	DomainDefinition domainDefinition;
+	Type commandHandlerType;
 
-	boolean done = false;
+	final Context context;
 
-	int[] localsOfVar;
-
-	int loop = 0;
-
-	String methodName = null;
-	Variable NA = new Variable("NA", Type.VOID_TYPE);
-	ClassBody sagaClassBody;
-	Field sagaIdField;
-	String sagaName = null;
-
-	ClassBody sagaObjectClassBody;
-
-	Type sagaObjectType;
-
-	Type sagaType;
-
-	// ClassMethodCode sageStartEventHandle;
-	Stack<Variable> stack = new Stack<>();
-	// Block topBlock;
-	List<Variable> variablesList;
-	Type sagaReturnType;
-	List<Field> datasFieldsWithID;
 	List<Field> datasFields;
 
-	public ByteCodeAnaMethodVisitor(DomainDefinition domainDefinition, MethodVisitor mv, MethodInfo methodInfo, int access, String name, String desc,
-	        String signature) {
+	List<Field> datasFieldsWithID;
+	// Block currentBlock;
+	DomainDefinition domainDefinition;
+	boolean done = false;
+	int[] localsOfVar;
+	int loop = 0;
+	String methodName = null;
+
+	Variable NA = new Variable("NA", Type.VOID_TYPE);
+
+	ClassBody sagaClassBody;
+
+	Field sagaIdField;
+	ClassBody sagaManagementClassBody;
+
+	String sagaName = null;
+	Type sagaObjectType;
+	Type sagaReturnType;
+	Type sagaType;
+	// ClassMethodCode sageStartEventHandle;
+	Stack<Variable> stack = new Stack<>();
+
+	Type statusType;
+
+	// Block topBlock;
+	List<Variable> variablesList;
+
+	public ByteCodeAnaMethodVisitor(Context context, MethodVisitor mv, MethodInfo methodInfo, int access, String name, String desc, String signature) {
 		super(ASM5, mv);
+		this.context = context;
 		this.methodName = name;
 		this.variablesList = methodInfo.locals;
 		this.localsOfVar = Types.computerLocalsVariable(this.variablesList);
 
-		this.domainDefinition = domainDefinition;
+		this.domainDefinition = context.getDomainDefinition();
 		sagaObjectType = domainDefinition.typeOf(methodName);
-		sagaType = domainDefinition.typeOf(methodName + "ManagementSaga");
-
+		sagaType = domainDefinition.typeOf(methodName, "ManagementSaga");
+		commandHandlerType = domainDefinition.typeOf("CommandHandler");
 		datasFields = new ArrayList<>();
 
 		for (Field field : methodInfo.params) {
@@ -198,38 +188,13 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 		// System.out.println(sagaName + " -> on(" + createdEvent + ") {");
 	}
 
-	private void makeEndSaga(DomainDefinition domainDefinition, List<Field> datasFieldsWithID, String resultString, int resultValue) {
-		Type commandType = domainDefinition.apitypeOf(this.methodName, "Mark", resultString, "Command");
-		Type eventType = domainDefinition.apitypeOf(this.methodName, resultString, "Event");
-
-		byte[] commandCode = ClassBuilder.make(commandType).field(sagaIdField).readonlyPojo().toByteArray();
-		defineClass(commandType.getClassName(), commandCode);
-
-		byte[] eventCode = ClassBuilder.make(eventType).field(sagaIdField).readonlyPojo().toByteArray();
-		defineClass(eventType.getClassName(), eventCode);
-
-		sagaObjectClassBody.publicMethod("handle").annotation(CommandHandler.class).parameter("command", commandType).code(mc -> {
-			mc.newInstace(eventType);
-			mc.dup();
-			mc.object("command").getProperty(sagaIdField);
-			mc.type(eventType).invokeSpecial("<init>", sagaIdField);
-			mc.type(AggregateLifecycle.class).invokeStatic("apply", eventType);
-		});
-
-		sagaObjectClassBody.publicMethod("on").annotation(EventHandler.class).parameter("event", eventType).code(mc -> {
-			mc.loadThis();
-			mc.type(statusType).getStatic(resultString, statusType);
-			mc.type(mc.thisType()).putTo("status", statusType);
-		});
-	}
-
 	void blockCloseCurrent() {
 		makeBlockEnd();
 
 		Block previousBlock = blockStack.pop();
 		pop(stack.size() - previousBlock.startStackIndex);
 
-		LOGGER.debug("[]{}****}", ByteCodeAnaClassVisitor.repeat("    ", blockStack.size()));
+		LOGGER.debug("[]{}****}", repeat("    ", blockStack.size()));
 
 		switch (previousBlock.blockType) {
 		case IFBLOCK:
@@ -257,7 +222,7 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 	}
 
 	private void blockStartOfElse(String name, Label labelClose, Block.BlockType blockType, Block ifBlock) {
-		LOGGER.debug("[]{}else{****", ByteCodeAnaClassVisitor.repeat("    ", blockStack.size()));
+		LOGGER.debug("[]{}else{****", repeat("    ", blockStack.size()));
 		Block parentBlock = blockStack.peek();
 
 		Label thisLabelclose = labelClose;
@@ -270,7 +235,7 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 	}
 
 	private void blockStartOfResult(String name, Label labelClose) {
-		LOGGER.debug("[]{}if{****", ByteCodeAnaClassVisitor.repeat("    ", blockStack.size()));
+		LOGGER.debug("[]{}if{****", repeat("    ", blockStack.size()));
 		Block parentBlock = blockStack.peek();
 		Label thisLabelclose = labelClose;
 		if (labelClose == null) {
@@ -282,7 +247,7 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 	}
 
 	private void blockStartOfRoot(String name, List<Field> datasFields, Type createdEvent) {
-		LOGGER.debug("[]{}root{****", ByteCodeAnaClassVisitor.repeat("    ", blockStack.size()));
+		LOGGER.debug("[]{}root{****", repeat("    ", blockStack.size()));
 		Block nextBlock = blockStack.push(new Block(name, null, stack.size()));
 		makeBlockBeginOfRoot(nextBlock, datasFields, createdEvent);
 	}
@@ -301,16 +266,15 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 		}
 
 		final Type eventType = domainDefinition.apitypeOf(parentBlock.commandName, result, "Event");
-		byte[] eventCode = ClassBuilder.make(eventType).fields(parentBlock.eventFields).readonlyPojo().toByteArray();
-		defineClass(eventType.getClassName(), eventCode);
+		context.add(ClassBuilder.make(eventType).fields(parentBlock.eventFields).readonlyPojo());
 		makeBlockEnd();
-		block.code = sagaClassBody.publicMethod("on").annotation(SagaEventHandler.class, "associationProperty", sagaIdField.name).parameter("event", eventType)
-		        .begin();
+		block.code = sagaManagementClassBody.publicMethod("on").annotation(SagaEventHandler.class, "associationProperty", sagaIdField.name)
+		        .parameter("event", eventType).begin();
 	}
 
 	private void makeBlockBeginOfRoot(Block block, List<Field> datasFields, Type createdEvent) {
-		block.code = sagaClassBody.publicMethod("on").annotation(StartSaga.class).annotation(SagaEventHandler.class, "associationProperty", sagaIdField.name)
-		        .parameter("event", createdEvent).begin().block(mc -> {
+		block.code = sagaManagementClassBody.publicMethod("on").annotation(StartSaga.class)
+		        .annotation(SagaEventHandler.class, "associationProperty", sagaIdField.name).parameter("event", createdEvent).begin().block(mc -> {
 			        for (Field field : datasFields) {
 				        mc.loadThis();
 				        mc.object("event").getProperty(field);
@@ -319,28 +283,39 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 		        });
 	}
 
-	@Override
-	public void visitCode() {
-
-		statusType = domainDefinition.apitypeOf(this.methodName, "Status");
-		{
-			byte[] code = StatusBuilder.dump(statusType, Status.Started.name(), Status.Failed.name(), Status.Completed.name());
-			defineClass(statusType.getClassName(), code);
+	private void makeBlockEnd() {
+		ClassMethodCode code = currentBlock().code;
+		if (code != null) {
+			code.returnVoid();
+			code.end();
+			currentBlock().code = null;
 		}
-		sagaObjectClassBody = ClassBuilder.make(sagaObjectType).field(AggregateIdentifier.class, sagaIdField).fields(datasFields).field("status", statusType);
-		sagaClassBody = ClassBuilder.make(sagaType).field(ACC_PRIVATE + ACC_TRANSIENT, "commandBus", CommandBus.class)
-		        .definePropertySet(Inject.class, "commandBus", CommandBus.class).fields(datasFields);
+	}
+
+	private void makeCommandHandler() {
+		commandHandlerBody = ClassBuilder.make(commandHandlerType).field("repository", Repository.class, domainDefinition.implDomainType).field("eventBus",
+		        EventBus.class);
+		context.add("commandHandler", commandHandlerBody);
+		commandHandlerBody.publicMethod("<init>").parameter("repository", Repository.class, domainDefinition.implDomainType)
+		        .parameter("eventBus", EventBus.class).code(mb -> {
+			        mb.line(15).initObject();
+			        mb.loadThis().put("repository", "repository");
+			        mb.loadThis().put("eventBus", "eventBus");
+			        mb.returnVoid();
+		        });
+	}
+
+	private Type makeHandleCreate() {
 		Type createdCommand = domainDefinition.apitypeOf(methodName + "CreateCommand");
 		Type createdEvent = domainDefinition.apitypeOf(methodName + "CreatedEvent");
 		{
-			makeEvent(createdCommand, sagaIdField, datasFields);
+			context.add(createdCommand.getClassName(), ClassBuilder.make(createdCommand).field(TargetAggregateIdentifier.class, sagaIdField).fields(datasFields)
+			        .publicInitAllFields().defineAllPropetyGet().publicToStringWithAllFields());
 
-			makeEvent(createdEvent, sagaIdField, datasFields);
+			context.add(createdEvent.getClassName(), ClassBuilder.make(createdEvent).field(TargetAggregateIdentifier.class, sagaIdField).fields(datasFields)
+			        .publicInitAllFields().defineAllPropetyGet().publicToStringWithAllFields());
 
-			sagaObjectClassBody.publicMethod("<init>").code(mc -> {
-				mc.initObject();
-			});
-			sagaObjectClassBody.publicMethod("<init>").annotation(CommandHandler.class).parameter("command", createdCommand).code(mc -> {
+			sagaClassBody.publicMethod("<init>").annotation(CommandHandler.class).parameter("command", createdCommand).code(mc -> {
 				mc.initObject();
 				mc.newInstace(createdEvent);
 				mc.dup();
@@ -352,7 +327,7 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 
 			});
 
-			sagaObjectClassBody.publicMethod("on").annotation(EventHandler.class).parameter("event", createdEvent).code(mc -> {
+			sagaClassBody.publicMethod("on").annotation(EventHandler.class).parameter("event", createdEvent).code(mc -> {
 				for (Field field : datasFieldsWithID) {
 					mc.loadThis();
 					mc.object("event").getProperty(field);
@@ -363,21 +338,54 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 				mc.type(mc.thisType()).putTo("status", statusType);
 			});
 		}
-
-		blockStartOfRoot("on" + AsmBuilder.toSimpleName(sagaObjectType.getClassName()) + blockIndex++, datasFields, createdEvent);
-
-		if (Type.getType(boolean.class).getDescriptor().equals(sagaReturnType.getDescriptor())) {
-			makeEndSaga(domainDefinition, datasFieldsWithID, Status.Completed.name(), 1);
-			makeEndSaga(domainDefinition, datasFieldsWithID, Status.Failed.name(), 0);
-		}
-		super.visitCode();
+		return createdEvent;
 	}
 
-	enum Status {
-		Started, Failed, Completed
-	}
+	// private static void visitDefine_handle_execute(ClassBody cb, Type
+	// handleType, Type callerType, Type commandType, Type domainType, Field
+	// identifierField) {
+	// cb.publicMethod("handle",
+	// Exception.class).annotation(CommandHandler.class).parameter("command",
+	// commandType).code(mc -> {
+	// mc.def("aggregate", Aggregate.class, domainType);
+	// mc.line(27).loadThis().get("repository");
+	// mc.object("command").getProperty(identifierField);
+	// mc.type(Repository.class).invokeInterface(Aggregate.class, "load",
+	// identifierField.type).store("aggregate");
+	// mc.use("aggregate").with(m -> {
+	// mc.newInstace(callerType);
+	// mc.dup();
+	// mc.load("this");
+	// mc.load("command");
+	// mc.type(callerType).invokeSpecial("<init>", handleType, commandType);
+	// }).invokeInterface("execute", Consumer.class);
+	//
+	// mc.returnVoid();
+	// });
+	// }
 
-	Type statusType;
+	private void makeHandleEndOfSaga(DomainDefinition domainDefinition, List<Field> datasFieldsWithID, String resultString, int resultValue) {
+		Type commandType = domainDefinition.apitypeOf(this.methodName, "Mark", resultString, "Command");
+		Type eventType = domainDefinition.apitypeOf(this.methodName, resultString, "Event");
+
+		context.add(ClassBuilder.make(commandType).field(sagaIdField).readonlyPojo());
+
+		context.add(ClassBuilder.make(eventType).field(sagaIdField).readonlyPojo());
+
+		sagaClassBody.publicMethod("handle").annotation(CommandHandler.class).parameter("command", commandType).code(mc -> {
+			mc.newInstace(eventType);
+			mc.dup();
+			mc.object("command").getProperty(sagaIdField);
+			mc.type(eventType).invokeSpecial("<init>", sagaIdField);
+			mc.type(AggregateLifecycle.class).invokeStatic("apply", eventType);
+		});
+
+		sagaClassBody.publicMethod("on").annotation(EventHandler.class).parameter("event", eventType).code(mc -> {
+			mc.loadThis();
+			mc.type(statusType).getStatic(resultString, statusType);
+			mc.type(mc.thisType()).putTo("status", statusType);
+		});
+	}
 
 	private void makeFinished(int value) {
 
@@ -406,40 +414,6 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 		});
 	}
 
-	private void makeBlockEnd() {
-		ClassMethodCode code = currentBlock().code;
-		if (code != null) {
-			code.returnVoid();
-			code.end();
-			currentBlock().code = null;
-		}
-	}
-
-	void makeCommand(Type type, Field idField, List<Field> fields) {
-		if (definedTypes.containsKey(type.getInternalName())) return;
-		byte[] createdEventCode = ClassBuilder.make(type).field(idField).fields(fields).publicInitAllFields().defineAllPropetyGet()
-		        .publicToStringWithAllFields().toByteArray();
-		defineClass(type.getClassName(), createdEventCode);
-	}
-
-	public Class<?> defineClass(String name, byte[] binaryRepresentation) {
-		try {
-			if (definedTypes.containsKey(name)) return classLoader111.loadClass(name);
-			Class<?> clz = classLoader111.define(name, binaryRepresentation);
-			definedTypes.put(name, clz);
-			return clz;
-		} catch (ClassNotFoundException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	void makeEvent(Type type, Field idField, List<Field> fields) {
-		if (definedTypes.containsKey(type.getInternalName())) return;
-		byte[] createdEventCode = ClassBuilder.make(type).field(TargetAggregateIdentifier.class, idField).fields(fields).publicInitAllFields()
-		        .defineAllPropetyGet().publicToStringWithAllFields().toByteArray();
-		defineClass(type.getClassName(), createdEventCode);
-	}
-
 	private void makeInvokeCommand(int opcode, String owner, String name, String desc, boolean itf) {
 		Type[] types = Type.getArgumentTypes(desc);
 		Type returnType = Type.getReturnType(desc);
@@ -460,9 +434,8 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 		Type commandType = domainDefinition.apitypeOf(this.methodName, ownerField.name, name, "Command");
 
 		{// make command
-			byte[] code = ClassBuilder.make(commandType).field(TargetAggregateIdentifier.class, domainDefinition.identifierField).field(sagaIdField)
-			        .fields(methodParams).readonlyPojo().toByteArray();
-			defineClass(commandType.getClassName(), code);
+			context.add(ClassBuilder.make(commandType).field(TargetAggregateIdentifier.class, domainDefinition.identifierField).field(sagaIdField)
+			        .fields(methodParams).readonlyPojo());
 		}
 		if (Type.getType(boolean.class).getDescriptor().equals(returnType.getDescriptor())) {
 			List<Field> eventFields = new ArrayList<>();
@@ -503,6 +476,20 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 
 	}
 
+	private void makeSaga() {
+		sagaClassBody = ClassBuilder.make(sagaObjectType).field(AggregateIdentifier.class, sagaIdField).fields(datasFields).field("status", statusType);
+		context.add("saga", sagaClassBody);
+		sagaClassBody.publicMethod("<init>").code(mc -> {
+			mc.initObject();
+		});
+	}
+
+	private void makeSagaManagement() {
+		sagaManagementClassBody = ClassBuilder.make(sagaType).field(ACC_PRIVATE + ACC_TRANSIENT, "commandBus", CommandBus.class)
+		        .definePropertySet(Inject.class, "commandBus", CommandBus.class).fields(datasFields);
+		context.add("managementSaga", sagaManagementClassBody);
+	}
+
 	private Variable pop(int size) {
 		Variable var = null;
 		for (int i = 0; i < size; i++) {
@@ -541,24 +528,45 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 	}
 
 	@Override
+	public void visitCode() {
+
+		statusType = domainDefinition.apitypeOf(this.methodName, "Status");
+		{
+			context.add(StatusBuilder.build(statusType, Status.Started.name(), Status.Failed.name(), Status.Completed.name()));
+		}
+
+		makeSaga();
+
+		makeSagaManagement();
+
+		makeCommandHandler();
+
+		Type createdEvent = makeHandleCreate();
+
+		blockStartOfRoot("on" + AsmBuilder.toSimpleName(sagaObjectType.getClassName()) + blockIndex++, datasFields, createdEvent);
+
+		if (Type.getType(boolean.class).getDescriptor().equals(sagaReturnType.getDescriptor())) {
+			makeHandleEndOfSaga(domainDefinition, datasFieldsWithID, Status.Completed.name(), 1);
+			makeHandleEndOfSaga(domainDefinition, datasFieldsWithID, Status.Failed.name(), 0);
+		}
+		super.visitCode();
+	}
+
+	@Override
 	public void visitEnd() {
-		// LOGGER.debug("[]{}}", ByteCodeAnaClassVisitor.repeat(" ",
-		// blockStack.size()));
-		// LOGGER.debug("}");
 		blockCloseCurrent();
 		super.visitEnd();
 
-		// System.out.println("[[[ " + loop + " ]]]");
-		byte[] sageObjectCode = sagaObjectClassBody.end().toByteArray();
-		defineClass(sagaObjectType.getClassName(), sageObjectCode);
-
-		byte[] sageCode = sagaClassBody.end().toByteArray();
-		defineClass(sagaType.getClassName(), sageCode);
+		// byte[] sageObjectCode = sagaObjectClassBody.end().toByteArray();
+		// defineClass(sagaObjectType, sageObjectCode);
+		//
+		// byte[] sageCode = sagaClassBody.end().toByteArray();
+		// defineClass(sagaType, sageCode);
 	}
 
 	@Override
 	public void visitFieldInsn(int opcode, String owner, String name, String desc) {
-		LOGGER.debug("[]{}{}\t\t\t{}", ByteCodeAnaClassVisitor.repeat("    ", blockStack.size()), "visitFieldInsn", name);
+		LOGGER.debug("[]{}{}\t\t\t{}", repeat("    ", blockStack.size()), "visitFieldInsn", name);
 
 		if (opcode == GETSTATIC || opcode == GETFIELD) {
 			push("", Type.getType(desc));
@@ -571,7 +579,7 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 
 	@Override
 	public void visitIincInsn(int var, int increment) {
-		LOGGER.debug("[]{}{}\t\t\t{}", ByteCodeAnaClassVisitor.repeat("    ", blockStack.size()), "visitIincInsn", var);
+		LOGGER.debug("[]{}{}\t\t\t{}", repeat("    ", blockStack.size()), "visitIincInsn", var);
 
 		super.visitIincInsn(var, increment);
 		printStack();
@@ -579,7 +587,7 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 
 	@Override
 	public void visitInsn(int opcode) {
-		LOGGER.debug("[]{}{}\t\t\t{}", ByteCodeAnaClassVisitor.repeat("    ", blockStack.size()), "visitInsn", opcode);
+		LOGGER.debug("[]{}{}\t\t\t{}", repeat("    ", blockStack.size()), "visitInsn", opcode);
 
 		if (IRETURN <= opcode && opcode <= RETURN) {
 			makeFinished((Integer) stack.peek().value);
@@ -590,7 +598,7 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 			// mc.insn(IADD);
 			// mc.storeTop("i");
 			// });
-			LOGGER.debug("[]{}{}\t\t\t{}", ByteCodeAnaClassVisitor.repeat("    ", blockStack.size()), "return", (Integer) stack.peek().value);
+			LOGGER.debug("[]{}{}\t\t\t{}", repeat("    ", blockStack.size()), "return", (Integer) stack.peek().value);
 		}
 
 		int cnt = Types.SIZE[opcode];
@@ -610,7 +618,7 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 
 	@Override
 	public void visitIntInsn(int opcode, int operand) {
-		LOGGER.debug("[]{}{}\t\t\t{}", ByteCodeAnaClassVisitor.repeat("    ", blockStack.size()), "visitIntInsn", operand);
+		LOGGER.debug("[]{}{}\t\t\t{}", repeat("    ", blockStack.size()), "visitIntInsn", operand);
 
 		int cnt = Types.SIZE[opcode];
 		if (cnt > 0) {
@@ -624,7 +632,7 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 
 	@Override
 	public void visitJumpInsn(int opcode, Label label) {
-		LOGGER.debug("[]{}jump", ByteCodeAnaClassVisitor.repeat("    ", blockStack.size()));
+		LOGGER.debug("[]{}jump", repeat("    ", blockStack.size()));
 		if (opcode == GOTO) {
 			currentBlock().elseLabel = label;
 
@@ -651,7 +659,7 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 
 	@Override
 	public void visitLabel(Label label) {
-		LOGGER.debug("[]{}{}\t\t\t{}", ByteCodeAnaClassVisitor.repeat("    ", blockStack.size()), "label", label);
+		LOGGER.debug("[]{}{}\t\t\t{}", repeat("    ", blockStack.size()), "label", label);
 		if (blockStack.size() > 0 && label == currentBlock().labelClose) {
 			blockCloseCurrent();
 		}
@@ -661,7 +669,7 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 
 	@Override
 	public void visitLdcInsn(Object cst) {
-		LOGGER.debug("[]{}{}\t\t\t{}", ByteCodeAnaClassVisitor.repeat("    ", blockStack.size()), "visitLdcInsn", cst);
+		LOGGER.debug("[]{}{}\t\t\t{}", repeat("    ", blockStack.size()), "visitLdcInsn", cst);
 
 		push("", Type.getType(cst.getClass()));
 
@@ -676,7 +684,7 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 
 	@Override
 	public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-		LOGGER.debug("[]{}{}\t\t\t{}", ByteCodeAnaClassVisitor.repeat("    ", blockStack.size()), "visitMethodInsn", name);
+		LOGGER.debug("[]{}{}\t\t\t{}", repeat("    ", blockStack.size()), "visitMethodInsn", name);
 		if (opcode == INVOKESTATIC) {
 			Type[] params = Type.getArgumentTypes(desc);
 			for (int i = params.length - 1; i >= 0; i--) {
@@ -708,7 +716,7 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 
 	@Override
 	public void visitTypeInsn(int opcode, String type) {
-		LOGGER.debug("[]{}{}\t\t\t{}", ByteCodeAnaClassVisitor.repeat("    ", blockStack.size()), "visitTypeInsn", type);
+		LOGGER.debug("[]{}{}\t\t\t{}", repeat("    ", blockStack.size()), "visitTypeInsn", type);
 		if (opcode == NEW) {
 			push("", Type.getObjectType(type));
 		}
@@ -718,7 +726,7 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 
 	@Override
 	public void visitVarInsn(int opcode, int varLocal) {
-		LOGGER.debug("[]{}{}\t\t\t{}", ByteCodeAnaClassVisitor.repeat("    ", blockStack.size()), "visitVarInsn", varLocal);
+		LOGGER.debug("[]{}{}\t\t\t{}", repeat("    ", blockStack.size()), "visitVarInsn", varLocal);
 		if (ILOAD <= opcode && opcode <= SALOAD) {
 			Variable var = variablesList.get(localsOfVar[varLocal]);
 			push(var.name, var.type);
