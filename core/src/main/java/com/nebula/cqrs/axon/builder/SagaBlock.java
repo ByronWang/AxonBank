@@ -8,12 +8,12 @@ import org.objectweb.asm.Type;
 import com.nebula.tinyasm.api.ClassMethodCode;
 import com.nebula.tinyasm.util.Field;
 
-class Block {
+class SagaBlock {
 	enum BlockType {
 		ELSEBLOCK, IFBLOCK, METHODBLOCK, VITUALBLOCK
 	}
 
-	Block.BlockType blockType = BlockType.METHODBLOCK;
+	SagaBlock.BlockType blockType = BlockType.METHODBLOCK;
 
 	Label elseLabel;
 
@@ -22,14 +22,14 @@ class Block {
 	String name;
 	final int startStackIndex;
 
-	public Block(String name, final int startStackIndex) {
+	public SagaBlock(String name, final int startStackIndex) {
 		super();
 		this.name = name;
 		this.blockType = BlockType.METHODBLOCK;
 		this.startStackIndex = startStackIndex;
 	}
 
-	public Block(String name, Label label, Block.BlockType blockType, final int startStackIndex) {
+	public SagaBlock(String name, Label label, SagaBlock.BlockType blockType, final int startStackIndex) {
 		super();
 		this.name = name;
 		this.labelClose = label;
@@ -37,7 +37,7 @@ class Block {
 		this.startStackIndex = startStackIndex;
 	}
 
-	public Block(String name, Label labelClose, final int startStackIndex) {
+	public SagaBlock(String name, Label labelClose, final int startStackIndex) {
 		super();
 		this.name = name;
 		this.labelClose = labelClose;

@@ -19,7 +19,7 @@ import com.nebula.tinyasm.util.AsmBuilderHelper;
 import com.nebula.tinyasm.util.ConvertFromParamsToClassMethodVisitor;
 import com.nebula.tinyasm.util.Field;
 
-public class CQRSEventClassListener extends ClassVisitor implements ClassListener, Types {
+public class CQRSEventClassListener extends ClassVisitor implements DomainListener, Types {
 
 	public CQRSEventClassListener() {
 		super(ASM5);

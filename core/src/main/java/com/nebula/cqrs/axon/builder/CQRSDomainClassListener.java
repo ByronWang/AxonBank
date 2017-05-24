@@ -5,7 +5,7 @@ import org.objectweb.asm.MethodVisitor;
 
 import com.nebula.tinyasm.ClassBuilder;
 
-public class CQRSDomainClassListener extends ClassBuilder implements ClassListener {
+public class CQRSDomainClassListener extends ClassBuilder implements DomainListener {
 
 	public CQRSDomainClassListener() {
 		super();

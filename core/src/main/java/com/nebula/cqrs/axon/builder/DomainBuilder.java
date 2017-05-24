@@ -78,7 +78,7 @@ public class DomainBuilder implements DomainContext {
 		cr.accept(classVisitor, ClassReader.SKIP_FRAMES);
 	}
 
-	public void visit(ClassListener classListener) {
+	public void visit(DomainListener classListener) {
 		cr.accept(classListener.listen(this), ClassReader.SKIP_FRAMES);
 	}
 

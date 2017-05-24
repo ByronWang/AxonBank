@@ -46,7 +46,7 @@ import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.nebula.cqrs.axon.builder.Block.BlockType;
+import com.nebula.cqrs.axon.builder.SagaBlock.BlockType;
 import com.nebula.cqrs.axon.pojo.DomainDefinition;
 import com.nebula.tinyasm.ClassBuilder;
 import com.nebula.tinyasm.StatusBuilder;
@@ -93,7 +93,7 @@ class SagaMethodVisitor extends MethodVisitor {
 
 	int blockIndex = 0;
 
-	Stack<Block> blockStack = new Stack<>();
+	Stack<SagaBlock> blockStack = new Stack<>();
 	ClassBody commandHandlerBody;
 
 	Type commandHandlerType;
@@ -185,7 +185,7 @@ class SagaMethodVisitor extends MethodVisitor {
 	void blockCloseCurrent() {
 		makeBlockEnd();
 
-		Block previousBlock = blockStack.pop();
+		SagaBlock previousBlock = blockStack.pop();
 		pop(stack.size() - previousBlock.startStackIndex);
 
 		LOGGER.debug("[]{}****}", repeat("    ", blockStack.size()));
@@ -215,42 +215,42 @@ class SagaMethodVisitor extends MethodVisitor {
 		printStack();
 	}
 
-	private void blockStartOfElse(String name, Label labelClose, Block.BlockType blockType, Block ifBlock) {
+	private void blockStartOfElse(String name, Label labelClose, SagaBlock.BlockType blockType, SagaBlock ifBlock) {
 		LOGGER.debug("[]{}else{****", repeat("    ", blockStack.size()));
-		Block parentBlock = blockStack.peek();
+		SagaBlock parentBlock = blockStack.peek();
 
 		Label thisLabelclose = labelClose;
 		if (labelClose == null) {
 			thisLabelclose = parentBlock.labelClose;
 		}
 
-		Block nextBlock = blockStack.push(new Block(name, thisLabelclose, blockType, ifBlock.startStackIndex));
+		SagaBlock nextBlock = blockStack.push(new SagaBlock(name, thisLabelclose, blockType, ifBlock.startStackIndex));
 		makeBlockBeginOfResult(parentBlock, nextBlock);
 	}
 
 	private void blockStartOfResult(String name, Label labelClose) {
 		LOGGER.debug("[]{}if{****", repeat("    ", blockStack.size()));
-		Block parentBlock = blockStack.peek();
+		SagaBlock parentBlock = blockStack.peek();
 		Label thisLabelclose = labelClose;
 		if (labelClose == null) {
 			thisLabelclose = parentBlock.labelClose;
 		}
 
-		Block nextBlock = blockStack.push(new Block(name, thisLabelclose, stack.size()));
+		SagaBlock nextBlock = blockStack.push(new SagaBlock(name, thisLabelclose, stack.size()));
 		makeBlockBeginOfResult(parentBlock, nextBlock);
 	}
 
 	private void blockStartOfRoot(String name, List<Field> datasFields, Type createdEvent) {
 		LOGGER.debug("[]{}root{****", repeat("    ", blockStack.size()));
-		Block nextBlock = blockStack.push(new Block(name, null, stack.size()));
+		SagaBlock nextBlock = blockStack.push(new SagaBlock(name, null, stack.size()));
 		makeBlockBeginOfRoot(nextBlock, datasFields, createdEvent);
 	}
 
-	private Block currentBlock() {
+	private SagaBlock currentBlock() {
 		return blockStack.peek();
 	}
 
-	private void makeBlockBeginOfResult(Block parentBlock, Block block) {
+	private void makeBlockBeginOfResult(SagaBlock parentBlock, SagaBlock block) {
 		String result = null;
 
 		if (block.blockType == BlockType.IFBLOCK) {
@@ -266,7 +266,7 @@ class SagaMethodVisitor extends MethodVisitor {
 		        .parameter("event", eventType).begin();
 	}
 
-	private void makeBlockBeginOfRoot(Block block, List<Field> datasFields, Type createdEvent) {
+	private void makeBlockBeginOfRoot(SagaBlock block, List<Field> datasFields, Type createdEvent) {
 		block.code = sagaManagementClassBody.publicMethod("on").annotation(StartSaga.class)
 		        .annotation(SagaEventHandler.class, "associationProperty", sagaIdField.name).parameter("event", createdEvent).begin().block(mc -> {
 			        for (Field field : datasFields) {

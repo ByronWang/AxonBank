@@ -27,7 +27,7 @@ import com.nebula.tinyasm.util.Field;
 import com.nebula.tinyasm.util.Lamba;
 import com.nebula.tinyasm.util.MethodInfo;
 
-public class CQRSCommandClassListener extends ClassVisitor implements ClassListener, Types {
+public class CQRSCommandClassListener extends ClassVisitor implements DomainListener, Types {
 
 	public CQRSCommandClassListener() {
 		super(ASM5);

@@ -7,7 +7,7 @@ import com.nebula.tinyasm.util.MethodInfo;
 
 import static org.objectweb.asm.Opcodes.*;
 
-public class SagaClassListener extends ClassVisitor implements ClassListener {
+public class SagaClassListener extends ClassVisitor implements DomainListener {
 
 	DomainContext context;
 	public SagaClassListener() {
