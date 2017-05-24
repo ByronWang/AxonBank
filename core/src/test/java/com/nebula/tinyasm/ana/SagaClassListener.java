@@ -30,7 +30,7 @@ public class SagaClassListener extends ClassVisitor implements ClassListener {
 	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
 		MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
 		if (is(access, ACC_PUBLIC) && is(access, ACC_STATIC)) {
-			MethodInfo method = context.getDomainDefinition().menthods.get(name);
+			MethodInfo method = context.getDomainDefinition().methods.get(name);
 			return new SagaMethodVisitor(context, mv, method, access, name, desc, signature);
 		} else {
 

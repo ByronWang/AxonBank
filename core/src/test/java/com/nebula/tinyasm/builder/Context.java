@@ -4,6 +4,7 @@ import org.objectweb.asm.Type;
 
 import com.nebula.cqrs.axon.pojo.DomainDefinition;
 import com.nebula.tinyasm.api.ClassBody;
+import com.nebula.tinyasm.builder.DomainBuilder.MethodProvider;
 
 public interface Context {
 	ClassBody add(String name, ClassBody cb);
@@ -15,4 +16,6 @@ public interface Context {
 	ClassBody get(Type type);
 
 	DomainDefinition getDomainDefinition();
+
+	void read(String name, MethodProvider provider);
 }

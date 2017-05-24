@@ -120,27 +120,27 @@ public class CQRSBuilder implements CQRSContext {
 
         byte[] code = cw.toByteArray();
 
-        classLoader.define(implDomainType.getClassName(), code);
+        classLoader.load(implDomainType.getClassName(), code);
 
         for (Event event : domainDefinition.realEvents.values()) {
             byte[] eventCode = CQRSEventRealBuilder.dump(event);
             LOGGER.debug("Create event [{}]", event.type.getClassName());
-            classLoader.define(event.type.getClassName(), eventCode);
+            classLoader.load(event.type.getClassName(), eventCode);
         }
         for (Event event : domainDefinition.virtualEvents.values()) {
             byte[] eventCode = CQRSEventAliasBuilder.dump(event);
             LOGGER.debug("Create command handler [{}]", event.type.getClassName());
-            classLoader.define(event.type.getClassName(), eventCode);
+            classLoader.load(event.type.getClassName(), eventCode);
         }
         for (Command command : domainDefinition.commands.values()) {
             if (command.ctorMethod) {
                 byte[] codeCommand = CQRSCommandBuilder.dump(command);
                 LOGGER.debug("Create command handler [{}]", command.type.getClassName());
-                classLoader.define(command.type.getClassName(), codeCommand);
+                classLoader.load(command.type.getClassName(), codeCommand);
             } else {
                 byte[] codeCommand = CQRSCommandBuilder.dump(command);
                 LOGGER.debug("Create command handler [{}]", command.type.getClassName());
-                classLoader.define(command.type.getClassName(), codeCommand);
+                classLoader.load(command.type.getClassName(), codeCommand);
             }
         }
     }
@@ -177,8 +177,8 @@ public class CQRSBuilder implements CQRSContext {
     }
 
     @SuppressWarnings("unchecked")
-    public <T> Class<T> defineClass(String name, byte[] b) {
-        return (Class<T>) this.classLoader.define(name, b);
+    public <T> void defineClass(String name, byte[] b) {
+        this.classLoader.load(name, b);
     }
 
 }

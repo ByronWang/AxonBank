@@ -6,16 +6,18 @@ import java.util.Map;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.MethodVisitor;
+
+import static org.objectweb.asm.Opcodes.ASM5;
 import org.objectweb.asm.Type;
 
 import com.nebula.cqrs.axon.ClassLoaderDebuger;
 import com.nebula.cqrs.axon.MyClassLoader;
 import com.nebula.cqrs.axon.asm.AnalyzeEventsClassVisitor;
 import com.nebula.cqrs.axon.asm.AnalyzeFieldClassVisitor;
-import com.nebula.cqrs.axon.asm.CQRSMakeDomainImplClassVisitor;
 import com.nebula.cqrs.axon.asm.RemoveCqrsAnnotationClassVisitor;
 import com.nebula.cqrs.axon.pojo.DomainDefinition;
-import com.nebula.tinyasm.ClassBuilder;
+import com.nebula.tinyasm.ana.DomainClassListener;
 import com.nebula.tinyasm.api.ClassBody;
 import com.nebula.tinyasm.util.AnalyzeMethodParamsClassVisitor;
 import com.nebula.tinyasm.util.Field;
@@ -25,16 +27,19 @@ public class DomainBuilder implements Context {
 
 	final ClassReader cr;
 	final DomainDefinition domainDefinition;
-	final ClassBody classBody;
+	// final ClassBody classBody;
 
 	final Map<String, ClassBody> types;
 
 	public DomainBuilder(String srcDomainName, Type srcDomainType, ClassReader cr) {
 		this.domainDefinition = new DomainDefinition(srcDomainName, srcDomainType);
-		this.cr = init(cr, srcDomainType, domainDefinition.implDomainType);
-		this.classBody = ClassBuilder.make(domainDefinition.implDomainType);
-		this.types = new HashMap<>();
 		initDefinition(cr, domainDefinition);
+		this.cr = init(cr, srcDomainType, domainDefinition.implDomainType);
+		this.types = new HashMap<>();
+
+		DomainClassListener domainObject = new DomainClassListener();
+		this.accept(domainObject);
+		this.add("impl", domainObject);
 	}
 
 	private static ClassReader init(ClassReader cr, Type domainType, Type implType) {
@@ -51,7 +56,7 @@ public class DomainBuilder implements Context {
 			AnalyzeMethodParamsClassVisitor analyzeMethodParamsClassVisitor = new AnalyzeMethodParamsClassVisitor();
 			AnalyzeFieldClassVisitor analyzeFieldClassVisitor = new AnalyzeFieldClassVisitor(analyzeMethodParamsClassVisitor);
 			cr.accept(analyzeFieldClassVisitor, 0);
-			domainDefinition.menthods = analyzeMethodParamsClassVisitor.getMethods();
+			domainDefinition.methods = analyzeMethodParamsClassVisitor.getMethods();
 			domainDefinition.fields = analyzeFieldClassVisitor.finished().toArray(new Field[0]);
 			for (Field field : domainDefinition.fields) {
 				if (field.identifier) {
@@ -99,17 +104,43 @@ public class DomainBuilder implements Context {
 	@Override
 	public ClassBody add(ClassBody cb) {
 		this.types.put(cb.getType().getClassName(), cb);
+		System.out.println(cb.getType().getInternalName());
 		return cb;
 	}
 
 	public void finished() {
-		for (ClassBody cb : types.values()) {
-			classLoader.define(cb.getType().getClassName(), cb.end().toByteArray());
+		try {
+			for (ClassBody cb : types.values()) {
+				classLoader.load(cb.getType().getClassName(), cb.end().toByteArray());
+			}
+			for (ClassBody cb : types.values()) {
+				classLoader.loadClass(cb.getType().getClassName());
+			}
+		} catch (ClassNotFoundException e) {
+			throw new RuntimeException(e);
 		}
 	}
 
 	@Override
 	public ClassBody get(Type type) {
 		return this.types.get(type.getClassName());
+	}
+
+	@Override
+	public void read(final String provideName, MethodProvider provider) {
+		this.cr.accept(new ClassVisitor(ASM5) {
+			@Override
+			public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+				if (provideName.equals(name)) {
+					return provider.visitMethod(access, name, desc, signature, exceptions);
+				} else {
+					return null;
+				}
+			}
+		}, ClassReader.SKIP_FRAMES);
+	}
+
+	interface MethodProvider {
+		MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions);
 	}
 }

@@ -28,19 +28,16 @@ public class MyClassLoader extends ClassLoader {
 		cp.concat(";").concat(root.getName());
 	}
 
-	public Class<?> define(String name, byte[] binaryRepresentation) {
+	public void load(String name, byte[] binaryRepresentation) {
 		writeToWithPackage(root, name, binaryRepresentation);
-//		LOGGER.debug("Define class [{}]", name);
-		// System.out.println("defineClass > " + name);
 		typeDefinitions.putIfAbsent(name, binaryRepresentation);
-		Class<?> type = defineClass(name, binaryRepresentation, 0, binaryRepresentation.length);;
-		return type;
 	}
 
-	public Class<?> define(String name, byte[] binaryRepresentation,boolean debug) {
-		return define(name, binaryRepresentation);
+	public void load(String name, byte[] binaryRepresentation, boolean debug) {
+		LOGGER.debug("Load class [{}]", name);
+		load(name, binaryRepresentation);
 	}
-	
+
 	@Override
 	protected Class<?> findClass(String name) throws ClassNotFoundException {
 		LOGGER.debug("Find class [{}]", name);

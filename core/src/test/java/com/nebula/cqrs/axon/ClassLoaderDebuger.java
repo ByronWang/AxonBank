@@ -10,13 +10,13 @@ import org.objectweb.asm.util.TraceClassVisitor;
 public class ClassLoaderDebuger extends MyClassLoader {
 
 	@Override
-	public Class<?> define(String name, byte[] binaryRepresentation, boolean debug) {
+	public void load(String name, byte[] binaryRepresentation, boolean debug) {
 		if (debug) {
 			ClassReader cr = new ClassReader(binaryRepresentation);
 			ClassVisitor visitor = new TraceClassVisitor(null, new ASMifier(), new PrintWriter(System.out));
 			cr.accept(visitor, ClassReader.EXPAND_FRAMES);
 		}
-		return super.define(name, binaryRepresentation);
+		super.load(name, binaryRepresentation);
 	}
 
 }
