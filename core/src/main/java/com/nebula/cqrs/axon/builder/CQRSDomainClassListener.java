@@ -1,22 +1,20 @@
-package com.nebula.tinyasm.ana;
+package com.nebula.cqrs.axon.builder;
 
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 
 import com.nebula.tinyasm.ClassBuilder;
-import com.nebula.tinyasm.builder.ClassListener;
-import com.nebula.tinyasm.builder.Context;
 
-public class DomainClassListener extends ClassBuilder implements ClassListener {
+public class CQRSDomainClassListener extends ClassBuilder implements ClassListener {
 
-	public DomainClassListener() {
+	public CQRSDomainClassListener() {
 		super();
 	}
 
-	Context context;
+	DomainContext context;
 
 	@Override
-	public ClassVisitor listen(Context context) {
+	public ClassVisitor listen(DomainContext context) {
 		this.context = context;
 		return this;
 	}

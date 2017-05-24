@@ -1,4 +1,4 @@
-package com.nebula.tinyasm.builder;
+package com.nebula.cqrs.axon.builder;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,13 +17,12 @@ import com.nebula.cqrs.axon.asm.AnalyzeEventsClassVisitor;
 import com.nebula.cqrs.axon.asm.AnalyzeFieldClassVisitor;
 import com.nebula.cqrs.axon.asm.RemoveCqrsAnnotationClassVisitor;
 import com.nebula.cqrs.axon.pojo.DomainDefinition;
-import com.nebula.tinyasm.ana.DomainClassListener;
 import com.nebula.tinyasm.api.ClassBody;
 import com.nebula.tinyasm.util.AnalyzeMethodParamsClassVisitor;
 import com.nebula.tinyasm.util.Field;
 import com.nebula.tinyasm.util.RenameClassVisitor;
 
-public class DomainBuilder implements Context {
+public class DomainBuilder implements DomainContext {
 
 	final ClassReader cr;
 	final DomainDefinition domainDefinition;
@@ -37,7 +36,7 @@ public class DomainBuilder implements Context {
 		this.cr = init(cr, srcDomainType, domainDefinition.implDomainType);
 		this.types = new HashMap<>();
 
-		DomainClassListener domainObject = new DomainClassListener();
+		CQRSDomainClassListener domainObject = new CQRSDomainClassListener();
 		this.accept(domainObject);
 		this.add("impl", domainObject);
 	}
@@ -104,7 +103,7 @@ public class DomainBuilder implements Context {
 	@Override
 	public ClassBody add(ClassBody cb) {
 		this.types.put(cb.getType().getClassName(), cb);
-		System.out.println(cb.getType().getInternalName());
+		System.out.println("add " + cb.getType().getInternalName());
 		return cb;
 	}
 

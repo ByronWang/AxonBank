@@ -28,66 +28,65 @@ import org.slf4j.LoggerFactory;
 public class BankAccount {
 	private final static Logger LOGGER = LoggerFactory.getLogger(BankAccount.class);
 
-    @AggregateIdentifier
-    private String id;
-    private long overdraftLimit;
-    private long balanceInCents;
+	@AggregateIdentifier
+	private String bankAccountId;
+	private long overdraftLimit;
+	private long balanceInCents;
 
-    @SuppressWarnings("unused")
-    private BankAccount() {
-    }
+	@SuppressWarnings("unused")
+	private BankAccount() {
+	}
 
-    public BankAccount(String bankAccountId, long overdraftLimit) {
-        apply(new BankAccountCreatedEvent(bankAccountId, overdraftLimit));
+	public BankAccount(String bankAccountId, long overdraftLimit) {
+		apply(new BankAccountCreatedEvent(bankAccountId, overdraftLimit));
 		LOGGER.debug("create BankAccount {}", this);
-    }
+	}
 
-    public void deposit(long amount) {
-        apply(new BankAccountMoneyDepositedEvent(id, amount));
+	public void deposit(long amount) {
+		apply(new BankAccountMoneyDepositedEvent(bankAccountId, amount));
 		LOGGER.debug("deposit {}", this);
-    }
+	}
 
-    public void withdraw(long amount) {
-        if (amount <= balanceInCents + overdraftLimit) {
-            apply(new BankAccountMoneyWithdrawnEvent(id, amount));
+	public void withdraw(long amount) {
+		if (amount <= balanceInCents + overdraftLimit) {
+			apply(new BankAccountMoneyWithdrawnEvent(bankAccountId, amount));
 			LOGGER.debug("withdraw {}", this);
-        }
-    }
+		}
+	}
 
-    public void debit(long amount, String bankTransferId) {
-        if (amount <= balanceInCents + overdraftLimit) {
-            apply(new BankTransferSourceDebitCompletedEvent(id, amount, bankTransferId));
-        }
-        else {
-            apply(new BankTransferSourceDebitFailedEvent(bankTransferId));
-        }
-    }
+	public void debit(long amount, String bankTransferId) {
+		if (amount <= balanceInCents + overdraftLimit) {
+			apply(new BankTransferSourceDebitCompletedEvent(bankAccountId, amount, bankTransferId));
+		} else {
+			apply(new BankTransferSourceDebitFailedEvent(bankTransferId));
+		}
+	}
 
-    public void credit(long amount, String bankTransferId) {
-        apply(new BankTransferDestinationCreditCompletedEvent(id, amount, bankTransferId));
-    }
+	public void credit(long amount, String bankTransferId) {
+		apply(new BankTransferDestinationCreditCompletedEvent(bankAccountId, amount, bankTransferId));
+	}
 
-    public void returnMoney(long amount) {
-        apply(new BankTransferSourceReturnedMoneyOfFailedEvent(id, amount));
-    }
+	public void returnMoney(long amount) {
+		apply(new BankTransferSourceReturnedMoneyOfFailedEvent(bankAccountId, amount));
+	}
 
-    @EventHandler
-    public void on(BankAccountCreatedEvent event) {
-        this.id = event.getId();
-        this.overdraftLimit = event.getOverdraftLimit();
-        this.balanceInCents = 0;
+	@EventHandler
+	public void on(BankAccountCreatedEvent event) {
+		this.bankAccountId = event.getBankAccountId();
+		this.overdraftLimit = event.getOverdraftLimit();
+		this.balanceInCents = 0;
 		LOGGER.debug("on BankAccountCreatedEvent {}", this);
-    }
+	}
 
-    @EventHandler
-    public void on(BankAccountMoneyAddedEvent event) {
-        balanceInCents += event.getAmount();
+	@EventHandler
+	public void on(BankAccountMoneyAddedEvent event) {
+		balanceInCents += event.getAmount();
 		LOGGER.debug("on BankAccountMoneyAddedEvent {}", this);
-    }
+	}
 
-    @EventHandler
-    public void on(BankAccountMoneySubtractedEvent event) {
-        balanceInCents -= event.getAmount();
+	@EventHandler
+	public void on(BankAccountMoneySubtractedEvent event) {
+		balanceInCents -= event.getAmount();
 		LOGGER.debug("on BankAccountMoneySubtractedEvent {}", this);
-    }
+	}
 }

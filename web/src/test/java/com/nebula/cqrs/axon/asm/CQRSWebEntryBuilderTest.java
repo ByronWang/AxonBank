@@ -42,7 +42,8 @@ public class CQRSWebEntryBuilderTest {
 
 		byte[] code = CQRSWebEntryBuilder.dump(objectType, objectFields.toArray(new Field[0]));
 
-		Class<?> clz = cqrs.defineClass(objectType.getClassName(), code);
+		cqrs.defineClass(objectType.getClassName(), code);
+		Class<?> clz = cqrs.loadClass(objectType.getClassName());
 		clz.newInstance();
 	}
 }

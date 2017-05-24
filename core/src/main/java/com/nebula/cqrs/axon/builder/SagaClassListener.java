@@ -1,23 +1,21 @@
-package com.nebula.tinyasm.ana;
+package com.nebula.cqrs.axon.builder;
 
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 
-import com.nebula.tinyasm.builder.ClassListener;
-import com.nebula.tinyasm.builder.Context;
 import com.nebula.tinyasm.util.MethodInfo;
 
 import static org.objectweb.asm.Opcodes.*;
 
 public class SagaClassListener extends ClassVisitor implements ClassListener {
 
-	Context context;
+	DomainContext context;
 	public SagaClassListener() {
 		super(ASM5);
 	}
 
 	@Override
-	public ClassVisitor listen(Context context) {
+	public ClassVisitor listen(DomainContext context) {
 		this.context = context;
 		return this;
 	}

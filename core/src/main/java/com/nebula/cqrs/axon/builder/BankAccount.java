@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.nebula.tinyasm.ana;
+package com.nebula.cqrs.axon.builder;
 
 import org.axonframework.commandhandling.model.AggregateIdentifier;
 import org.axonframework.spring.stereotype.Aggregate;

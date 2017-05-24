@@ -25,6 +25,7 @@ public class ClassBuilder extends ClassVisitor implements Opcodes, Types, ClassB
 	final static int THIS = 0;
 
 	final static String THIS_NAME = "this";
+
 	static public ClassBody make() {
 		ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
 		return new ClassBuilder(classWriter);
@@ -141,8 +142,10 @@ public class ClassBuilder extends ClassVisitor implements Opcodes, Types, ClassB
 	}
 
 	protected void addField(Field field) {
-		fieldsMap.put(field.name, field);
-		fieldsList.add(field);
+		if (!fieldsMap.containsKey(field.name)) {
+			fieldsMap.put(field.name, field);
+			fieldsList.add(field);
+		}
 	}
 
 	@Override
@@ -160,6 +163,8 @@ public class ClassBuilder extends ClassVisitor implements Opcodes, Types, ClassB
 
 	@Override
 	public ClassBody field(int access, String fieldName, Type fieldType) {
+		if (fieldsMap.containsKey(fieldName)) return this;
+
 		addField(new Field(fieldName, fieldType));
 		AsmBuilder.visitDefineField(cv, access, fieldName, fieldType);
 		return this;
@@ -167,6 +172,7 @@ public class ClassBuilder extends ClassVisitor implements Opcodes, Types, ClassB
 
 	@Override
 	public ClassBody field(int access, String fieldName, Type fieldType, String signature) {
+		if (fieldsMap.containsKey(fieldName)) return this;
 		addField(new ClassField(access, fieldName, fieldType, signature, null));
 		AsmBuilder.visitDefineField(cv, access, fieldName, fieldType, signature);
 		return this;
@@ -174,6 +180,7 @@ public class ClassBuilder extends ClassVisitor implements Opcodes, Types, ClassB
 
 	@Override
 	public ClassBody field(int access, Type annotationType, Object annotationValue, String fieldName, Type fieldType) {
+		if (fieldsMap.containsKey(fieldName)) return this;
 		addField(new ClassField(access, fieldName, fieldType, null, null));
 		AsmBuilder.visitDefineField(cv, access, fieldName, fieldType, annotationType, annotationValue);
 		return this;
@@ -181,6 +188,7 @@ public class ClassBuilder extends ClassVisitor implements Opcodes, Types, ClassB
 
 	@Override
 	public ClassBody field(int access, Type annotationType, Object annotationValue, String fieldName, Type fieldType, String signature) {
+		if (fieldsMap.containsKey(fieldName)) return this;
 		addField(new ClassField(access, fieldName, fieldType, signature, null));
 		AsmBuilder.visitDefineField(cv, access, fieldName, fieldType, signature, annotationType, annotationValue);
 		return this;
@@ -210,15 +218,18 @@ public class ClassBuilder extends ClassVisitor implements Opcodes, Types, ClassB
 		this.superType = superType;
 	}
 
-//	@Override
-//	public MethodHeader<ClassMethodCode> method(int access, String name, String desc, String signature, String[] exceptions) {
-//		Type returnType = Type.getReturnType(desc);
-//		
-//		MethodHeader<ClassMethodCode> mh = new ClassMethodVisitor(this, thisType, access, returnType, name, exceptions);
-//		
-//		
-//		return new ClassMethodVisitor(this, thisType, access, returnType, methodName, exceptions);
-//	}
+	// @Override
+	// public MethodHeader<ClassMethodCode> method(int access, String name,
+	// String desc, String signature, String[] exceptions) {
+	// Type returnType = Type.getReturnType(desc);
+	//
+	// MethodHeader<ClassMethodCode> mh = new ClassMethodVisitor(this, thisType,
+	// access, returnType, name, exceptions);
+	//
+	//
+	// return new ClassMethodVisitor(this, thisType, access, returnType,
+	// methodName, exceptions);
+	// }
 
 	@Override
 	public MethodHeader<ClassMethodCode> method(int access, Type returnType, String methodName, String[] exceptions) {

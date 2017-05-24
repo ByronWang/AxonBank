@@ -21,7 +21,7 @@ import lombok.Value;
 @Value
 public class BankAccountCreatedEvent {
 
-    private String id;
+    private String bankAccountId;
     private long overdraftLimit;
 
 }

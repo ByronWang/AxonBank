@@ -1,12 +1,12 @@
-package com.nebula.tinyasm.builder;
+package com.nebula.cqrs.axon.builder;
 
 import org.objectweb.asm.Type;
 
+import com.nebula.cqrs.axon.builder.DomainBuilder.MethodProvider;
 import com.nebula.cqrs.axon.pojo.DomainDefinition;
 import com.nebula.tinyasm.api.ClassBody;
-import com.nebula.tinyasm.builder.DomainBuilder.MethodProvider;
 
-public interface Context {
+public interface DomainContext {
 	ClassBody add(String name, ClassBody cb);
 
 	ClassBody add(ClassBody cb);

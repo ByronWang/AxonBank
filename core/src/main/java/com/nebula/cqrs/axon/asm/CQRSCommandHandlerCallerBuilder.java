@@ -19,15 +19,15 @@ public class CQRSCommandHandlerCallerBuilder extends AxonAsmBuilder {
 		cw.field("command", command.type);
 		cw.field(ACC_FINAL + ACC_SYNTHETIC, "this$0", handleType);
 
-		visitDefine_init(cw, handleType, command);
+		visitDefine_init(cw, handleType, command.type);
 		visitDefine_invoke(cw, domainType, command);
 		visitDefine_invoke_bridge(cw, domainType);
 
 		return cw.toByteArray();
 	}
 
-	private static void visitDefine_init(ClassBody cw, Type handleType, Command command) {
-		cw.publicMethod("<init>").parameter("handle", handleType).parameter("command", command.type).code(mb -> {
+	private static void visitDefine_init(ClassBody cw, Type handleType, Type commandType) {
+		cw.publicMethod("<init>").parameter("handle", handleType).parameter("command", commandType).code(mb -> {
 			mb.loadThis().put(1, "this$0");
 			mb.line(15).initObject();
 			mb.loadThis().put("command", "command");

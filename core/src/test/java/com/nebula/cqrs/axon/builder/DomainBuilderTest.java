@@ -1,4 +1,4 @@
-package com.nebula.tinyasm.builder;
+package com.nebula.cqrs.axon.builder;
 
 import java.io.IOException;
 
@@ -7,9 +7,6 @@ import org.objectweb.asm.Type;
 
 import com.nebula.cqrs.axon.pojo.DomainDefinition;
 import com.nebula.tinyasm.ClassBuilder;
-import com.nebula.tinyasm.ana.BankAccount;
-import com.nebula.tinyasm.ana.DomainCommandClassListener;
-import com.nebula.tinyasm.ana.DomainEventClassListener;
 import com.nebula.tinyasm.util.AsmBuilder;
 
 public class DomainBuilderTest {
@@ -26,11 +23,11 @@ public class DomainBuilderTest {
 		DomainDefinition dd = domainBuilder.getDomainDefinition();
 		domainBuilder.add("impl", ClassBuilder.make(dd.implDomainType).fields(dd.fields));
 
-		domainBuilder.visit(new DomainEventClassListener());
-		domainBuilder.visit(new DomainCommandClassListener());
-		
-//		SagaClassListener saga = new SagaClassListener();
-//		domainBuilder.visit(saga);
+		domainBuilder.visit(new CQRSEventClassListener());
+		domainBuilder.visit(new CQRSCommandClassListener());
+
+		// SagaClassListener saga = new SagaClassListener();
+		// domainBuilder.visit(saga);
 
 		domainBuilder.finished();
 	}

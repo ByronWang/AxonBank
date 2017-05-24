@@ -1,4 +1,4 @@
-package com.nebula.tinyasm.ana;
+package com.nebula.cqrs.axon.builder;
 
 import static com.nebula.tinyasm.util.AsmBuilder.toCamelUpper;
 import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
@@ -46,16 +46,14 @@ import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.nebula.cqrs.axon.builder.Block.BlockType;
 import com.nebula.cqrs.axon.pojo.DomainDefinition;
 import com.nebula.tinyasm.ClassBuilder;
 import com.nebula.tinyasm.StatusBuilder;
 import com.nebula.tinyasm.Variable;
-import com.nebula.tinyasm.ana.Block.BlockType;
 import com.nebula.tinyasm.api.ClassBody;
 import com.nebula.tinyasm.api.ClassMethodCode;
 import com.nebula.tinyasm.api.Types;
-import com.nebula.tinyasm.builder.Context;
-import com.nebula.tinyasm.builder.DomainBuilder;
 import com.nebula.tinyasm.util.AsmBuilder;
 import com.nebula.tinyasm.util.Field;
 import com.nebula.tinyasm.util.MethodInfo;
@@ -100,7 +98,7 @@ class SagaMethodVisitor extends MethodVisitor {
 
 	Type commandHandlerType;
 
-	final Context context;
+	final DomainContext context;
 
 	List<Field> datasFields;
 
@@ -131,7 +129,7 @@ class SagaMethodVisitor extends MethodVisitor {
 	// Block topBlock;
 	List<Variable> variablesList;
 
-	public SagaMethodVisitor(Context context, MethodVisitor mv, MethodInfo methodInfo, int access, String name, String desc, String signature) {
+	public SagaMethodVisitor(DomainContext context, MethodVisitor mv, MethodInfo methodInfo, int access, String name, String desc, String signature) {
 		super(ASM5, mv);
 		this.context = context;
 		this.methodName = name;
