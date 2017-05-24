@@ -75,7 +75,7 @@ public class DomainBuilder implements Context {
 		return this.types.get(name);
 	}
 
-	MyClassLoader classLoader111 = new ClassLoaderDebuger();
+	MyClassLoader classLoader = new ClassLoaderDebuger();
 
 	@Override
 	public DomainDefinition getDomainDefinition() {
@@ -90,7 +90,7 @@ public class DomainBuilder implements Context {
 
 	public void finished() {
 		for (ClassBody cb : types.values()) {
-			classLoader111.define(cb.getType().getClassName(), cb.end().toByteArray());
+			classLoader.define(cb.getType().getClassName(), cb.end().toByteArray());
 		}
 	}
 

@@ -46,8 +46,6 @@ import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.nebula.cqrs.axon.asm.AnalyzeEventsClassVisitor;
-import com.nebula.cqrs.axon.asm.AnalyzeFieldClassVisitor;
 import com.nebula.cqrs.axon.pojo.DomainDefinition;
 import com.nebula.tinyasm.ClassBuilder;
 import com.nebula.tinyasm.StatusBuilder;
@@ -58,17 +56,16 @@ import com.nebula.tinyasm.api.ClassMethodCode;
 import com.nebula.tinyasm.api.Types;
 import com.nebula.tinyasm.builder.Context;
 import com.nebula.tinyasm.builder.DomainBuilder;
-import com.nebula.tinyasm.util.AnalyzeMethodParamsClassVisitor;
 import com.nebula.tinyasm.util.AsmBuilder;
 import com.nebula.tinyasm.util.Field;
 import com.nebula.tinyasm.util.MethodInfo;
 
-class ByteCodeAnaMethodVisitor extends MethodVisitor {
+class SagaMethodVisitor extends MethodVisitor {
 	enum Status {
 		Completed, Failed, Started
 	}
 
-	private final static Logger LOGGER = LoggerFactory.getLogger(ByteCodeAnaMethodVisitor.class);
+	private final static Logger LOGGER = LoggerFactory.getLogger(SagaMethodVisitor.class);
 
 	public static void main(String[] args) throws IOException {
 		Type domainType = Type.getType(BankAccount.class);
@@ -79,10 +76,9 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 
 		DomainBuilder domainBuilder = new DomainBuilder(srcDomainName, domainType, cr);
 
-		// AnalyzeMethodParamsClassVisitor analyzeMethodParamsClassVisitor = new
-		// AnalyzeMethodParamsClassVisitor();
-		// cr.accept(analyzeMethodParamsClassVisitor, ClassReader.SKIP_FRAMES);
-		
+		DomainDefinition dd = domainBuilder.getDomainDefinition();
+		domainBuilder.add("impl", ClassBuilder.make(dd.implDomainType).fields(dd.fields));
+
 		SagaClassListener anaClassVisitor = new SagaClassListener();
 		domainBuilder.visit(anaClassVisitor);
 
@@ -135,7 +131,7 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 	// Block topBlock;
 	List<Variable> variablesList;
 
-	public ByteCodeAnaMethodVisitor(Context context, MethodVisitor mv, MethodInfo methodInfo, int access, String name, String desc, String signature) {
+	public SagaMethodVisitor(Context context, MethodVisitor mv, MethodInfo methodInfo, int access, String name, String desc, String signature) {
 		super(ASM5, mv);
 		this.context = context;
 		this.methodName = name;
@@ -145,7 +141,7 @@ class ByteCodeAnaMethodVisitor extends MethodVisitor {
 		this.domainDefinition = context.getDomainDefinition();
 		sagaObjectType = domainDefinition.typeOf(methodName);
 		sagaType = domainDefinition.typeOf(methodName, "ManagementSaga");
-		commandHandlerType = domainDefinition.typeOf("CommandHandler");
+		commandHandlerType = domainDefinition.topLeveltypeOf("CommandHandler");
 		datasFields = new ArrayList<>();
 
 		for (Field field : methodInfo.params) {

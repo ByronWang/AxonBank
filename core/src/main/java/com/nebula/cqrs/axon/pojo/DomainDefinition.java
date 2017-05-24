@@ -19,7 +19,7 @@ public class DomainDefinition {
 		this.defineType = defineType;
 		String className = defineType.getClassName();
 		packageName = className.substring(0, className.lastIndexOf('.'));
-		this.implDomainType = typeOf("Impl");
+		this.implDomainType = topLeveltypeOf("Impl");
 	}
 
 	public static String toCamelUpper(String name) {
@@ -48,6 +48,15 @@ public class DomainDefinition {
 			retName += toCamelUpper(names[i]);
 		}
 		String name = packageName + ".generatedsources." + defineName + "." + toCamelUpper(retName);
+		return Type.getObjectType(name.replace('.', '/'));
+	}
+
+	public Type topLeveltypeOf(String... names) {
+		String retName = names[0];
+		for (int i = 1; i < names.length; i++) {
+			retName += toCamelUpper(names[i]);
+		}
+		String name = packageName + ".generatedsources." + defineName + "." + defineName + toCamelUpper(retName);
 		return Type.getObjectType(name.replace('.', '/'));
 	}
 
