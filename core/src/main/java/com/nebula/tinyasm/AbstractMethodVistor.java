@@ -148,7 +148,7 @@ public abstract class AbstractMethodVistor<H, M, C extends MethodCode<M, C>> ext
 	List<Annotation> thisMethodAnnotations = new ArrayList<>();
 
 	// final Type thisType;
-	Class<?>[] thisMethodExceptionClasses;
+	String[] excptions;
 
 	private String thisMethodName;
 
@@ -178,13 +178,13 @@ public abstract class AbstractMethodVistor<H, M, C extends MethodCode<M, C>> ext
 
 	protected Stack<Variable> variablesStack = new Stack<>();
 
-	public AbstractMethodVistor(ClassVisitor cv, Type thisType, int access, Type returnType, String methodName, Class<?>... exceptionClasses) {
+	public AbstractMethodVistor(ClassVisitor cv, Type thisType, int access, Type returnType, String methodName, String[] exceptiones) {
 		super(ASM5);
 		this.cv = cv;
 		this.thisMethodName = methodName;
 		this.thisMethodAccess = access;
 		this.thisMethodReturnType = returnType;
-		this.thisMethodExceptionClasses = exceptionClasses;
+		this.excptions = exceptiones;
 		this.thisObjectType = thisType;
 	}
 
@@ -307,16 +307,6 @@ public abstract class AbstractMethodVistor<H, M, C extends MethodCode<M, C>> ext
 			if (definedSignature) {
 				signature = signatureFromParameter;
 			}
-		}
-
-		String[] excptions;
-		if (thisMethodExceptionClasses != null && thisMethodExceptionClasses.length > 0) {
-			excptions = new String[thisMethodExceptionClasses.length];
-			for (int i = 0; i < thisMethodExceptionClasses.length; i++) {
-				excptions[i] = Type.getInternalName(thisMethodExceptionClasses[i]);
-			}
-		} else {
-			excptions = new String[0];
 		}
 
 		this.mv = AsmBuilder.visitDefineMethod(cv, thisMethodAccess, thisMethodReturnType, thisMethodName, ClassField.typesOf(thisMethodParams), signature,

@@ -23,7 +23,12 @@ import com.nebula.tinyasm.util.Field;
 
 public class ClassBuilder extends ClassVisitor implements Opcodes, Types, ClassBody {
 	final static int THIS = 0;
+
 	final static String THIS_NAME = "this";
+	static public ClassBody make() {
+		ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
+		return new ClassBuilder(classWriter);
+	}
 
 	static public ClassBody make(ClassVisitor cv, Type objectType) {
 		return make(ACC_PUBLIC + ACC_SUPER, cv, objectType, Type.getType(Object.class));
@@ -69,11 +74,6 @@ public class ClassBuilder extends ClassVisitor implements Opcodes, Types, ClassB
 		return make(access, objectType, Type.getType(superClass), interfaceType, interfaceSignature);
 	}
 
-	static public ClassBody make(final int access, Type objectType, Type superType, Type[] superTypeSignature) {
-		ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
-		return new ClassBuilder(access, classWriter, objectType, superType, superTypeSignature);
-	}
-
 	static public ClassBody make(final int access, Type objectType, Type superType) {
 		ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
 		return new ClassBuilder(access, classWriter, objectType, superType);
@@ -82,6 +82,11 @@ public class ClassBuilder extends ClassVisitor implements Opcodes, Types, ClassB
 	static public ClassBody make(final int access, Type objectType, Type superType, Type interfaceType, Type[] interfaceSignature) {
 		ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
 		return new ClassBuilder(access, classWriter, objectType, superType, interfaceType, interfaceSignature);
+	}
+
+	static public ClassBody make(final int access, Type objectType, Type superType, Type[] superTypeSignature) {
+		ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
+		return new ClassBuilder(access, classWriter, objectType, superType, superTypeSignature);
 	}
 
 	static public ClassBody make(Type objectType) {
@@ -103,33 +108,18 @@ public class ClassBuilder extends ClassVisitor implements Opcodes, Types, ClassB
 
 	private Type thisType;
 
-	ClassBuilder(final int access, ClassVisitor cv) {
+	protected ClassBuilder() {
+		super(Opcodes.ASM5, new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS));
+	}
+
+	protected ClassBuilder(ClassVisitor cv) {
 		super(Opcodes.ASM5, cv);
 	}
-	
+
 	ClassBuilder(final int access, ClassVisitor cv, Type thisType, Type superType) {
 		super(Opcodes.ASM5, cv);
 		initType(thisType, superType);
 		cv.visit(52, access, thisType.getInternalName(), null, superType.getInternalName(), null);
-		cv.visitSource(ClassUtils.toSimpleName(this.thisType.getClassName()) + ".java", null);
-	}
-
-	private void initType(Type thisType, Type superType) {
-		this.thisType = thisType;
-		this.superType = superType;
-	}
-
-	@Override
-	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-		initType(Type.getObjectType(name), Type.getObjectType(superName));
-		super.visit(version, access, name, signature, superName, interfaces);
-	}
-
-	ClassBuilder(final int access, ClassVisitor cv, Type thisType, Type superType, Type[] superTypeSignatures) {
-		super(Opcodes.ASM5, cv);
-		initType(thisType, superType);
-
-		cv.visit(52, access, thisType.getInternalName(), signatureOf(superType, superTypeSignatures), superType.getInternalName(), null);
 		cv.visitSource(ClassUtils.toSimpleName(this.thisType.getClassName()) + ".java", null);
 	}
 
@@ -142,21 +132,12 @@ public class ClassBuilder extends ClassVisitor implements Opcodes, Types, ClassB
 		cv.visitSource(ClassUtils.toSimpleName(this.thisType.getClassName()) + ".java", null);
 	}
 
-	@Override
-	public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
-		this.addField(new ClassField(access, name, Type.getType(desc), signature, value));
-		return super.visitField(access, name, desc, signature, value);
-	}
+	ClassBuilder(final int access, ClassVisitor cv, Type thisType, Type superType, Type[] superTypeSignatures) {
+		super(Opcodes.ASM5, cv);
+		initType(thisType, superType);
 
-	@Override
-	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-		return super.visitMethod(access, name, desc, signature, exceptions);
-	}
-
-	@Override
-	public void visitEnd() {
-		super.visitEnd();
-		hadEnd = true;
+		cv.visit(52, access, thisType.getInternalName(), signatureOf(superType, superTypeSignatures), superType.getInternalName(), null);
+		cv.visitSource(ClassUtils.toSimpleName(this.thisType.getClassName()) + ".java", null);
 	}
 
 	protected void addField(Field field) {
@@ -224,9 +205,24 @@ public class ClassBuilder extends ClassVisitor implements Opcodes, Types, ClassB
 		return thisType;
 	}
 
+	private void initType(Type thisType, Type superType) {
+		this.thisType = thisType;
+		this.superType = superType;
+	}
+
+//	@Override
+//	public MethodHeader<ClassMethodCode> method(int access, String name, String desc, String signature, String[] exceptions) {
+//		Type returnType = Type.getReturnType(desc);
+//		
+//		MethodHeader<ClassMethodCode> mh = new ClassMethodVisitor(this, thisType, access, returnType, name, exceptions);
+//		
+//		
+//		return new ClassMethodVisitor(this, thisType, access, returnType, methodName, exceptions);
+//	}
+
 	@Override
-	public MethodHeader<ClassMethodCode> method(int access, Type returnType, String methodName, Class<?>... exceptionClasses) {
-		return new ClassMethodVisitor(this, thisType, access, returnType, methodName, exceptionClasses);
+	public MethodHeader<ClassMethodCode> method(int access, Type returnType, String methodName, String[] exceptions) {
+		return new ClassMethodVisitor(this, thisType, access, returnType, methodName, exceptions);
 	}
 
 	@Override
@@ -239,7 +235,7 @@ public class ClassBuilder extends ClassVisitor implements Opcodes, Types, ClassB
 	}
 
 	@Override
-	public MethodHeader<StaticMethodCode> staticMethod(int access, Type returnType, String methodName, Class<?>... exceptionClasses) {
+	public MethodHeader<StaticMethodCode> staticMethod(int access, Type returnType, String methodName, String[] exceptionClasses) {
 		return new StaticMethodVisitor(this, thisType, access, returnType, methodName, exceptionClasses);
 	}
 
@@ -252,6 +248,29 @@ public class ClassBuilder extends ClassVisitor implements Opcodes, Types, ClassB
 			return ((ClassWriter) cv).toByteArray();
 		}
 		return null;
+	}
+
+	@Override
+	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+		initType(Type.getObjectType(name), Type.getObjectType(superName));
+		super.visit(version, access, name, signature, superName, interfaces);
+	}
+
+	@Override
+	public void visitEnd() {
+		super.visitEnd();
+		hadEnd = true;
+	}
+
+	@Override
+	public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
+		this.addField(new ClassField(access, name, Type.getType(desc), signature, value));
+		return super.visitField(access, name, desc, signature, value);
+	}
+
+	@Override
+	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+		return super.visitMethod(access, name, desc, signature, exceptions);
 	}
 
 	@Override

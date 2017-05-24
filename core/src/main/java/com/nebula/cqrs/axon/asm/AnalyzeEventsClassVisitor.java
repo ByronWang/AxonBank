@@ -44,7 +44,7 @@ public class AnalyzeEventsClassVisitor extends ClassVisitor {
 			Type eventType = domainDefinition.typeOf(eventName + "Event");
 			Event event = new Event(eventName, originMethodName, newMethodName, innerEvent, eventType);
 
-			MethodInfo method = domainDefinition.menthods.get(originMethodName);
+			MethodInfo method = domainDefinition.methods.get(originMethodName);
 			event.methodParams = method.params;
 
 			List<Field> fields = new ArrayList<>();

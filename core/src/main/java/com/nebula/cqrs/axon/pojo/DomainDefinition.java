@@ -78,5 +78,5 @@ public class DomainDefinition {
 	public Map<String, Command> commands;
 	public Map<String, Event> realEvents;
 	public Map<String, Event> virtualEvents;
-	public Map<String, MethodInfo> menthods;
+	public Map<String, MethodInfo> methods;
 }

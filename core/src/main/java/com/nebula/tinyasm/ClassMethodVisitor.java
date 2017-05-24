@@ -40,7 +40,7 @@ public class ClassMethodVisitor extends AbstractInstanceMethodVisitor<MethodHead
 
 	ThisInstance thisInstance;
 
-	public ClassMethodVisitor(ClassBuilder cv, Type thisType, int access, Type returnType, String methodName, Class<?>... exceptionClasses) {
+	public ClassMethodVisitor(ClassBuilder cv, Type thisType, int access, Type returnType, String methodName, String[] exceptionClasses) {
 		super(cv, thisType, access, returnType, methodName, exceptionClasses);
 		this.cv = cv;
 	}

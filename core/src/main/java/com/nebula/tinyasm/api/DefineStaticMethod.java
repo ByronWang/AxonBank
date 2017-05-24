@@ -76,7 +76,7 @@ public interface DefineStaticMethod<C> extends Types {
 		return staticMethod(ACC_STATIC + ACC_PUBLIC, returnType, methodName);
 	}
 
-	default MethodHeader<C> publicStaticMethod(Type returnType,boolean array, String methodName) {
+	default MethodHeader<C> publicStaticMethod(Type returnType, boolean array, String methodName) {
 		return staticMethod(ACC_STATIC + ACC_PUBLIC, arrayOf(returnType, array), methodName);
 	}
 
@@ -96,7 +96,11 @@ public interface DefineStaticMethod<C> extends Types {
 		return staticMethod(ACC_STATIC + access, Type.getType(returnClass), methodName, exceptionClasses);
 	}
 
-	MethodHeader<C> staticMethod(int access, Type returnType, String methodName, Class<?>... exceptionClasses);
+	MethodHeader<C> staticMethod(int access, Type returnType, String methodName, String[] exceptionClasses);
+
+	default MethodHeader<C> staticMethod(int access, Type returnType, String methodName, Class<?>... exceptionClasses) {
+		return staticMethod(access, returnType, methodName, namesOf(exceptionClasses));
+	}
 
 	default MethodHeader<C> staticMethod(String methodName) {
 		return staticMethod(ACC_STATIC, Type.VOID_TYPE, methodName);

@@ -28,7 +28,7 @@ public class StaticMethodVisitor extends AbstractMethodVistor<MethodHeader<Stati
 		}
 	}
 
-	public StaticMethodVisitor(ClassVisitor cv, Type thisType, int access, Type returnType, String methodName, Class<?>... exceptionClasses) {
+	public StaticMethodVisitor(ClassVisitor cv, Type thisType, int access, Type returnType, String methodName, String[] exceptionClasses) {
 		super(cv, thisType, access, returnType, methodName, exceptionClasses);
 	}
 

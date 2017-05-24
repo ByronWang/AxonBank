@@ -200,13 +200,13 @@ public class CQRSMakeDomainImplClassVisitor extends ClassVisitor {
 			Type type = domainDefinition.typeOf(simpleClassName);
 			this.succeedEvent = new Event(eventName, originMethodName, newMethodName, innerEvent, type);
 
-			MethodInfo method = domainDefinition.menthods.get(command.methodName);
+			MethodInfo method = domainDefinition.methods.get(command.methodName);
 			command.methodParams = method.params;
 		}
 
 		@Override
 		public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-			MethodInfo method = domainDefinition.menthods.get(name);
+			MethodInfo method = domainDefinition.methods.get(name);
 			succeedEvent.methodParams = method.params;
 
 			if (owner.equals(implDomainType.getInternalName()) && name.startsWith("on")) {

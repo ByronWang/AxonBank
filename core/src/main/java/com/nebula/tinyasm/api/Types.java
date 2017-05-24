@@ -378,6 +378,15 @@ public interface Types {
 		}
 		return types;
 	};
+	
+
+	default String[] namesOf(Class<?>... classes) {
+		String[] types = new String[classes.length];
+		for (int i = 0; i < classes.length; i++) {
+			types[i] = Type.getInternalName(classes[i]);
+		}
+		return types;
+	};
 
 	default Type[] typesOf(Field... fields) {
 		Type[] types = new Type[fields.length];

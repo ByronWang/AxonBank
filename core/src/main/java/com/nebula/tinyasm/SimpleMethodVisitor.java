@@ -38,7 +38,7 @@ public class SimpleMethodVisitor extends AbstractInstanceMethodVisitor<MethodHea
 	}
 
 	public SimpleMethodVisitor(ClassVisitor cv, Type thisType, int access, Type returnType, String methodName) {
-		super(cv, thisType, access, returnType, methodName);
+		super(cv, thisType, access, returnType, methodName,new String[0]);
 	}
 
 	@Override

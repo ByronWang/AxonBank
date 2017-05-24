@@ -11,7 +11,7 @@ import com.nebula.tinyasm.api.Types;
 public abstract class AbstractInstanceMethodVisitor<H, M, C extends MethodCode<M, C>> extends AbstractMethodVistor<H, M, C>
         implements InstanceMethodCode<M, C>, MethodHeader<C>, Types {
 
-	public AbstractInstanceMethodVisitor(ClassVisitor cv, Type thisType, int access, Type returnType, String methodName, Class<?>... exceptionClasses) {
+	public AbstractInstanceMethodVisitor(ClassVisitor cv, Type thisType, int access, Type returnType, String methodName,String[] exceptionClasses) {
 		super(cv, thisType, access, returnType, methodName, exceptionClasses);
 	}
 

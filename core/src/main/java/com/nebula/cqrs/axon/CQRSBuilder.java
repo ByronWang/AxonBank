@@ -154,7 +154,7 @@ public class CQRSBuilder implements CQRSContext {
             AnalyzeMethodParamsClassVisitor analyzeMethodParamsClassVisitor = new AnalyzeMethodParamsClassVisitor();
             AnalyzeFieldClassVisitor analyzeFieldClassVisitor = new AnalyzeFieldClassVisitor(analyzeMethodParamsClassVisitor);
             cr.accept(analyzeFieldClassVisitor, 0);
-            domainDefinition.menthods = analyzeMethodParamsClassVisitor.getMethods();
+            domainDefinition.methods = analyzeMethodParamsClassVisitor.getMethods();
             domainDefinition.fields = analyzeFieldClassVisitor.finished().toArray(new Field[0]);
             for (Field field : domainDefinition.fields) {
                 if (field.identifier) {
