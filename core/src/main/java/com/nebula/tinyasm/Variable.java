@@ -7,7 +7,7 @@ public class Variable extends ClassField {
 	Label startFrom;
 
 	public Variable(ClassField field, Label startFrom) {
-		super(field.access, field.name, field.type, field.signature);
+		super(field.access, field.name, field.type, field.signature,null);
 		this.startFrom = startFrom;
 	}
 
@@ -16,11 +16,11 @@ public class Variable extends ClassField {
 	}
 
 	public Variable(String name, Type type, String signature) {
-		super(0, name, type, signature);
+		super(0, name, type, signature,null);
 	}
 
 	public Variable(String name, Type type, String signature, Label startFrom) {
-		super(0, name, type, signature);
+		super(0, name, type, signature,null);
 		this.startFrom = startFrom;
 	}
 	public Object value;

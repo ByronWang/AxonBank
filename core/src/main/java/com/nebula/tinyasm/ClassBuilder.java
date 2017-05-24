@@ -7,6 +7,8 @@ import java.util.Map;
 
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
@@ -67,12 +69,11 @@ public class ClassBuilder extends ClassVisitor implements Opcodes, Types, ClassB
 		return make(access, objectType, Type.getType(superClass), interfaceType, interfaceSignature);
 	}
 
-	static public ClassBody make(final int access,  Type objectType, Type superType, Type[] superTypeSignature) {
+	static public ClassBody make(final int access, Type objectType, Type superType, Type[] superTypeSignature) {
 		ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
 		return new ClassBuilder(access, classWriter, objectType, superType, superTypeSignature);
 	}
 
-	
 	static public ClassBody make(final int access, Type objectType, Type superType) {
 		ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
 		return new ClassBuilder(access, classWriter, objectType, superType);
@@ -98,42 +99,64 @@ public class ClassBuilder extends ClassVisitor implements Opcodes, Types, ClassB
 
 	boolean hadEnd = false;
 
-	private final Type superType;
+	private Type superType;
 
-	private final Type thisType;
+	private Type thisType;
 
+	ClassBuilder(final int access, ClassVisitor cv) {
+		super(Opcodes.ASM5, cv);
+	}
+	
 	ClassBuilder(final int access, ClassVisitor cv, Type thisType, Type superType) {
-		super(Opcodes.ASM5);
-		this.cv = cv;
+		super(Opcodes.ASM5, cv);
+		initType(thisType, superType);
+		cv.visit(52, access, thisType.getInternalName(), null, superType.getInternalName(), null);
+		cv.visitSource(ClassUtils.toSimpleName(this.thisType.getClassName()) + ".java", null);
+	}
+
+	private void initType(Type thisType, Type superType) {
 		this.thisType = thisType;
 		this.superType = superType;
+	}
 
-		cv.visit(52, access, thisType.getInternalName(), null, superType.getInternalName(), null);
-		String simpleName = ClassUtils.toSimpleName(this.thisType.getClassName());
-		cv.visitSource(simpleName + ".java", null);
+	@Override
+	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+		initType(Type.getObjectType(name), Type.getObjectType(superName));
+		super.visit(version, access, name, signature, superName, interfaces);
 	}
 
 	ClassBuilder(final int access, ClassVisitor cv, Type thisType, Type superType, Type[] superTypeSignatures) {
-		super(Opcodes.ASM5);
-		this.cv = cv;
-		this.thisType = thisType;
-		this.superType = superType;
+		super(Opcodes.ASM5, cv);
+		initType(thisType, superType);
 
 		cv.visit(52, access, thisType.getInternalName(), signatureOf(superType, superTypeSignatures), superType.getInternalName(), null);
-		String simpleName = ClassUtils.toSimpleName(this.thisType.getClassName());
-		cv.visitSource(simpleName + ".java", null);
+		cv.visitSource(ClassUtils.toSimpleName(this.thisType.getClassName()) + ".java", null);
 	}
 
 	ClassBuilder(final int access, ClassVisitor cv, Type thisType, Type superType, Type interfaceType, Type[] interfaceSignatures) {
-		super(Opcodes.ASM5);
-		this.cv = cv;
-		this.thisType = thisType;
-		this.superType = superType;
+		super(Opcodes.ASM5, cv);
+		initType(thisType, superType);
 
 		cv.visit(52, access, thisType.getInternalName(), superType.getDescriptor() + signatureOf(interfaceType, interfaceSignatures),
 		        superType.getInternalName(), new String[] { interfaceType.getInternalName() });
-		String simpleName = ClassUtils.toSimpleName(this.thisType.getClassName());
-		cv.visitSource(simpleName + ".java", null);
+		cv.visitSource(ClassUtils.toSimpleName(this.thisType.getClassName()) + ".java", null);
+	}
+
+	@Override
+	public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
+		this.addField(new ClassField(access, name, Type.getType(desc), signature, value));
+		return super.visitField(access, name, desc, signature, value);
+	}
+
+	@Override
+	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+		return super.visitMethod(access, name, desc, signature, exceptions);
+	}
+
+	@Override
+	public void visitEnd() {
+		super.visitEnd();
+		hadEnd = true;
 	}
 
 	protected void addField(Field field) {
@@ -142,8 +165,8 @@ public class ClassBuilder extends ClassVisitor implements Opcodes, Types, ClassB
 	}
 
 	@Override
-	public ClassBody annotation(Type annotationType, Object value) {
-		AsmBuilder.visitAnnotation(cv, annotationType, value);
+	public ClassBody annotation(Type annotationType, Object annotationValue) {
+		AsmBuilder.visitAnnotation(cv, annotationType, annotationValue);
 		return this;
 	}
 
@@ -163,22 +186,22 @@ public class ClassBuilder extends ClassVisitor implements Opcodes, Types, ClassB
 
 	@Override
 	public ClassBody field(int access, String fieldName, Type fieldType, String signature) {
-		addField(new ClassField(access, fieldName, fieldType, signature));
+		addField(new ClassField(access, fieldName, fieldType, signature, null));
 		AsmBuilder.visitDefineField(cv, access, fieldName, fieldType, signature);
 		return this;
 	}
 
 	@Override
-	public ClassBody field(int access, Type annotationType, Object value, String fieldName, Type fieldType) {
-		addField(new ClassField(access, fieldName, fieldType, null));
-		AsmBuilder.visitDefineField(cv, access, fieldName, fieldType, annotationType, value);
+	public ClassBody field(int access, Type annotationType, Object annotationValue, String fieldName, Type fieldType) {
+		addField(new ClassField(access, fieldName, fieldType, null, null));
+		AsmBuilder.visitDefineField(cv, access, fieldName, fieldType, annotationType, annotationValue);
 		return this;
 	}
 
 	@Override
-	public ClassBody field(int access, Type annotationType, Object value, String fieldName, Type fieldType, String signature) {
-		addField(new ClassField(access, fieldName, fieldType, signature));
-		AsmBuilder.visitDefineField(cv, access, fieldName, fieldType, signature, annotationType, value);
+	public ClassBody field(int access, Type annotationType, Object annotationValue, String fieldName, Type fieldType, String signature) {
+		addField(new ClassField(access, fieldName, fieldType, signature, null));
+		AsmBuilder.visitDefineField(cv, access, fieldName, fieldType, signature, annotationType, annotationValue);
 		return this;
 	}
 

@@ -55,11 +55,11 @@ public class AsmBuilder {
 		return types.toArray(new Type[0]);
 	}
 
-	public static void visitAnnotation(ClassVisitor cv, Type annotationType, Object value) {
+	public static void visitAnnotation(ClassVisitor cv, Type annotationType, Object annotationValue) {
 		AnnotationVisitor av0 = cv.visitAnnotation(annotationType.getDescriptor(), true);
-		if (value != null) {
+		if (annotationValue != null) {
 			AnnotationVisitor av1 = av0.visitArray("value");
-			av1.visit(null, value);
+			av1.visit(null, annotationValue);
 			av1.visitEnd();
 		}
 		av0.visitEnd();

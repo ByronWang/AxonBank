@@ -48,8 +48,8 @@ public class AsmBuilderHelperTest {
 	@Test
 	public void testStatusBuilder() throws Exception {
 		Type type = Type.getObjectType("com/nebula/dropwizard/core/Status");
-		
-		byte[] code = StatusBuilder.dump(type,"STARTED","FAILED","COMPLETED");
+
+		byte[] code = StatusBuilder.dump(type, "STARTED", "FAILED", "COMPLETED");
 		byte[] codeExpected = StatusDump.dump();
 
 		String strCode = toString(code);

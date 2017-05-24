@@ -5,17 +5,21 @@ import java.util.Map;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Type;
 
 import com.nebula.cqrs.axon.ClassLoaderDebuger;
 import com.nebula.cqrs.axon.MyClassLoader;
 import com.nebula.cqrs.axon.asm.AnalyzeEventsClassVisitor;
 import com.nebula.cqrs.axon.asm.AnalyzeFieldClassVisitor;
+import com.nebula.cqrs.axon.asm.CQRSMakeDomainImplClassVisitor;
+import com.nebula.cqrs.axon.asm.RemoveCqrsAnnotationClassVisitor;
 import com.nebula.cqrs.axon.pojo.DomainDefinition;
 import com.nebula.tinyasm.ClassBuilder;
 import com.nebula.tinyasm.api.ClassBody;
 import com.nebula.tinyasm.util.AnalyzeMethodParamsClassVisitor;
 import com.nebula.tinyasm.util.Field;
+import com.nebula.tinyasm.util.RenameClassVisitor;
 
 public class DomainBuilder implements Context {
 
@@ -26,11 +30,20 @@ public class DomainBuilder implements Context {
 	final Map<String, ClassBody> types;
 
 	public DomainBuilder(String srcDomainName, Type srcDomainType, ClassReader cr) {
-		this.cr = cr;
 		this.domainDefinition = new DomainDefinition(srcDomainName, srcDomainType);
+		this.cr = init(cr, srcDomainType, domainDefinition.implDomainType);
 		this.classBody = ClassBuilder.make(domainDefinition.implDomainType);
 		this.types = new HashMap<>();
 		initDefinition(cr, domainDefinition);
+	}
+
+	private static ClassReader init(ClassReader cr, Type domainType, Type implType) {
+		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
+		RenameClassVisitor cvRename = new RenameClassVisitor(cw, domainType.getInternalName(), implType.getInternalName());
+		RemoveCqrsAnnotationClassVisitor removeCqrsAnnotation = new RemoveCqrsAnnotationClassVisitor(cvRename);
+		cr.accept(removeCqrsAnnotation, 0);
+		ClassReader newcr = new ClassReader(cw.toByteArray());
+		return newcr;
 	}
 
 	public static DomainDefinition initDefinition(final ClassReader cr, final DomainDefinition domainDefinition) {
@@ -45,6 +58,7 @@ public class DomainBuilder implements Context {
 					domainDefinition.identifierField = field;
 				}
 			}
+
 		}
 
 		{
