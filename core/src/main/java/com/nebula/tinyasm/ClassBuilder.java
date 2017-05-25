@@ -281,7 +281,7 @@ public class ClassBuilder extends ClassVisitor implements Opcodes, Types, ClassB
 
 	@Override
 	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-		return super.visitMethod(access, name, desc, signature, exceptions);
+		return cv.visitMethod(access, name, desc, signature, exceptions);
 	}
 
 	@Override

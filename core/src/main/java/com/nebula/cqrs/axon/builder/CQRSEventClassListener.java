@@ -59,9 +59,9 @@ public class CQRSEventClassListener extends ClassVisitor implements DomainListen
 			}
 			
 			if(hasNotIdentifier){
-				context.add(ClassBuilder.make(eventType).field(identifierField).fields(params).publicInitAllFields());
+				context.add(ClassBuilder.make(eventType).field(identifierField).fields(params).readonlyPojo());
 			}else{
-				context.add(ClassBuilder.make(eventType).fields(params).publicInitAllFields());				
+				context.add(ClassBuilder.make(eventType).fields(params).readonlyPojo());				
 			}
 
 

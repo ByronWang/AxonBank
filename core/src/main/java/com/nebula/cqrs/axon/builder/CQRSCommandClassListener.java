@@ -63,7 +63,7 @@ public class CQRSCommandClassListener extends ClassVisitor implements DomainList
 
 	@Override
 	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-		if (is(access, ACC_PUBLIC) && !is(access, ACC_STATIC)) {
+		if (is(access, ACC_PUBLIC) && !is(access, ACC_STATIC) && Type.getArgumentTypes(desc).length > 0) {
 
 			String methodName = name;
 			String actionName;
@@ -71,13 +71,13 @@ public class CQRSCommandClassListener extends ClassVisitor implements DomainList
 			Type handlerType = commandHandlerClassBody.getType();
 			Type domainType = domainDefinition.implDomainType;
 			Type returnType = Type.getReturnType(desc);
+			Field identifierField = domainDefinition.identifierField;
 			String commandName;
 			if ("<init>".equals(name)) {
 				actionName = "create";
 
 				commandName = AsmBuilderHelper.toCamelUpper(actionName);
 
-				Field identifierField = domainDefinition.identifierField;
 				MethodInfo method = domainDefinition.methods.get(name);
 
 				Type commandType = domainDefinition.typeOf(commandName, "Command");
@@ -99,21 +99,16 @@ public class CQRSCommandClassListener extends ClassVisitor implements DomainList
 				}));
 
 				commandHandlerClassBody.publicMethod("handle", Exception.class).annotation(CommandHandler.class).parameter("command", commandType).code(mc -> {
-					mc.def("aggregate", Aggregate.class, domainType);
-					mc.line(27).loadThis().get("repository");
-					mc.object("command").getProperty(identifierField);
-					mc.type(Repository.class).invokeInterface(Aggregate.class, "load", identifierField.type).store("aggregate");
-					mc.use("aggregate").with(m -> {
-					    mc.newInstace(callerType);
-					    mc.dup();
-					    mc.load("this");
-					    mc.load("command");
-					    mc.type(callerType).invokeSpecial("<init>", handlerType, commandType);
-				    }).invokeInterface("execute", Consumer.class);
-
+					mc.line(22).loadThis().get("repository");
+					mc.newInstace(callerType);
+					mc.dup();
+					mc.load("this");
+					mc.load("command");
+					mc.type(callerType).invokeSpecial("<init>", commandHandlerClassBody.getType(), commandType);
+					mc.type(Repository.class).invokeInterface(Aggregate.class, "newInstance", Callable.class);
+					mc.pop();
 					mc.returnVoid();
 				});
-
 			} else {
 				actionName = methodName;
 
@@ -138,19 +133,23 @@ public class CQRSCommandClassListener extends ClassVisitor implements DomainList
 				}));
 
 				commandHandlerClassBody.publicMethod("handle", Exception.class).annotation(CommandHandler.class).parameter("command", commandType).code(mc -> {
-					mc.line(22).loadThis().get("repository");
-					mc.newInstace(callerType);
-					mc.dup();
-					mc.load("this");
-					mc.load("command");
-					mc.type(callerType).invokeSpecial("<init>", commandHandlerClassBody.getType(), commandType);
-					mc.type(Repository.class).invokeInterface(Aggregate.class, "newInstance", Callable.class);
-					mc.pop();
+					mc.def("aggregate", Aggregate.class, domainType);
+					mc.line(27).loadThis().get("repository");
+					mc.object("command").getProperty(identifierField);
+					mc.type(Repository.class).invokeInterface(Aggregate.class, "load", identifierField.type).store("aggregate");
+					mc.use("aggregate").with(m -> {
+					    mc.newInstace(callerType);
+					    mc.dup();
+					    mc.load("this");
+					    mc.load("command");
+					    mc.type(callerType).invokeSpecial("<init>", handlerType, commandType);
+				    }).invokeInterface("execute", Consumer.class);
+
 					mc.returnVoid();
 				});
 			}
 
-			MethodVisitor methodVisitor = ((ClassVisitor) implClassBody).visitMethod(access, name, desc, signature, exceptions);
+			MethodVisitor methodVisitor = ((ClassBuilder) implClassBody).visitor().visitMethod(access, name, desc, signature, exceptions);
 			CommandMethodVisitor commandMethodVisitor = new CommandMethodVisitor(methodVisitor, commandName, access, name, desc, signature, exceptions);
 
 			return commandMethodVisitor;
@@ -176,29 +175,34 @@ public class CQRSCommandClassListener extends ClassVisitor implements DomainList
 				MethodInfo method = domainDefinition.methods.get(name);
 				final Field identifierField = domainDefinition.identifierField;
 
-				context.add(ClassBuilder.make(eventType, realType).publicMethodInitWithAllFieldsToSuper(method.params));
+				boolean checkHasNotIdentifier = true;
+				for (Field param : method.params) {
+					if (identifierField.name.equals(param.name)) {
+						checkHasNotIdentifier = false;
+						break;
+					}
+				}
+
+				final boolean hasNotIdentifier = checkHasNotIdentifier;
+
+				if (hasNotIdentifier) {
+					context.add(ClassBuilder.make(eventType, realType)
+					        .publicMethodInitWithAllFieldsToSuper(fieldsOf(domainDefinition.identifierField, method.params)));
+				} else {
+					context.add(ClassBuilder.make(eventType, realType).publicMethodInitWithAllFieldsToSuper(method.params));
+				}
 
 				String applyMethodName = "apply" + commandName + "Finished";
-
+				//
 				implClassBody.protectdMethod(applyMethodName).parameter(method.params).code(mc -> {
 					mc.newInstace(eventType);
 					mc.dup();
 
-					boolean hasNotIdentifier = true;
-					for (Field param : method.params) {
-						if (identifierField.name.equals(param.name)) {
-							hasNotIdentifier = false;
-							break;
-						}
-					}
-
 					Field[] params = method.params;
 					if (hasNotIdentifier) {
 						mc.loadThis().get(identifierField);
-						Field[] newparams = new Field[params.length + 1];
-						newparams[0] = identifierField;
-						System.arraycopy(params, 0, newparams, 1, params.length);
-						params = newparams;
+
+						params = fieldsOf(identifierField, params);
 					}
 
 					for (Field param : method.params) {

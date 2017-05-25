@@ -15,7 +15,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.util.ASMifier;
 import org.objectweb.asm.util.TraceClassVisitor;
 
-public class AsmBuilderHelperTest {
+public class ClassBuilderTest {
 
 	@Before
 	public void setUp() throws Exception {

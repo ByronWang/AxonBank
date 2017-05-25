@@ -1,5 +1,7 @@
 package com.nebula.cqrs.axon.builder;
 
+import static org.objectweb.asm.Opcodes.ASM5;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -7,16 +9,14 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
-
-import static org.objectweb.asm.Opcodes.ASM5;
 import org.objectweb.asm.Type;
 
 import com.nebula.cqrs.axon.ClassLoaderDebuger;
 import com.nebula.cqrs.axon.MyClassLoader;
 import com.nebula.cqrs.axon.asm.AnalyzeEventsClassVisitor;
 import com.nebula.cqrs.axon.asm.AnalyzeFieldClassVisitor;
-import com.nebula.cqrs.axon.asm.RemoveCqrsAnnotationClassVisitor;
 import com.nebula.cqrs.axon.pojo.DomainDefinition;
+import com.nebula.tinyasm.ClassBuilder;
 import com.nebula.tinyasm.api.ClassBody;
 import com.nebula.tinyasm.util.AnalyzeMethodParamsClassVisitor;
 import com.nebula.tinyasm.util.Field;
@@ -36,16 +36,16 @@ public class DomainBuilder implements DomainContext {
 		this.cr = init(cr, srcDomainType, domainDefinition.implDomainType);
 		this.types = new HashMap<>();
 
-		CQRSDomainClassListener domainObject = new CQRSDomainClassListener();
-		this.accept(domainObject);
+		ClassBuilder domainObject = (ClassBuilder)ClassBuilder.make();
+		CQRSDomainFilterClassVisitor domainFilterClassVisitor = new CQRSDomainFilterClassVisitor(domainObject);
+		this.accept(domainFilterClassVisitor);
 		this.add("impl", domainObject);
 	}
 
 	private static ClassReader init(ClassReader cr, Type domainType, Type implType) {
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
-		RenameClassVisitor cvRename = new RenameClassVisitor(cw, domainType.getInternalName(), implType.getInternalName());
-		RemoveCqrsAnnotationClassVisitor removeCqrsAnnotation = new RemoveCqrsAnnotationClassVisitor(cvRename);
-		cr.accept(removeCqrsAnnotation, 0);
+		RenameClassVisitor renameClassVisitor = new RenameClassVisitor(cw, domainType.getInternalName(), implType.getInternalName());
+		cr.accept(renameClassVisitor, 0);
 		ClassReader newcr = new ClassReader(cw.toByteArray());
 		return newcr;
 	}

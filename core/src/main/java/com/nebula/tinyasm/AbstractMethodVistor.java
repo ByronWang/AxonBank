@@ -308,9 +308,11 @@ public abstract class AbstractMethodVistor<H, M, C extends MethodCode<M, C>> ext
 				signature = signatureFromParameter;
 			}
 		}
+		System.out.println(thisMethodName + " < " + thisType().getClassName());
 
 		this.mv = AsmBuilder.visitDefineMethod(cv, thisMethodAccess, thisMethodReturnType, thisMethodName, ClassField.typesOf(thisMethodParams), signature,
-		        excptions);
+		        null);
+		assert this.mv != null;
 		for (Annotation annotation : thisMethodAnnotations) {
 			AsmBuilder.visitAnnotation(mv, annotation.type, annotation.name, annotation.value);
 		}

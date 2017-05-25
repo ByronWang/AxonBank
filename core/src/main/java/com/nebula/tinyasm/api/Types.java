@@ -316,6 +316,22 @@ public interface Types {
 		}
 	};
 
+	default Field[] fieldsOf(Field field, Field[] fields) {
+		Field[] newfields = new Field[fields.length+1];
+		newfields[0] = field;
+		System.arraycopy(fields, 0, newfields, 1, fields.length);
+		return newfields;
+	}
+
+	default Field[] fieldsOf(Field field, List<Field> fields) {
+		Field[] newfields = new Field[fields.size()+1];
+		newfields[0] = field;
+		for (int i = 0; i < fields.size(); i++) {
+			newfields[i + 1] = fields.get(i);
+		}
+		return newfields;
+	}
+
 	default String signatureOf(Type type, Class<?>... signatureClasses) {
 		String signature = null;
 		if (signatureClasses != null && signatureClasses.length > 0) {
@@ -378,7 +394,6 @@ public interface Types {
 		}
 		return types;
 	};
-	
 
 	default String[] namesOf(Class<?>... classes) {
 		String[] types = new String[classes.length];
