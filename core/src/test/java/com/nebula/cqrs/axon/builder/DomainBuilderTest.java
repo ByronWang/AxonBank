@@ -20,14 +20,10 @@ public class DomainBuilderTest {
 
 		DomainBuilder domainBuilder = new DomainBuilder(srcDomainName, domainType, cr);
 
-		DomainDefinition dd = domainBuilder.getDomainDefinition();
-//		domainBuilder.add("impl", ClassBuilder.make(dd.implDomainType).fields(dd.fields));
-
 		domainBuilder.visit(new CQRSEventClassListener());
 		domainBuilder.visit(new CQRSCommandClassListener());
 
-		// SagaClassListener saga = new SagaClassListener();
-		// domainBuilder.visit(saga);
+		domainBuilder.visit(new SagaClassListener());
 
 		domainBuilder.finished();
 	}
