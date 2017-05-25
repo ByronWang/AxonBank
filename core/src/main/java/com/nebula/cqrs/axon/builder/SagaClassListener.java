@@ -58,74 +58,73 @@ import com.nebula.tinyasm.util.Field;
 import com.nebula.tinyasm.util.MethodInfo;
 
 public class SagaClassListener extends ClassVisitor implements DomainListener {
-	class SagaMethodVisitor extends MethodVisitor {
+	static class SagaMethodVisitor extends MethodVisitor {
 
 		ClassBody commandHandlerBody;
 
 		Type commandHandlerType;
-		
+
 		final DomainContext context;
 		// Block currentBlock;
 		DomainDefinition domainDefinition;
 
-		int sagaBlockIndex = 0;
-		Stack<SagaBlock> sagaBlockStack = new Stack<>();
-		
-		List<Field> sagaDatasFields;
-		List<Field> sagaDatasFieldsWithID;
+		Field idField;
+		int methodBlockIndex = 0;
 
-		Field sagaIdField;
-		int[] sagaLocalsOfVar;
+		Stack<SagaBlock> methodBlockStack = new Stack<>();
+		int[] methodLocalsOfVar;
+
+		String methodName = null;
+		Type methodReturnType;
+
+		Stack<Variable> methodStack = new Stack<>();
+		List<Variable> methodVariablesList;
+
+		List<Field> sagaFields;
+		List<Field> sagaFieldsWithID;
 
 		ClassBody sagaManagementClassBody;
-		String sagaMethodName = null;
-
 		String sagaName = null;
+
 		ClassBody sagaObjectBody;
 
 		Type sagaObjectType;
-		Type sagaReturnType;
 
-		Stack<Variable> sagaStack = new Stack<>();
-		
 		Type sagaType;
-
-		// Block topBlock;
-		List<Variable> sagaVariablesList;
 
 		Type statusType;
 
 		public SagaMethodVisitor(DomainContext context, MethodVisitor mv, MethodInfo methodInfo, int access, String name, String desc, String signature) {
 			super(ASM5, mv);
 			this.context = context;
-			this.sagaMethodName = name;
-			this.sagaVariablesList = methodInfo.locals;
-			this.sagaLocalsOfVar = Types.computerLocalsVariable(this.sagaVariablesList);
+			this.methodName = name;
+			this.methodVariablesList = methodInfo.locals;
+			this.methodLocalsOfVar = Types.computerLocalsVariable(this.methodVariablesList);
 
 			this.domainDefinition = context.getDomainDefinition();
-			sagaObjectType = domainDefinition.typeOf(sagaMethodName);
-			sagaType = domainDefinition.typeOf(sagaMethodName, "ManagementSaga");
+			sagaObjectType = domainDefinition.typeOf(methodName);
+			sagaType = domainDefinition.typeOf(methodName, "ManagementSaga");
 			commandHandlerType = domainDefinition.topLeveltypeOf("CommandHandler");
-			sagaDatasFields = new ArrayList<>();
+			sagaFields = new ArrayList<>();
 
 			for (Field field : methodInfo.params) {
 				if (field.type.getClassName().startsWith("java/") || field.type.getDescriptor().length() == 1) {
-					sagaDatasFields.add(field);
+					sagaFields.add(field);
 				} else {
-					sagaDatasFields
+					sagaFields
 					        .add(new Field(field.name + AsmBuilder.toCamelUpper(domainDefinition.identifierField.name), domainDefinition.identifierField.type));
 					// TODO to deal other type
 				}
 			}
 
-			sagaIdField = new Field(sagaMethodName + "Id", Type.getType(String.class));
-			sagaDatasFieldsWithID = new ArrayList<>();
-			sagaDatasFieldsWithID.add(sagaIdField);
-			sagaDatasFieldsWithID.addAll(sagaDatasFields);
+			idField = new Field(methodName + "Id", Type.getType(String.class));
+			sagaFieldsWithID = new ArrayList<>();
+			sagaFieldsWithID.add(idField);
+			sagaFieldsWithID.addAll(sagaFields);
 
 			// List<Field> realFields = new ArrayList<>();
 			// realFields.addAll(datasFields);
-			sagaReturnType = Type.getReturnType(desc);
+			methodReturnType = Type.getReturnType(desc);
 
 			//
 			// @StartSaga
@@ -153,10 +152,10 @@ public class SagaClassListener extends ClassVisitor implements DomainListener {
 		void blockCloseCurrent() {
 			makeBlockEnd();
 
-			SagaBlock previousBlock = sagaBlockStack.pop();
-			pop(sagaStack.size() - previousBlock.startStackIndex);
+			SagaBlock previousBlock = methodBlockStack.pop();
+			stackPop(methodStack.size() - previousBlock.startStackIndex);
 
-			LOGGER.debug("[]{}****}", repeat("    ", sagaBlockStack.size()));
+			LOGGER.debug("[]{}****}", repeat("    ", methodBlockStack.size()));
 
 			switch (previousBlock.blockType) {
 			case IFBLOCK:
@@ -164,7 +163,7 @@ public class SagaClassListener extends ClassVisitor implements DomainListener {
 
 					blockStartOfElse(previousBlock.name + "Else", previousBlock.elseLabel, BlockType.ELSEBLOCK, previousBlock);
 				} else {
-					if (sagaBlockStack.size() > 0) {
+					if (methodBlockStack.size() > 0) {
 						blockStartOfElse(previousBlock.name + "ElseVirtual", previousBlock.elseLabel, BlockType.VITUALBLOCK, previousBlock);
 					}
 				}
@@ -172,7 +171,7 @@ public class SagaClassListener extends ClassVisitor implements DomainListener {
 			case ELSEBLOCK:
 				break;
 			case VITUALBLOCK:
-				if (sagaBlockStack.size() > 0) {
+				if (methodBlockStack.size() > 0) {
 					blockCloseCurrent();
 				}
 				break;
@@ -183,39 +182,39 @@ public class SagaClassListener extends ClassVisitor implements DomainListener {
 			printStack();
 		}
 
+		private SagaBlock blockCurrent() {
+			return methodBlockStack.peek();
+		}
+
 		private void blockStartOfElse(String name, Label labelClose, SagaBlock.BlockType blockType, SagaBlock ifBlock) {
-			LOGGER.debug("[]{}else{****", repeat("    ", sagaBlockStack.size()));
-			SagaBlock parentBlock = sagaBlockStack.peek();
+			LOGGER.debug("[]{}else{****", repeat("    ", methodBlockStack.size()));
+			SagaBlock parentBlock = methodBlockStack.peek();
 
 			Label thisLabelclose = labelClose;
 			if (labelClose == null) {
 				thisLabelclose = parentBlock.labelClose;
 			}
 
-			SagaBlock nextBlock = sagaBlockStack.push(new SagaBlock(name, thisLabelclose, blockType, ifBlock.startStackIndex));
+			SagaBlock nextBlock = methodBlockStack.push(new SagaBlock(name, thisLabelclose, blockType, ifBlock.startStackIndex));
 			makeBlockBeginOfResult(parentBlock, nextBlock);
 		}
 
 		private void blockStartOfResult(String name, Label labelClose) {
-			LOGGER.debug("[]{}if{****", repeat("    ", sagaBlockStack.size()));
-			SagaBlock parentBlock = sagaBlockStack.peek();
+			LOGGER.debug("[]{}if{****", repeat("    ", methodBlockStack.size()));
+			SagaBlock parentBlock = methodBlockStack.peek();
 			Label thisLabelclose = labelClose;
 			if (labelClose == null) {
 				thisLabelclose = parentBlock.labelClose;
 			}
 
-			SagaBlock nextBlock = sagaBlockStack.push(new SagaBlock(name, thisLabelclose, sagaStack.size()));
+			SagaBlock nextBlock = methodBlockStack.push(new SagaBlock(name, thisLabelclose, methodStack.size()));
 			makeBlockBeginOfResult(parentBlock, nextBlock);
 		}
 
 		private void blockStartOfRoot(String name, List<Field> datasFields, Type createdEvent) {
-			LOGGER.debug("[]{}root{****", repeat("    ", sagaBlockStack.size()));
-			SagaBlock nextBlock = sagaBlockStack.push(new SagaBlock(name, null, sagaStack.size()));
+			LOGGER.debug("[]{}root{****", repeat("    ", methodBlockStack.size()));
+			SagaBlock nextBlock = methodBlockStack.push(new SagaBlock(name, null, methodStack.size()));
 			makeBlockBeginOfRoot(nextBlock, datasFields, createdEvent);
-		}
-
-		private SagaBlock currentBlock() {
-			return sagaBlockStack.peek();
 		}
 
 		private void makeBlockBeginOfResult(SagaBlock parentBlock, SagaBlock block) {
@@ -230,13 +229,13 @@ public class SagaClassListener extends ClassVisitor implements DomainListener {
 			final Type eventType = domainDefinition.apitypeOf(parentBlock.commandName, result, "Event");
 			context.add(ClassBuilder.make(eventType).fields(parentBlock.eventFields).readonlyPojo());
 			makeBlockEnd();
-			block.code = sagaManagementClassBody.publicMethod("on").annotation(SagaEventHandler.class, "associationProperty", sagaIdField.name)
+			block.code = sagaManagementClassBody.publicMethod("on").annotation(SagaEventHandler.class, "associationProperty", idField.name)
 			        .parameter("event", eventType).begin();
 		}
 
 		private void makeBlockBeginOfRoot(SagaBlock block, List<Field> datasFields, Type createdEvent) {
 			block.code = sagaManagementClassBody.publicMethod("on").annotation(StartSaga.class)
-			        .annotation(SagaEventHandler.class, "associationProperty", sagaIdField.name).parameter("event", createdEvent).begin().block(mc -> {
+			        .annotation(SagaEventHandler.class, "associationProperty", idField.name).parameter("event", createdEvent).begin().block(mc -> {
 				        for (Field field : datasFields) {
 					        mc.loadThis();
 					        mc.object("event").getProperty(field);
@@ -246,11 +245,11 @@ public class SagaClassListener extends ClassVisitor implements DomainListener {
 		}
 
 		private void makeBlockEnd() {
-			ClassMethodCode code = currentBlock().code;
+			ClassMethodCode code = blockCurrent().code;
 			if (code != null) {
 				code.returnVoid();
 				code.end();
-				currentBlock().code = null;
+				blockCurrent().code = null;
 			}
 		}
 
@@ -278,20 +277,20 @@ public class SagaClassListener extends ClassVisitor implements DomainListener {
 			Type commandType;
 
 			if (value == 1) {
-				commandType = domainDefinition.apitypeOf(this.sagaMethodName, "Mark", Status.Completed.name(), "Command");
+				commandType = domainDefinition.apitypeOf(this.methodName, "Mark", Status.Completed.name(), "Command");
 			} else {
-				commandType = domainDefinition.apitypeOf(this.sagaMethodName, "Mark", Status.Failed.name(), "Command");
+				commandType = domainDefinition.apitypeOf(this.methodName, "Mark", Status.Failed.name(), "Command");
 			}
 
-			currentBlock().code.block(mc -> {
+			blockCurrent().code.block(mc -> {
 				mc.loadThis().get("commandBus");
 
 				mc.newInstace(commandType);
 				mc.dup();
 				{
 					List<Field> paramTypes = new ArrayList<>();
-					mc.object("event").getProperty(sagaIdField);
-					paramTypes.add(sagaIdField);
+					mc.object("event").getProperty(idField);
+					paramTypes.add(idField);
 					mc.type(commandType).invokeSpecial("<init>", paramTypes);
 				}
 
@@ -324,29 +323,29 @@ public class SagaClassListener extends ClassVisitor implements DomainListener {
 		// }
 
 		private Type makeHandleCreate() {
-			Type createdCommand = domainDefinition.apitypeOf(sagaMethodName + "CreateCommand");
-			Type createdEvent = domainDefinition.apitypeOf(sagaMethodName + "CreatedEvent");
+			Type createdCommand = domainDefinition.apitypeOf(methodName + "CreateCommand");
+			Type createdEvent = domainDefinition.apitypeOf(methodName + "CreatedEvent");
 			{
-				context.add(createdCommand.getClassName(), ClassBuilder.make(createdCommand).field(TargetAggregateIdentifier.class, sagaIdField)
-				        .fields(sagaDatasFields).publicInitAllFields().defineAllPropetyGet().publicToStringWithAllFields());
+				context.add(createdCommand.getClassName(), ClassBuilder.make(createdCommand).field(TargetAggregateIdentifier.class, idField).fields(sagaFields)
+				        .publicInitAllFields().defineAllPropetyGet().publicToStringWithAllFields());
 
-				context.add(createdEvent.getClassName(), ClassBuilder.make(createdEvent).field(TargetAggregateIdentifier.class, sagaIdField).fields(sagaDatasFields)
+				context.add(createdEvent.getClassName(), ClassBuilder.make(createdEvent).field(TargetAggregateIdentifier.class, idField).fields(sagaFields)
 				        .publicInitAllFields().defineAllPropetyGet().publicToStringWithAllFields());
 
 				sagaObjectBody.publicMethod("<init>").annotation(CommandHandler.class).parameter("command", createdCommand).code(mc -> {
 					mc.initObject();
 					mc.newInstace(createdEvent);
 					mc.dup();
-					for (Field field : sagaDatasFieldsWithID) {
+					for (Field field : sagaFieldsWithID) {
 						mc.object("command").getProperty(field);
 					}
-					mc.type(createdEvent).invokeSpecial("<init>", sagaDatasFieldsWithID);
+					mc.type(createdEvent).invokeSpecial("<init>", sagaFieldsWithID);
 					mc.type(AggregateLifecycle.class).invokeStatic("apply", createdEvent);
 
 				});
 
 				sagaObjectBody.publicMethod("on").annotation(EventHandler.class).parameter("event", createdEvent).code(mc -> {
-					for (Field field : sagaDatasFieldsWithID) {
+					for (Field field : sagaFieldsWithID) {
 						mc.loadThis();
 						mc.object("event").getProperty(field);
 						mc.type(mc.thisType()).putTo(field);
@@ -360,18 +359,18 @@ public class SagaClassListener extends ClassVisitor implements DomainListener {
 		}
 
 		private void makeHandleEndOfSaga(DomainDefinition domainDefinition, List<Field> datasFieldsWithID, String resultString, int resultValue) {
-			Type commandType = domainDefinition.apitypeOf(this.sagaMethodName, "Mark", resultString, "Command");
-			Type eventType = domainDefinition.apitypeOf(this.sagaMethodName, resultString, "Event");
+			Type commandType = domainDefinition.apitypeOf(this.methodName, "Mark", resultString, "Command");
+			Type eventType = domainDefinition.apitypeOf(this.methodName, resultString, "Event");
 
-			context.add(ClassBuilder.make(commandType).field(sagaIdField).readonlyPojo());
+			context.add(ClassBuilder.make(commandType).field(idField).readonlyPojo());
 
-			context.add(ClassBuilder.make(eventType).field(sagaIdField).readonlyPojo());
+			context.add(ClassBuilder.make(eventType).field(idField).readonlyPojo());
 
 			sagaObjectBody.publicMethod("handle").annotation(CommandHandler.class).parameter("command", commandType).code(mc -> {
 				mc.newInstace(eventType);
 				mc.dup();
-				mc.object("command").getProperty(sagaIdField);
-				mc.type(eventType).invokeSpecial("<init>", sagaIdField);
+				mc.object("command").getProperty(idField);
+				mc.type(eventType).invokeSpecial("<init>", idField);
 				mc.type(AggregateLifecycle.class).invokeStatic("apply", eventType);
 			});
 
@@ -388,36 +387,36 @@ public class SagaClassListener extends ClassVisitor implements DomainListener {
 
 			Field[] methodParams = new Field[types.length];
 
-			int offset = sagaStack.size();
+			int offset = methodStack.size();
 			for (int i = types.length - 1; i >= 0; i--) {
 				Type type = types[i];
 				offset -= type.getSize();
-				Field field = sagaStack.elementAt(offset);
+				Field field = methodStack.elementAt(offset);
 				methodParams[i] = field;
 			}
 			Type ownerType = Type.getObjectType(owner);
 			offset -= ownerType.getSize();
-			Field ownerField = sagaStack.elementAt(offset);
+			Field ownerField = methodStack.elementAt(offset);
 
-			Type commandType = domainDefinition.apitypeOf(this.sagaMethodName, ownerField.name, name, "Command");
+			Type commandType = domainDefinition.apitypeOf(this.methodName, ownerField.name, name, "Command");
 
 			{// make command
-				context.add(ClassBuilder.make(commandType).field(TargetAggregateIdentifier.class, domainDefinition.identifierField).field(sagaIdField)
+				context.add(ClassBuilder.make(commandType).field(TargetAggregateIdentifier.class, domainDefinition.identifierField).field(idField)
 				        .fields(methodParams).readonlyPojo());
 			}
 			if (Type.getType(boolean.class).getDescriptor().equals(returnType.getDescriptor())) {
 				List<Field> eventFields = new ArrayList<>();
 
 				eventFields.add(domainDefinition.identifierField);
-				eventFields.add(sagaIdField);
+				eventFields.add(idField);
 				for (Field field : methodParams) {
 					eventFields.add(field);
 				}
-				currentBlock().eventFields = eventFields;
-				currentBlock().commandName = this.sagaMethodName + toCamelUpper(ownerField.name) + toCamelUpper(name);
+				blockCurrent().eventFields = eventFields;
+				blockCurrent().commandName = this.methodName + toCamelUpper(ownerField.name) + toCamelUpper(name);
 			}
 
-			currentBlock().code.block(mc -> {
+			blockCurrent().code.block(mc -> {
 				// mc.def("command", commandType);
 
 				mc.loadThis().get("commandBus");
@@ -427,9 +426,9 @@ public class SagaClassListener extends ClassVisitor implements DomainListener {
 				{
 					List<Field> params = new ArrayList<>();
 					mc.object("this").get(ownerField.name + toCamelUpper(domainDefinition.identifierField.name), domainDefinition.identifierField.type);
-					mc.object("event").getProperty(sagaIdField);
+					mc.object("event").getProperty(idField);
 					params.add(domainDefinition.identifierField);
-					params.add(sagaIdField);
+					params.add(idField);
 					for (Field field : methodParams) {
 						mc.object("this").get(field);
 						params.add(field);
@@ -445,7 +444,7 @@ public class SagaClassListener extends ClassVisitor implements DomainListener {
 		}
 
 		private void makeSaga() {
-			sagaObjectBody = ClassBuilder.make(sagaObjectType).field(AggregateIdentifier.class, sagaIdField).fields(sagaDatasFields).field("status", statusType);
+			sagaObjectBody = ClassBuilder.make(sagaObjectType).field(AggregateIdentifier.class, idField).fields(sagaFields).field("status", statusType);
 			context.add("saga", sagaObjectBody);
 			sagaObjectBody.publicMethod("<init>").code(mc -> {
 				mc.initObject();
@@ -454,20 +453,8 @@ public class SagaClassListener extends ClassVisitor implements DomainListener {
 
 		private void makeSagaManagement() {
 			sagaManagementClassBody = ClassBuilder.make(sagaType).field(ACC_PRIVATE + ACC_TRANSIENT, "commandBus", CommandBus.class)
-			        .definePropertySet(Inject.class, "commandBus", CommandBus.class).fields(sagaDatasFields);
+			        .definePropertySet(Inject.class, "commandBus", CommandBus.class).fields(sagaFields);
 			context.add("managementSaga", sagaManagementClassBody);
-		}
-
-		private Variable pop(int size) {
-			Variable var = null;
-			for (int i = 0; i < size; i++) {
-				var = sagaStack.pop();
-			}
-			return var;
-		}
-
-		private Variable pop(Type type) {
-			return pop(type.getSize());
 		}
 
 		private void printStack() {
@@ -484,21 +471,33 @@ public class SagaClassListener extends ClassVisitor implements DomainListener {
 			// System.out.println(sb.toString());
 		}
 
-		private void push(int size) {
+		private Variable stackPop(int size) {
+			Variable var = null;
 			for (int i = 0; i < size; i++) {
-				sagaStack.push(NA);
+				var = methodStack.pop();
+			}
+			return var;
+		}
+
+		private Variable stackPop(Type type) {
+			return stackPop(type.getSize());
+		}
+
+		private void stackPush(int size) {
+			for (int i = 0; i < size; i++) {
+				methodStack.push(NA);
 			}
 		}
 
-		private void push(String name, Type type) {
-			sagaStack.push(new Variable(name, type));
-			push(type.getSize() - 1);
+		private void stackPush(String name, Type type) {
+			methodStack.push(new Variable(name, type));
+			stackPush(type.getSize() - 1);
 		}
 
 		@Override
 		public void visitCode() {
 
-			statusType = domainDefinition.apitypeOf(this.sagaMethodName, "Status");
+			statusType = domainDefinition.apitypeOf(this.methodName, "Status");
 			{
 				context.add(StatusBuilder.build(statusType, Status.Started.name(), Status.Failed.name(), Status.Completed.name()));
 			}
@@ -511,11 +510,11 @@ public class SagaClassListener extends ClassVisitor implements DomainListener {
 
 			Type createdEvent = makeHandleCreate();
 
-			blockStartOfRoot("on" + AsmBuilder.toSimpleName(sagaObjectType.getClassName()) + sagaBlockIndex++, sagaDatasFields, createdEvent);
+			blockStartOfRoot("on" + AsmBuilder.toSimpleName(sagaObjectType.getClassName()) + methodBlockIndex++, sagaFields, createdEvent);
 
-			if (Type.getType(boolean.class).getDescriptor().equals(sagaReturnType.getDescriptor())) {
-				makeHandleEndOfSaga(domainDefinition, sagaDatasFieldsWithID, Status.Completed.name(), 1);
-				makeHandleEndOfSaga(domainDefinition, sagaDatasFieldsWithID, Status.Failed.name(), 0);
+			if (Type.getType(boolean.class).getDescriptor().equals(methodReturnType.getDescriptor())) {
+				makeHandleEndOfSaga(domainDefinition, sagaFieldsWithID, Status.Completed.name(), 1);
+				makeHandleEndOfSaga(domainDefinition, sagaFieldsWithID, Status.Failed.name(), 0);
 			}
 			super.visitCode();
 		}
@@ -534,12 +533,12 @@ public class SagaClassListener extends ClassVisitor implements DomainListener {
 
 		@Override
 		public void visitFieldInsn(int opcode, String owner, String name, String desc) {
-			LOGGER.debug("[]{}{}\t\t\t{}", repeat("    ", sagaBlockStack.size()), "visitFieldInsn", name);
+			LOGGER.debug("[]{}{}\t\t\t{}", repeat("    ", methodBlockStack.size()), "visitFieldInsn", name);
 
 			if (opcode == GETSTATIC || opcode == GETFIELD) {
-				push("", Type.getType(desc));
+				stackPush("", Type.getType(desc));
 			} else if (opcode == PUTSTATIC || opcode == PUTFIELD) {
-				pop(Type.getType(desc));
+				stackPop(Type.getType(desc));
 			}
 			super.visitFieldInsn(opcode, owner, name, desc);
 			printStack();
@@ -547,7 +546,7 @@ public class SagaClassListener extends ClassVisitor implements DomainListener {
 
 		@Override
 		public void visitIincInsn(int var, int increment) {
-			LOGGER.debug("[]{}{}\t\t\t{}", repeat("    ", sagaBlockStack.size()), "visitIincInsn", var);
+			LOGGER.debug("[]{}{}\t\t\t{}", repeat("    ", methodBlockStack.size()), "visitIincInsn", var);
 
 			super.visitIincInsn(var, increment);
 			printStack();
@@ -555,10 +554,10 @@ public class SagaClassListener extends ClassVisitor implements DomainListener {
 
 		@Override
 		public void visitInsn(int opcode) {
-			LOGGER.debug("[]{}{}\t\t\t{}", repeat("    ", sagaBlockStack.size()), "visitInsn", opcode);
+			LOGGER.debug("[]{}{}\t\t\t{}", repeat("    ", methodBlockStack.size()), "visitInsn", opcode);
 
 			if (IRETURN <= opcode && opcode <= RETURN) {
-				makeFinished((Integer) sagaStack.peek().value);
+				makeFinished((Integer) methodStack.peek().value);
 				// currentBlock().code.block(mc->{
 				// mc.def("i",int.class);
 				// mc.load("i");
@@ -566,18 +565,18 @@ public class SagaClassListener extends ClassVisitor implements DomainListener {
 				// mc.insn(IADD);
 				// mc.storeTop("i");
 				// });
-				LOGGER.debug("[]{}{}\t\t\t{}", repeat("    ", sagaBlockStack.size()), "return", (Integer) sagaStack.peek().value);
+				LOGGER.debug("[]{}{}\t\t\t{}", repeat("    ", methodBlockStack.size()), "return", (Integer) methodStack.peek().value);
 			}
 
 			int cnt = Types.SIZE[opcode];
 			if (cnt > 0) {
-				push(cnt);
+				stackPush(cnt);
 			} else {
-				pop(-cnt);
+				stackPop(-cnt);
 			}
 
 			if (ICONST_0 <= opcode && opcode <= ICONST_5) {
-				sagaStack.peek().value = opcode - ICONST_0;
+				methodStack.peek().value = opcode - ICONST_0;
 			}
 
 			super.visitInsn(opcode);
@@ -586,13 +585,13 @@ public class SagaClassListener extends ClassVisitor implements DomainListener {
 
 		@Override
 		public void visitIntInsn(int opcode, int operand) {
-			LOGGER.debug("[]{}{}\t\t\t{}", repeat("    ", sagaBlockStack.size()), "visitIntInsn", operand);
+			LOGGER.debug("[]{}{}\t\t\t{}", repeat("    ", methodBlockStack.size()), "visitIntInsn", operand);
 
 			int cnt = Types.SIZE[opcode];
 			if (cnt > 0) {
-				push(cnt);
+				stackPush(cnt);
 			} else {
-				pop(-cnt);
+				stackPop(-cnt);
 			}
 			super.visitIntInsn(opcode, operand);
 			printStack();
@@ -600,25 +599,25 @@ public class SagaClassListener extends ClassVisitor implements DomainListener {
 
 		@Override
 		public void visitJumpInsn(int opcode, Label label) {
-			LOGGER.debug("[]{}jump", repeat("    ", sagaBlockStack.size()));
+			LOGGER.debug("[]{}jump", repeat("    ", methodBlockStack.size()));
 			if (opcode == GOTO) {
-				currentBlock().elseLabel = label;
+				blockCurrent().elseLabel = label;
 
 				int cnt = Types.SIZE[opcode];
 				if (cnt > 0) {
-					push(cnt);
+					stackPush(cnt);
 				} else {
-					pop(-cnt);
+					stackPop(-cnt);
 				}
 
 			} else {
-				blockStartOfResult("inner" + sagaBlockIndex++, label);
+				blockStartOfResult("inner" + methodBlockIndex++, label);
 
 				int cnt = Types.SIZE[opcode];
 				if (cnt > 0) {
-					push(cnt);
+					stackPush(cnt);
 				} else {
-					pop(-cnt);
+					stackPop(-cnt);
 				}
 				super.visitJumpInsn(opcode, label);
 			}
@@ -627,8 +626,8 @@ public class SagaClassListener extends ClassVisitor implements DomainListener {
 
 		@Override
 		public void visitLabel(Label label) {
-			LOGGER.debug("[]{}{}\t\t\t{}", repeat("    ", sagaBlockStack.size()), "label", label);
-			if (sagaBlockStack.size() > 0 && label == currentBlock().labelClose) {
+			LOGGER.debug("[]{}{}\t\t\t{}", repeat("    ", methodBlockStack.size()), "label", label);
+			if (methodBlockStack.size() > 0 && label == blockCurrent().labelClose) {
 				blockCloseCurrent();
 			}
 			super.visitLabel(label);
@@ -637,9 +636,9 @@ public class SagaClassListener extends ClassVisitor implements DomainListener {
 
 		@Override
 		public void visitLdcInsn(Object cst) {
-			LOGGER.debug("[]{}{}\t\t\t{}", repeat("    ", sagaBlockStack.size()), "visitLdcInsn", cst);
+			LOGGER.debug("[]{}{}\t\t\t{}", repeat("    ", methodBlockStack.size()), "visitLdcInsn", cst);
 
-			push("", Type.getType(cst.getClass()));
+			stackPush("", Type.getType(cst.getClass()));
 
 			super.visitLdcInsn(cst);
 			printStack();
@@ -652,15 +651,15 @@ public class SagaClassListener extends ClassVisitor implements DomainListener {
 
 		@Override
 		public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-			LOGGER.debug("[]{}{}\t\t\t{}", repeat("    ", sagaBlockStack.size()), "visitMethodInsn", name);
+			LOGGER.debug("[]{}{}\t\t\t{}", repeat("    ", methodBlockStack.size()), "visitMethodInsn", name);
 			if (opcode == INVOKESTATIC) {
 				Type[] params = Type.getArgumentTypes(desc);
 				for (int i = params.length - 1; i >= 0; i--) {
-					pop(params[i]);
+					stackPop(params[i]);
 				}
 				Type returnType = Type.getReturnType(desc);
 				if (returnType != Type.VOID_TYPE) {
-					push("", returnType);
+					stackPush("", returnType);
 				}
 			} else {
 				makeInvokeCommand(opcode, owner, name, desc, itf);
@@ -669,12 +668,12 @@ public class SagaClassListener extends ClassVisitor implements DomainListener {
 
 				Type[] params = Type.getArgumentTypes(desc);
 				for (int i = params.length - 1; i >= 0; i--) {
-					pop(params[i]);
+					stackPop(params[i]);
 				}
-				Variable varOwner = pop(ownerType);
+				Variable varOwner = stackPop(ownerType);
 				Type returnType = Type.getReturnType(desc);
 				if (returnType != Type.VOID_TYPE) {
-					push(varOwner.name + "_" + name, returnType);
+					stackPush(varOwner.name + "_" + name, returnType);
 				}
 			}
 			super.visitMethodInsn(opcode, owner, name, desc, itf);
@@ -684,9 +683,9 @@ public class SagaClassListener extends ClassVisitor implements DomainListener {
 
 		@Override
 		public void visitTypeInsn(int opcode, String type) {
-			LOGGER.debug("[]{}{}\t\t\t{}", repeat("    ", sagaBlockStack.size()), "visitTypeInsn", type);
+			LOGGER.debug("[]{}{}\t\t\t{}", repeat("    ", methodBlockStack.size()), "visitTypeInsn", type);
 			if (opcode == NEW) {
-				push("", Type.getObjectType(type));
+				stackPush("", Type.getObjectType(type));
 			}
 			super.visitTypeInsn(opcode, type);
 			printStack();
@@ -694,14 +693,14 @@ public class SagaClassListener extends ClassVisitor implements DomainListener {
 
 		@Override
 		public void visitVarInsn(int opcode, int varLocal) {
-			LOGGER.debug("[]{}{}\t\t\t{}", repeat("    ", sagaBlockStack.size()), "visitVarInsn", varLocal);
+			LOGGER.debug("[]{}{}\t\t\t{}", repeat("    ", methodBlockStack.size()), "visitVarInsn", varLocal);
 			if (ILOAD <= opcode && opcode <= SALOAD) {
-				Variable var = sagaVariablesList.get(sagaLocalsOfVar[varLocal]);
-				push(var.name, var.type);
+				Variable var = methodVariablesList.get(methodLocalsOfVar[varLocal]);
+				stackPush(var.name, var.type);
 			}
 			if (ISTORE <= opcode && opcode <= SASTORE) {
-				Variable var = sagaVariablesList.get(sagaLocalsOfVar[varLocal]);
-				pop(var.type);
+				Variable var = methodVariablesList.get(methodLocalsOfVar[varLocal]);
+				stackPop(var.type);
 			}
 			super.visitVarInsn(opcode, varLocal);
 			printStack();
