@@ -5,8 +5,6 @@ import java.io.IOException;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Type;
 
-import com.nebula.cqrs.axon.pojo.DomainDefinition;
-import com.nebula.tinyasm.ClassBuilder;
 import com.nebula.tinyasm.util.AsmBuilder;
 
 public class DomainBuilderTest {

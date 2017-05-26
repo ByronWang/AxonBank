@@ -46,8 +46,8 @@ class SagaMethodVisitor extends SagaMethodAnalyzer {
 	DomainDefinition domainDefinition;
 
 	Field idField;
-	List<Field> sagaFields;
-	List<Field> sagaFieldsWithID;
+	final List<Field> sagaFields;
+	final List<Field> sagaFieldsWithID;
 
 	ClassBody sagaManagementClassBody;
 	String sagaName = null;
@@ -108,6 +108,26 @@ class SagaMethodVisitor extends SagaMethodAnalyzer {
 		//
 		// System.out.print("[] ");
 		// System.out.println(sagaName + " -> on(" + createdEvent + ") {");
+
+		prepareSagaClassBody();
+	}
+
+	public void prepareSagaClassBody() {
+
+		statusType = domainDefinition.apitypeOf(this.sagaName, "Status");
+		{
+			context.add(StatusBuilder.build(statusType, Status.Started.name(), Status.Failed.name(), Status.Completed.name()));
+		}
+
+		sagaObjectBody = ClassBuilder.make(sagaObjectType).field(AggregateIdentifier.class, idField).fields(sagaFields).field("status", statusType)
+		        .publicInitNone();
+		context.add("saga", sagaObjectBody);
+
+		sagaManagementClassBody = ClassBuilder.make(sagaType).field(ACC_PRIVATE + ACC_TRANSIENT, "commandBus", CommandBus.class)
+		        .definePropertySet(Inject.class, "commandBus", CommandBus.class).fields(sagaFields);
+		context.add("managementSaga", sagaManagementClassBody);
+
+		commandHandlerBody = context.get("commandHandler");
 	}
 
 	@Override
@@ -122,63 +142,28 @@ class SagaMethodVisitor extends SagaMethodAnalyzer {
 
 		final Type eventType = domainDefinition.apitypeOf(parentBlock.commandName, result, "Event");
 		context.add(ClassBuilder.make(eventType).fields(parentBlock.eventFields).readonlyPojo());
-		onEnd();
+		onEndOfSaga();
 		block.code = sagaManagementClassBody.publicMethod("on").annotation(SagaEventHandler.class, "associationProperty", idField.name)
 		        .parameter("event", eventType).begin();
 	}
 
 	@Override
-	protected void onBeginOfRoot(SagaBlock block, List<Field> datasFields, Type createdEvent) {
+	protected void onBeginSaga(SagaBlock block, Type methodReturnType) {
+
+		if (Type.getType(boolean.class).getDescriptor().equals(methodReturnType.getDescriptor())) {
+			onHandleSagaResult(domainDefinition, sagaFieldsWithID, Status.Completed.name(), 1);
+			onHandleSagaResult(domainDefinition, sagaFieldsWithID, Status.Failed.name(), 0);
+		}
+
+		Type createdEvent = onSagaCreate();
 		block.code = sagaManagementClassBody.publicMethod("on").annotation(StartSaga.class)
 		        .annotation(SagaEventHandler.class, "associationProperty", idField.name).parameter("event", createdEvent).begin().block(mc -> {
-			        for (Field field : datasFields) {
+			        for (Field field : sagaFields) {
 				        mc.loadThis();
 				        mc.object("event").getProperty(field);
 				        mc.type(mc.thisType()).putTo(field);
 			        }
 		        });
-	}
-
-	@Override
-	protected void onEnd() {
-		ClassMethodCode code = blockCurrent().code;
-		if (code != null) {
-			code.returnVoid();
-			code.end();
-			blockCurrent().code = null;
-		}
-	}
-
-	protected void makeCommandHandler() {
-		commandHandlerBody = context.get("commandHandler");
-	}
-
-	@Override
-	protected void onFinished(int value) {
-
-		Type commandType;
-
-		if (value == 1) {
-			commandType = domainDefinition.apitypeOf(this.sagaName, "Mark", Status.Completed.name(), "Command");
-		} else {
-			commandType = domainDefinition.apitypeOf(this.sagaName, "Mark", Status.Failed.name(), "Command");
-		}
-
-		blockCurrent().code.block(mc -> {
-			mc.loadThis().get("commandBus");
-
-			mc.newInstace(commandType);
-			mc.dup();
-			{
-				List<Field> paramTypes = new ArrayList<>();
-				mc.object("event").getProperty(idField);
-				paramTypes.add(idField);
-				mc.type(commandType).invokeSpecial("<init>", paramTypes);
-			}
-
-			mc.type(GenericCommandMessage.class).invokeStatic(CommandMessage.class, "asCommandMessage", commandType);
-			mc.type(CommandBus.class).invokeVirtual("dispatch", GenericCommandMessage.class);
-		});
 	}
 
 	// private static void visitDefine_handle_execute(ClassBody cb, Type
@@ -204,43 +189,17 @@ class SagaMethodVisitor extends SagaMethodAnalyzer {
 	// });
 	// }
 
-	Type makeHandleCreate() {
-		Type createdCommand = domainDefinition.apitypeOf(sagaName + "CreateCommand");
-		Type createdEvent = domainDefinition.apitypeOf(sagaName + "CreatedEvent");
-		{
-			context.add(createdCommand.getClassName(), ClassBuilder.make(createdCommand).field(TargetAggregateIdentifier.class, idField).fields(sagaFields)
-			        .publicInitAllFields().defineAllPropetyGet().publicToStringWithAllFields());
-
-			context.add(createdEvent.getClassName(), ClassBuilder.make(createdEvent).field(TargetAggregateIdentifier.class, idField).fields(sagaFields)
-			        .publicInitAllFields().defineAllPropetyGet().publicToStringWithAllFields());
-
-			sagaObjectBody.publicMethod("<init>").annotation(CommandHandler.class).parameter("command", createdCommand).code(mc -> {
-				mc.initObject();
-				mc.newInstace(createdEvent);
-				mc.dup();
-				for (Field field : sagaFieldsWithID) {
-					mc.object("command").getProperty(field);
-				}
-				mc.type(createdEvent).invokeSpecial("<init>", sagaFieldsWithID);
-				mc.type(AggregateLifecycle.class).invokeStatic("apply", createdEvent);
-
-			});
-
-			sagaObjectBody.publicMethod("on").annotation(EventHandler.class).parameter("event", createdEvent).code(mc -> {
-				for (Field field : sagaFieldsWithID) {
-					mc.loadThis();
-					mc.object("event").getProperty(field);
-					mc.type(mc.thisType()).putTo(field);
-				}
-				mc.loadThis();
-				mc.type(statusType).getStatic(Status.Started.name(), statusType);
-				mc.type(mc.thisType()).putTo("status", statusType);
-			});
+	@Override
+	protected void onEndOfSaga() {
+		ClassMethodCode code = blockCurrent().code;
+		if (code != null) {
+			code.returnVoid();
+			code.end();
+			blockCurrent().code = null;
 		}
-		return createdEvent;
 	}
 
-	void makeHandleEndOfSaga(DomainDefinition domainDefinition, List<Field> datasFieldsWithID, String resultString, int resultValue) {
+	void onHandleSagaResult(DomainDefinition domainDefinition, List<Field> datasFieldsWithID, String resultString, int resultValue) {
 		Type commandType = domainDefinition.apitypeOf(this.sagaName, "Mark", resultString, "Command");
 		Type eventType = domainDefinition.apitypeOf(this.sagaName, resultString, "Event");
 
@@ -248,7 +207,7 @@ class SagaMethodVisitor extends SagaMethodAnalyzer {
 
 		context.add(ClassBuilder.make(eventType).field(idField).readonlyPojo());
 
-		sagaObjectBody.publicMethod("handle").annotation(CommandHandler.class).parameter("command", commandType).code(mc -> {
+		commandHandlerBody.publicMethod("handle").annotation(CommandHandler.class).parameter("command", commandType).code(mc -> {
 			mc.newInstace(eventType);
 			mc.dup();
 			mc.object("command").getProperty(idField);
@@ -260,6 +219,34 @@ class SagaMethodVisitor extends SagaMethodAnalyzer {
 			mc.loadThis();
 			mc.type(statusType).getStatic(resultString, statusType);
 			mc.type(mc.thisType()).putTo("status", statusType);
+		});
+	}
+
+	@Override
+	protected void onMarkSagaFinished(int value) {
+
+		Type commandType;
+
+		if (value == 1) {
+			commandType = domainDefinition.apitypeOf(this.sagaName, "Mark", Status.Completed.name(), "Command");
+		} else {
+			commandType = domainDefinition.apitypeOf(this.sagaName, "Mark", Status.Failed.name(), "Command");
+		}
+
+		blockCurrent().code.block(mc -> {
+			mc.loadThis().get("commandBus");
+
+			mc.newInstace(commandType);
+			mc.dup();
+			{
+				List<Field> paramTypes = new ArrayList<>();
+				mc.object("event").getProperty(idField);
+				paramTypes.add(idField);
+				mc.type(commandType).invokeSpecial("<init>", paramTypes);
+			}
+
+			mc.type(GenericCommandMessage.class).invokeStatic(CommandMessage.class, "asCommandMessage", commandType);
+			mc.type(CommandBus.class).invokeVirtual("dispatch", GenericCommandMessage.class);
 		});
 	}
 
@@ -326,41 +313,40 @@ class SagaMethodVisitor extends SagaMethodAnalyzer {
 
 	}
 
-	void makeSaga() {
-		sagaObjectBody = ClassBuilder.make(sagaObjectType).field(AggregateIdentifier.class, idField).fields(sagaFields).field("status", statusType);
-		context.add("saga", sagaObjectBody);
-		sagaObjectBody.publicMethod("<init>").code(mc -> {
-			mc.initObject();
-		});
-	}
-
-	void makeSagaManagement() {
-		sagaManagementClassBody = ClassBuilder.make(sagaType).field(ACC_PRIVATE + ACC_TRANSIENT, "commandBus", CommandBus.class)
-		        .definePropertySet(Inject.class, "commandBus", CommandBus.class).fields(sagaFields);
-		context.add("managementSaga", sagaManagementClassBody);
-	}
-
-	public void makeCodeBegin(Type methodReturnType) {
-
-		statusType = domainDefinition.apitypeOf(this.sagaName, "Status");
+	Type onSagaCreate() {
+		Type createdCommand = domainDefinition.apitypeOf(sagaName + "CreateCommand");
+		Type createdEvent = domainDefinition.apitypeOf(sagaName + "CreatedEvent");
 		{
-			context.add(StatusBuilder.build(statusType, Status.Started.name(), Status.Failed.name(), Status.Completed.name()));
+			context.add(createdCommand.getClassName(), ClassBuilder.make(createdCommand).field(TargetAggregateIdentifier.class, idField).fields(sagaFields)
+			        .publicInitAllFields().defineAllPropetyGet().publicToStringWithAllFields());
+
+			context.add(createdEvent.getClassName(), ClassBuilder.make(createdEvent).field(TargetAggregateIdentifier.class, idField).fields(sagaFields)
+			        .publicInitAllFields().defineAllPropetyGet().publicToStringWithAllFields());
+
+			sagaObjectBody.publicMethod("<init>").annotation(CommandHandler.class).parameter("command", createdCommand).code(mc -> {
+				mc.initObject();
+				mc.newInstace(createdEvent);
+				mc.dup();
+				for (Field field : sagaFieldsWithID) {
+					mc.object("command").getProperty(field);
+				}
+				mc.type(createdEvent).invokeSpecial("<init>", sagaFieldsWithID);
+				mc.type(AggregateLifecycle.class).invokeStatic("apply", createdEvent);
+
+			});
+
+			sagaObjectBody.publicMethod("on").annotation(EventHandler.class).parameter("event", createdEvent).code(mc -> {
+				for (Field field : sagaFieldsWithID) {
+					mc.loadThis();
+					mc.object("event").getProperty(field);
+					mc.type(mc.thisType()).putTo(field);
+				}
+				mc.loadThis();
+				mc.type(statusType).getStatic(Status.Started.name(), statusType);
+				mc.type(mc.thisType()).putTo("status", statusType);
+			});
 		}
-
-		makeSaga();
-
-		makeSagaManagement();
-
-		makeCommandHandler();
-
-		Type createdEvent = makeHandleCreate();
-
-		blockStartOfRoot("on" + AsmBuilder.toSimpleName(sagaObjectType.getClassName()), sagaFields, createdEvent);
-
-		if (Type.getType(boolean.class).getDescriptor().equals(methodReturnType.getDescriptor())) {
-			makeHandleEndOfSaga(domainDefinition, sagaFieldsWithID, Status.Completed.name(), 1);
-			makeHandleEndOfSaga(domainDefinition, sagaFieldsWithID, Status.Failed.name(), 0);
-		}
+		return createdEvent;
 	}
 
 }

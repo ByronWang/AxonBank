@@ -8,7 +8,7 @@ import org.objectweb.asm.Type;
 
 import com.nebula.tinyasm.util.Field;
 
-public interface ClassBody extends Types, ToType, Opcodes, DefineField<ClassBody>,DefineStaticMethod<StaticMethodCode>,  DefineInstanceMethod<ClassMethodCode> {
+public interface ClassBody extends Types, ToType, Opcodes, DefineField<ClassBody>, DefineStaticMethod<StaticMethodCode>, DefineInstanceMethod<ClassMethodCode> {
 
 	default ClassBody annotation(Class<?> annotationClass) {
 		return annotation(typeOf(annotationClass));
@@ -89,7 +89,7 @@ public interface ClassBody extends Types, ToType, Opcodes, DefineField<ClassBody
 	default ClassBody definePropertySet(final Class<?> annotationClass, final String fieldName, final Class<?> fieldClass) {
 		return definePropertySet(typeOf(annotationClass), fieldName, typeOf(fieldClass));
 	}
-	
+
 	ClassBody end();
 
 	default ClassBody fields(List<Field> fields) {
@@ -116,6 +116,14 @@ public interface ClassBody extends Types, ToType, Opcodes, DefineField<ClassBody
 
 	default ClassBody pojo() {
 		return publicInitAllFields().defineAllPropetyGet().defineAllPropetySet().publicToStringWithAllFields();
+	}
+
+	default ClassBody publicInitNone() {
+		publicMethod("<init>").code(mc -> {
+			mc.initObject();
+			mc.returnVoid();
+		});
+		return this;
 	}
 
 	default ClassBody publicInitAllFields() {

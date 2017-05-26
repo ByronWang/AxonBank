@@ -27,7 +27,6 @@ import org.objectweb.asm.Type;
 import com.nebula.cqrs.axon.builder.SagaBlock.BlockType;
 import com.nebula.tinyasm.Variable;
 import com.nebula.tinyasm.api.Types;
-import com.nebula.tinyasm.util.Field;
 import com.nebula.tinyasm.util.MethodInfo;
 
 public abstract class SagaMethodAnalyzer extends MethodVisitor {
@@ -46,8 +45,8 @@ public abstract class SagaMethodAnalyzer extends MethodVisitor {
 		methodReturnType = Type.getReturnType(desc);
 	}
 
-	void blockCloseCurrent() {
-		onEnd();
+	private void blockCloseCurrent() {
+		onEndOfSaga();
 
 		SagaBlock previousBlock = methodBlockStack.pop();
 		stackPop(methodStack.size() - previousBlock.startStackIndex);
@@ -96,7 +95,7 @@ public abstract class SagaMethodAnalyzer extends MethodVisitor {
 		onBeginOfResult(parentBlock, nextBlock);
 	}
 
-	void blockStartOfResult(String name, Label labelClose) {
+	private void blockStartOfResult(String name, Label labelClose) {
 		SagaClassListener.LOGGER.debug("[]{}if{****", SagaClassListener.repeat("    ", methodBlockStack.size()));
 		SagaBlock parentBlock = methodBlockStack.peek();
 		Label thisLabelclose = labelClose;
@@ -108,21 +107,20 @@ public abstract class SagaMethodAnalyzer extends MethodVisitor {
 		onBeginOfResult(parentBlock, nextBlock);
 	}
 
-	protected void blockStartOfRoot(String name, List<Field> datasFields, Type createdEvent) {
+	private void blockStartOfRoot(String name) {
 		SagaClassListener.LOGGER.debug("[]{}root{****", SagaClassListener.repeat("    ", methodBlockStack.size()));
 		SagaBlock nextBlock = methodBlockStack.push(new SagaBlock(name + methodBlockIndex++, null, methodStack.size()));
-		onBeginOfRoot(nextBlock, datasFields, createdEvent);
+
+		onBeginSaga(nextBlock, this.methodReturnType);
 	}
 
 	protected abstract void onBeginOfResult(SagaBlock parentBlock, SagaBlock nextBlock);
 
-	protected abstract void onBeginOfRoot(SagaBlock nextBlock, List<Field> datasFields, Type createdEvent);
+	protected abstract void onBeginSaga(SagaBlock nextBlock, Type methodReturnType);
 
-	protected abstract void onEnd();
+	protected abstract void onEndOfSaga();
 
-	protected abstract void makeCodeBegin(Type methodReturnType);
-
-	protected abstract void onFinished(int value);
+	protected abstract void onMarkSagaFinished(int value);
 
 	protected abstract void onInvokeCommand(Stack<Variable> methodStack, int opcode, String owner, String name, String desc, boolean itf);
 
@@ -165,7 +163,7 @@ public abstract class SagaMethodAnalyzer extends MethodVisitor {
 
 	@Override
 	public void visitCode() {
-		makeCodeBegin(methodReturnType);
+		blockStartOfRoot("on");
 		super.visitCode();
 	}
 
@@ -173,12 +171,6 @@ public abstract class SagaMethodAnalyzer extends MethodVisitor {
 	public void visitEnd() {
 		blockCloseCurrent();
 		super.visitEnd();
-
-		// byte[] sageObjectCode = sagaObjectClassBody.end().toByteArray();
-		// defineClass(sagaObjectType, sageObjectCode);
-		//
-		// byte[] sageCode = sagaClassBody.end().toByteArray();
-		// defineClass(sagaType, sageCode);
 	}
 
 	@Override
@@ -207,7 +199,7 @@ public abstract class SagaMethodAnalyzer extends MethodVisitor {
 		SagaClassListener.LOGGER.debug("[]{}{}\t\t\t{}", SagaClassListener.repeat("    ", methodBlockStack.size()), "visitInsn", opcode);
 
 		if (IRETURN <= opcode && opcode <= RETURN) {
-			onFinished((Integer) methodStack.peek().value);
+			onMarkSagaFinished((Integer) methodStack.peek().value);
 			// currentBlock().code.block(mc->{
 			// mc.def("i",int.class);
 			// mc.load("i");
