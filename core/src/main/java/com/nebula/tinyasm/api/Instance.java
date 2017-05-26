@@ -1,7 +1,6 @@
 package com.nebula.tinyasm.api;
 
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
 
 import com.nebula.tinyasm.util.Field;
 

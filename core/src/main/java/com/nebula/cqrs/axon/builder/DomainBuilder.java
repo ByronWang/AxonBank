@@ -36,7 +36,7 @@ public class DomainBuilder implements DomainContext {
 		this.cr = init(cr, srcDomainType, domainDefinition.implDomainType);
 		this.types = new HashMap<>();
 
-		ClassBuilder domainObject = (ClassBuilder)ClassBuilder.make();
+		ClassBuilder domainObject = (ClassBuilder) ClassBuilder.make();
 		CQRSDomainFilterClassVisitor domainFilterClassVisitor = new CQRSDomainFilterClassVisitor(domainObject);
 		this.accept(domainFilterClassVisitor);
 		this.add("impl", domainObject);
@@ -103,7 +103,6 @@ public class DomainBuilder implements DomainContext {
 	@Override
 	public ClassBody add(ClassBody cb) {
 		this.types.put(cb.getType().getClassName(), cb);
-		System.out.println("add " + cb.getType().getInternalName());
 		return cb;
 	}
 

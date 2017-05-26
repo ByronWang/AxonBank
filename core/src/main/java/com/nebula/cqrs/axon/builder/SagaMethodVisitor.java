@@ -84,31 +84,6 @@ class SagaMethodVisitor extends SagaMethodAnalyzer {
 		sagaFieldsWithID.addAll(sagaFields);
 		this.sagaName = name;
 
-		// List<Field> realFields = new ArrayList<>();
-		// realFields.addAll(datasFields);
-
-		//
-		// @StartSaga
-		// @SagaEventHandler(associationProperty = "bankTransferId")
-		// public void on(BankTransferCreatedEvent event) {
-		// this.sourceBankAccountId = event.getSourceBankAccountId();
-		// this.destinationBankAccountId =
-		// event.getDestinationBankAccountId();
-		// this.amount = event.getAmount();
-		//
-		// BankTransferSourceDebitCommand command = new
-		// BankTransferSourceDebitCommand(event.getSourceBankAccountId(),
-		// event.getBankTransferId(),
-		// event.getAmount());
-		// commandBus.dispatch(asCommandMessage(command));
-		// }
-
-		// System.out.print("[] ");
-		// System.out.println(" make " + createdEvent + " ");
-		//
-		// System.out.print("[] ");
-		// System.out.println(sagaName + " -> on(" + createdEvent + ") {");
-
 		prepareSagaClassBody();
 	}
 
@@ -154,10 +129,39 @@ class SagaMethodVisitor extends SagaMethodAnalyzer {
 			onHandleSagaResult(domainDefinition, sagaFieldsWithID, Status.Completed.name(), 1);
 			onHandleSagaResult(domainDefinition, sagaFieldsWithID, Status.Failed.name(), 0);
 		}
+		Type createCommandType = domainDefinition.apitypeOf(sagaName + "CreateCommand");
+		Type createdEventType = domainDefinition.apitypeOf(sagaName + "CreatedEvent");
 
-		Type createdEvent = onSagaCreate();
+		context.add(createCommandType.getClassName(), ClassBuilder.make(createCommandType).field(TargetAggregateIdentifier.class, idField).fields(sagaFields)
+		        .publicInitAllFields().defineAllPropetyGet().publicToStringWithAllFields());
+
+		context.add(createdEventType.getClassName(), ClassBuilder.make(createdEventType).field(TargetAggregateIdentifier.class, idField).fields(sagaFields)
+		        .publicInitAllFields().defineAllPropetyGet().publicToStringWithAllFields());
+
+		sagaObjectBody.publicMethod("<init>").annotation(CommandHandler.class).parameter("command", createCommandType).code(mc -> {
+			mc.initObject();
+			mc.newInstace(createdEventType);
+			mc.dup();
+			for (Field field1 : sagaFieldsWithID) {
+				mc.object("command").getProperty(field1);
+			}
+			mc.type(createdEventType).invokeSpecial("<init>", sagaFieldsWithID);
+			mc.type(AggregateLifecycle.class).invokeStatic("apply", createdEventType);
+		});
+
+		sagaObjectBody.publicMethod("on").annotation(EventHandler.class).parameter("event", createdEventType).code(mc -> {
+			for (Field field2 : sagaFieldsWithID) {
+				mc.loadThis();
+				mc.object("event").getProperty(field2);
+				mc.type(mc.thisType()).putTo(field2);
+			}
+			mc.loadThis();
+			mc.type(statusType).getStatic(Status.Started.name(), statusType);
+			mc.type(mc.thisType()).putTo("status", statusType);
+		});
+
 		block.code = sagaManagementClassBody.publicMethod("on").annotation(StartSaga.class)
-		        .annotation(SagaEventHandler.class, "associationProperty", idField.name).parameter("event", createdEvent).begin().block(mc -> {
+		        .annotation(SagaEventHandler.class, "associationProperty", idField.name).parameter("event", createdEventType).begin().block(mc -> {
 			        for (Field field : sagaFields) {
 				        mc.loadThis();
 				        mc.object("event").getProperty(field);
@@ -207,7 +211,7 @@ class SagaMethodVisitor extends SagaMethodAnalyzer {
 
 		context.add(ClassBuilder.make(eventType).field(idField).readonlyPojo());
 
-		commandHandlerBody.publicMethod("handle").annotation(CommandHandler.class).parameter("command", commandType).code(mc -> {
+		sagaObjectBody.publicMethod("handle").annotation(CommandHandler.class).parameter("command", commandType).code(mc -> {
 			mc.newInstace(eventType);
 			mc.dup();
 			mc.object("command").getProperty(idField);
@@ -287,8 +291,6 @@ class SagaMethodVisitor extends SagaMethodAnalyzer {
 		}
 
 		blockCurrent().code.block(mc -> {
-			// mc.def("command", commandType);
-
 			mc.loadThis().get("commandBus");
 
 			mc.newInstace(commandType);
@@ -309,44 +311,6 @@ class SagaMethodVisitor extends SagaMethodAnalyzer {
 			mc.type(CommandBus.class).invokeVirtual("dispatch", GenericCommandMessage.class);
 		});
 
-		// System.out.println(methodParams);
-
-	}
-
-	Type onSagaCreate() {
-		Type createdCommand = domainDefinition.apitypeOf(sagaName + "CreateCommand");
-		Type createdEvent = domainDefinition.apitypeOf(sagaName + "CreatedEvent");
-		{
-			context.add(createdCommand.getClassName(), ClassBuilder.make(createdCommand).field(TargetAggregateIdentifier.class, idField).fields(sagaFields)
-			        .publicInitAllFields().defineAllPropetyGet().publicToStringWithAllFields());
-
-			context.add(createdEvent.getClassName(), ClassBuilder.make(createdEvent).field(TargetAggregateIdentifier.class, idField).fields(sagaFields)
-			        .publicInitAllFields().defineAllPropetyGet().publicToStringWithAllFields());
-
-			sagaObjectBody.publicMethod("<init>").annotation(CommandHandler.class).parameter("command", createdCommand).code(mc -> {
-				mc.initObject();
-				mc.newInstace(createdEvent);
-				mc.dup();
-				for (Field field : sagaFieldsWithID) {
-					mc.object("command").getProperty(field);
-				}
-				mc.type(createdEvent).invokeSpecial("<init>", sagaFieldsWithID);
-				mc.type(AggregateLifecycle.class).invokeStatic("apply", createdEvent);
-
-			});
-
-			sagaObjectBody.publicMethod("on").annotation(EventHandler.class).parameter("event", createdEvent).code(mc -> {
-				for (Field field : sagaFieldsWithID) {
-					mc.loadThis();
-					mc.object("event").getProperty(field);
-					mc.type(mc.thisType()).putTo(field);
-				}
-				mc.loadThis();
-				mc.type(statusType).getStatic(Status.Started.name(), statusType);
-				mc.type(mc.thisType()).putTo("status", statusType);
-			});
-		}
-		return createdEvent;
 	}
 
 }
