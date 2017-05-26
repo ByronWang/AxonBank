@@ -138,28 +138,62 @@ public interface ClassBody extends Types, ToType, Opcodes, DefineField<ClassBody
 		return this;
 	}
 
-	default ClassBody publicMethodInitWithAllFieldsToSuper(Field... fields) {
-		publicMethod("<init>").parameter(fields).code(mc -> {
-			mc.loadThis();
-			for (Field param : fields) {
-				mc.load(param.name);
-			}
-			mc.type(getSuperType()).invokeSpecial("<init>", typesOf(fields));
-			mc.returnVoid();
-		});
-		return this;
+	default ClassBody publicInitWithSuper(Field[] superFields) {
+		if (this.getFields().size() > 0) {
+			publicMethod("<init>").parameter(this.getFields()).parameter(superFields).code(mc -> {
+				mc.loadThis();
+				for (Field param : superFields) {
+					mc.load(param.name);
+				}
+				mc.type(getSuperType()).invokeSpecial("<init>", typesOf(superFields));
+
+				for (Field param : this.getFields()) {
+					mc.loadThis().put(param.name, param.name);
+				}
+				mc.returnVoid();
+			});
+			return this;
+		} else {
+			publicMethod("<init>").parameter(superFields).code(mc -> {
+				mc.loadThis();
+				for (Field param : superFields) {
+					mc.load(param.name);
+				}
+				mc.type(getSuperType()).invokeSpecial("<init>", typesOf(superFields));
+
+				mc.returnVoid();
+			});
+			return this;
+		}
 	}
 
-	default ClassBody publicMethodInitWithAllFieldsToSuper(List<Field> fields) {
-		publicMethod("<init>").parameter(fields).code(mc -> {
-			mc.loadThis();
-			for (Field param : fields) {
-				mc.load(param.name);
-			}
-			mc.type(getSuperType()).invokeSpecial("<init>", typesOf(fields));
-			mc.returnVoid();
-		});
-		return this;
+	default ClassBody publicInitWithSuper(List<Field> superFields) {
+		if (this.getFields().size() > 0) {
+			publicMethod("<init>").parameter(this.getFields()).parameter(superFields).code(mc -> {
+				mc.loadThis();
+				for (Field param : superFields) {
+					mc.load(param.name);
+				}
+				mc.type(getSuperType()).invokeSpecial("<init>", typesOf(superFields));
+
+				for (Field param : this.getFields()) {
+					mc.loadThis().put(param.name, param.name);
+				}
+				mc.returnVoid();
+			});
+			return this;
+		} else {
+			publicMethod("<init>").parameter(superFields).code(mc -> {
+				mc.loadThis();
+				for (Field param : superFields) {
+					mc.load(param.name);
+				}
+				mc.type(getSuperType()).invokeSpecial("<init>", typesOf(superFields));
+
+				mc.returnVoid();
+			});
+			return this;
+		}
 	}
 
 	default ClassBody publicToStringWithAllFields() {

@@ -187,9 +187,9 @@ public class CQRSCommandClassListener extends ClassVisitor implements DomainList
 
 				if (hasNotIdentifier) {
 					context.add(ClassBuilder.make(eventType, realType)
-					        .publicMethodInitWithAllFieldsToSuper(fieldsOf(domainDefinition.identifierField, method.params)));
+					        .publicInitWithSuper(fieldsOf(domainDefinition.identifierField, method.params)));
 				} else {
-					context.add(ClassBuilder.make(eventType, realType).publicMethodInitWithAllFieldsToSuper(method.params));
+					context.add(ClassBuilder.make(eventType, realType).publicInitWithSuper(method.params));
 				}
 
 				String applyMethodName = "apply" + commandName + "Finished";

@@ -8,6 +8,6 @@ public class CQRSEventAliasBuilder extends PojoBuilder {
 
 	public static byte[] dump(Event event) {
 
-		return ClassBuilder.make(event.type, event.getRealEvent().type).publicMethodInitWithAllFieldsToSuper(event.fields).toByteArray();
+		return ClassBuilder.make(event.type, event.getRealEvent().type).publicInitWithSuper(event.fields).toByteArray();
 	}
 }

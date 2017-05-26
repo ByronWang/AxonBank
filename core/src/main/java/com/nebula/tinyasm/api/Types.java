@@ -16,6 +16,15 @@ public interface Types {
 	 */
 	static final int[] SIZE = buildOpcodeSize();
 
+	default String concat(String... strs) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(strs[0]);
+		for (int i = 1; i < strs.length; i++) {
+			sb.append(toPropertyName(strs[i]));
+		}
+		return sb.toString();
+	}
+
 	/**
 	 * Computes the stack size variation corresponding to each JVM instruction.
 	 */
@@ -317,14 +326,14 @@ public interface Types {
 	};
 
 	default Field[] fieldsOf(Field field, Field[] fields) {
-		Field[] newfields = new Field[fields.length+1];
+		Field[] newfields = new Field[fields.length + 1];
 		newfields[0] = field;
 		System.arraycopy(fields, 0, newfields, 1, fields.length);
 		return newfields;
 	}
 
 	default Field[] fieldsOf(Field field, List<Field> fields) {
-		Field[] newfields = new Field[fields.size()+1];
+		Field[] newfields = new Field[fields.size() + 1];
 		newfields[0] = field;
 		for (int i = 0; i < fields.size(); i++) {
 			newfields[i + 1] = fields.get(i);

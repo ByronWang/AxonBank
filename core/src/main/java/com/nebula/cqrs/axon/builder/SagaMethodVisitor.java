@@ -31,11 +31,12 @@ import com.nebula.tinyasm.StatusBuilder;
 import com.nebula.tinyasm.Variable;
 import com.nebula.tinyasm.api.ClassBody;
 import com.nebula.tinyasm.api.ClassMethodCode;
+import com.nebula.tinyasm.api.Types;
 import com.nebula.tinyasm.util.AsmBuilder;
 import com.nebula.tinyasm.util.Field;
 import com.nebula.tinyasm.util.MethodInfo;
 
-class SagaMethodVisitor extends SagaMethodAnalyzer {
+class SagaMethodVisitor extends SagaMethodAnalyzer implements Types {
 
 	ClassBody commandHandlerBody;
 
@@ -272,12 +273,18 @@ class SagaMethodVisitor extends SagaMethodAnalyzer {
 		offset -= ownerType.getSize();
 		Field ownerField = methodStack.elementAt(offset);
 
-		Type commandType = domainDefinition.apitypeOf(this.sagaName, ownerField.name, name, "Command");
+		String commandProfix = concat(this.sagaName, ownerField.name);
 
-		{// make command
-			context.add(ClassBuilder.make(commandType).field(TargetAggregateIdentifier.class, domainDefinition.identifierField).field(idField)
-			        .fields(methodParams).readonlyPojo());
-		}
+		Type commandType = domainDefinition.typeOf(commandProfix, name, "Command");
+
+		SagaCommandMethodAnalyzer commandMethodAnalyzer = new SagaCommandMethodAnalyzer(commandProfix, idField, context);
+		this.context.read(name, commandMethodAnalyzer);
+		//
+		// {// make command
+		// context.add(ClassBuilder.make(commandType).field(TargetAggregateIdentifier.class,
+		// domainDefinition.identifierField).field(idField)
+		// .fields(methodParams).readonlyPojo());
+		// }
 		if (Type.getType(boolean.class).getDescriptor().equals(returnType.getDescriptor())) {
 			List<Field> eventFields = new ArrayList<>();
 

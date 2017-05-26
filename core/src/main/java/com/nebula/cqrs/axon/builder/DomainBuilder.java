@@ -102,6 +102,9 @@ public class DomainBuilder implements DomainContext {
 
 	@Override
 	public ClassBody add(ClassBody cb) {
+		if(this.types.containsKey(cb.getType().getClassName())){
+			System.out.println("duplicate " + cb.getType().getClassName());
+		}
 		this.types.put(cb.getType().getClassName(), cb);
 		return cb;
 	}
