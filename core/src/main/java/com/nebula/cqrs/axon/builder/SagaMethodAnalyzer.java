@@ -47,7 +47,7 @@ public abstract class SagaMethodAnalyzer extends MethodVisitor {
 	}
 
 	void blockCloseCurrent() {
-		makeBlockEnd();
+		onEnd();
 
 		SagaBlock previousBlock = methodBlockStack.pop();
 		stackPop(methodStack.size() - previousBlock.startStackIndex);
@@ -93,7 +93,7 @@ public abstract class SagaMethodAnalyzer extends MethodVisitor {
 		}
 
 		SagaBlock nextBlock = methodBlockStack.push(new SagaBlock(name, thisLabelclose, blockType, ifBlock.startStackIndex));
-		makeBlockBeginOfResult(parentBlock, nextBlock);
+		onBeginOfResult(parentBlock, nextBlock);
 	}
 
 	void blockStartOfResult(String name, Label labelClose) {
@@ -105,26 +105,26 @@ public abstract class SagaMethodAnalyzer extends MethodVisitor {
 		}
 
 		SagaBlock nextBlock = methodBlockStack.push(new SagaBlock(name, thisLabelclose, methodStack.size()));
-		makeBlockBeginOfResult(parentBlock, nextBlock);
+		onBeginOfResult(parentBlock, nextBlock);
 	}
 
 	protected void blockStartOfRoot(String name, List<Field> datasFields, Type createdEvent) {
 		SagaClassListener.LOGGER.debug("[]{}root{****", SagaClassListener.repeat("    ", methodBlockStack.size()));
 		SagaBlock nextBlock = methodBlockStack.push(new SagaBlock(name + methodBlockIndex++, null, methodStack.size()));
-		makeBlockBeginOfRoot(nextBlock, datasFields, createdEvent);
+		onBeginOfRoot(nextBlock, datasFields, createdEvent);
 	}
 
-	protected abstract void makeBlockBeginOfResult(SagaBlock parentBlock, SagaBlock nextBlock);
+	protected abstract void onBeginOfResult(SagaBlock parentBlock, SagaBlock nextBlock);
 
-	protected abstract void makeBlockBeginOfRoot(SagaBlock nextBlock, List<Field> datasFields, Type createdEvent);
+	protected abstract void onBeginOfRoot(SagaBlock nextBlock, List<Field> datasFields, Type createdEvent);
 
-	protected abstract void makeBlockEnd();
+	protected abstract void onEnd();
 
 	protected abstract void makeCodeBegin(Type methodReturnType);
 
-	protected abstract void makeFinished(int value);
+	protected abstract void onFinished(int value);
 
-	protected abstract void makeInvokeCommand(Stack<Variable> methodStack, int opcode, String owner, String name, String desc, boolean itf);
+	protected abstract void onInvokeCommand(Stack<Variable> methodStack, int opcode, String owner, String name, String desc, boolean itf);
 
 	protected void printStack() {
 		// StringBuffer sb = new StringBuffer();
@@ -207,7 +207,7 @@ public abstract class SagaMethodAnalyzer extends MethodVisitor {
 		SagaClassListener.LOGGER.debug("[]{}{}\t\t\t{}", SagaClassListener.repeat("    ", methodBlockStack.size()), "visitInsn", opcode);
 
 		if (IRETURN <= opcode && opcode <= RETURN) {
-			makeFinished((Integer) methodStack.peek().value);
+			onFinished((Integer) methodStack.peek().value);
 			// currentBlock().code.block(mc->{
 			// mc.def("i",int.class);
 			// mc.load("i");
@@ -308,7 +308,7 @@ public abstract class SagaMethodAnalyzer extends MethodVisitor {
 				stackPush("", returnType);
 			}
 		} else {
-			makeInvokeCommand(methodStack, opcode, owner, name, desc, itf);
+			onInvokeCommand(methodStack, opcode, owner, name, desc, itf);
 
 			Type ownerType = Type.getObjectType(owner);
 

@@ -111,7 +111,7 @@ class SagaMethodVisitor extends SagaMethodAnalyzer {
 	}
 
 	@Override
-	protected void makeBlockBeginOfResult(SagaBlock parentBlock, SagaBlock block) {
+	protected void onBeginOfResult(SagaBlock parentBlock, SagaBlock block) {
 		String result = null;
 
 		if (block.blockType == BlockType.IFBLOCK) {
@@ -122,13 +122,13 @@ class SagaMethodVisitor extends SagaMethodAnalyzer {
 
 		final Type eventType = domainDefinition.apitypeOf(parentBlock.commandName, result, "Event");
 		context.add(ClassBuilder.make(eventType).fields(parentBlock.eventFields).readonlyPojo());
-		makeBlockEnd();
+		onEnd();
 		block.code = sagaManagementClassBody.publicMethod("on").annotation(SagaEventHandler.class, "associationProperty", idField.name)
 		        .parameter("event", eventType).begin();
 	}
 
 	@Override
-	protected void makeBlockBeginOfRoot(SagaBlock block, List<Field> datasFields, Type createdEvent) {
+	protected void onBeginOfRoot(SagaBlock block, List<Field> datasFields, Type createdEvent) {
 		block.code = sagaManagementClassBody.publicMethod("on").annotation(StartSaga.class)
 		        .annotation(SagaEventHandler.class, "associationProperty", idField.name).parameter("event", createdEvent).begin().block(mc -> {
 			        for (Field field : datasFields) {
@@ -140,7 +140,7 @@ class SagaMethodVisitor extends SagaMethodAnalyzer {
 	}
 
 	@Override
-	protected void makeBlockEnd() {
+	protected void onEnd() {
 		ClassMethodCode code = blockCurrent().code;
 		if (code != null) {
 			code.returnVoid();
@@ -150,26 +150,11 @@ class SagaMethodVisitor extends SagaMethodAnalyzer {
 	}
 
 	protected void makeCommandHandler() {
-		// commandHandlerBody =
-		// ClassBuilder.make(commandHandlerType).field("repository",
-		// Repository.class,
-		// domainDefinition.implDomainType).field("eventBus",
-		// EventBus.class);
-		// context.add("commandHandler", commandHandlerBody);
-		// commandHandlerBody.publicMethod("<init>").parameter("repository",
-		// Repository.class, domainDefinition.implDomainType)
-		// .parameter("eventBus", EventBus.class).code(mb -> {
-		// mb.line(15).initObject();
-		// mb.loadThis().put("repository", "repository");
-		// mb.loadThis().put("eventBus", "eventBus");
-		// mb.returnVoid();
-		// });
-		//
 		commandHandlerBody = context.get("commandHandler");
 	}
 
 	@Override
-	protected void makeFinished(int value) {
+	protected void onFinished(int value) {
 
 		Type commandType;
 
@@ -279,7 +264,7 @@ class SagaMethodVisitor extends SagaMethodAnalyzer {
 	}
 
 	@Override
-	protected void makeInvokeCommand(Stack<Variable> methodStack, int opcode, String owner, String name, String desc, boolean itf) {
+	protected void onInvokeCommand(Stack<Variable> methodStack, int opcode, String owner, String name, String desc, boolean itf) {
 		Type[] types = Type.getArgumentTypes(desc);
 		Type returnType = Type.getReturnType(desc);
 
