@@ -46,7 +46,7 @@ public abstract class SagaMethodAnalyzer extends MethodVisitor {
 	}
 
 	private void blockCloseCurrent() {
-		onEndOfSaga();
+		onClosePreviousBlock();
 
 		SagaBlock previousBlock = methodBlockStack.pop();
 		stackPop(methodStack.size() - previousBlock.startStackIndex);
@@ -92,7 +92,7 @@ public abstract class SagaMethodAnalyzer extends MethodVisitor {
 		}
 
 		SagaBlock nextBlock = methodBlockStack.push(new SagaBlock(name, thisLabelclose, blockType, ifBlock.startStackIndex));
-		onBeginOfResult(parentBlock, nextBlock);
+		onStartNewBlock(parentBlock, nextBlock);
 	}
 
 	private void blockStartOfResult(String name, Label labelClose) {
@@ -104,21 +104,21 @@ public abstract class SagaMethodAnalyzer extends MethodVisitor {
 		}
 
 		SagaBlock nextBlock = methodBlockStack.push(new SagaBlock(name, thisLabelclose, methodStack.size()));
-		onBeginOfResult(parentBlock, nextBlock);
+		onStartNewBlock(parentBlock, nextBlock);
 	}
 
 	private void blockStartOfRoot(String name) {
 		SagaClassListener.LOGGER.debug("[]{}root{****", SagaClassListener.repeat("    ", methodBlockStack.size()));
 		SagaBlock nextBlock = methodBlockStack.push(new SagaBlock(name + methodBlockIndex++, null, methodStack.size()));
 
-		onBeginSaga(nextBlock, this.methodReturnType);
+		onStartSaga(nextBlock, this.methodReturnType);
 	}
 
-	protected abstract void onBeginOfResult(SagaBlock parentBlock, SagaBlock nextBlock);
+	protected abstract void onStartNewBlock(SagaBlock parentBlock, SagaBlock nextBlock);
 
-	protected abstract void onBeginSaga(SagaBlock nextBlock, Type methodReturnType);
+	protected abstract void onStartSaga(SagaBlock nextBlock, Type methodReturnType);
 
-	protected abstract void onEndOfSaga();
+	protected abstract void onClosePreviousBlock();
 
 	protected abstract void onMarkSagaFinished(int value);
 

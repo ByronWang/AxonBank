@@ -131,7 +131,7 @@ class SagaMethodVisitor extends SagaMethodAnalyzer {
 	}
 
 	@Override
-	protected void onBeginOfResult(SagaBlock parentBlock, SagaBlock block) {
+	protected void onStartNewBlock(SagaBlock parentBlock, SagaBlock block) {
 		String result = null;
 
 		if (block.blockType == BlockType.IFBLOCK) {
@@ -142,13 +142,13 @@ class SagaMethodVisitor extends SagaMethodAnalyzer {
 
 		final Type eventType = domainDefinition.apitypeOf(parentBlock.commandName, result, "Event");
 		context.add(ClassBuilder.make(eventType).fields(parentBlock.eventFields).readonlyPojo());
-		onEndOfSaga();
+		onClosePreviousBlock();
 		block.code = sagaManagementClassBody.publicMethod("on").annotation(SagaEventHandler.class, "associationProperty", idField.name)
 		        .parameter("event", eventType).begin();
 	}
 
 	@Override
-	protected void onBeginSaga(SagaBlock block, Type methodReturnType) {
+	protected void onStartSaga(SagaBlock block, Type methodReturnType) {
 
 		if (Type.getType(boolean.class).getDescriptor().equals(methodReturnType.getDescriptor())) {
 			onHandleSagaResult(domainDefinition, sagaFieldsWithID, Status.Completed.name(), 1);
@@ -190,7 +190,7 @@ class SagaMethodVisitor extends SagaMethodAnalyzer {
 	// }
 
 	@Override
-	protected void onEndOfSaga() {
+	protected void onClosePreviousBlock() {
 		ClassMethodCode code = blockCurrent().code;
 		if (code != null) {
 			code.returnVoid();
